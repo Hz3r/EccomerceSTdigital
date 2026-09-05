@@ -1,0 +1,49 @@
+//MODELO USUARIO 
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client{
+  provider = "prisma-client-js"
+}
+
+enum RolUsuario{
+  ADMIN
+  CLIENTE
+}
+
+enum ProveedorAuth{
+  LOCAL
+  GOOGLE
+}
+
+
+model User{
+  id String @id @default(uuid())
+  nombre String 
+  email String @unique
+  passwordHash String? 
+
+
+  googleId String? @unique
+  proveedor ProveedorAuth @default(LOCAL)
+
+  rol RolUsuario @default(CLIENTE)
+  avatarUrl String? 
+  isActive Boolean @default(true)
+  
+  lastLoginAt DateTime?
+
+  creadoEn DateTime @default(now())
+  actualizado DateTime @updatedAt
+
+  @@map("users")
+
+}
+
+
+
+
+
+
