@@ -1,8 +1,8 @@
-import prisma from "../../config/database.js";
+import { getPrisma } from "../../config/database.js";
 import { NotFoundError } from "../../errors/appError.js";
 
 export const getAll = async () => {
-  return prisma.user.findMany({
+  return getPrisma().user.findMany({
     select: {
       id: true,
       nombre: true,
@@ -17,7 +17,7 @@ export const getAll = async () => {
 };
 
 export const getById = async (id: string) => {
-  const user = await prisma.user.findUnique({
+  const user = await getPrisma().user.findUnique({
     where: { id },
     select: {
       id: true,
@@ -43,13 +43,13 @@ export const update = async (
   id: string,
   data: { nombre?: string; rol?: "ADMIN" | "CLIENTE"; isActive?: boolean }
 ) => {
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await getPrisma().user.findUnique({ where: { id } });
 
   if (!user) {
     throw new NotFoundError("Usuario no encontrado");
   }
 
-  return prisma.user.update({
+  return getPrisma().user.update({
     where: { id },
     data,
     select: {
@@ -64,13 +64,13 @@ export const update = async (
 };
 
 export const remove = async (id: string) => {
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await getPrisma().user.findUnique({ where: { id } });
 
   if (!user) {
     throw new NotFoundError("Usuario no encontrado");
   }
 
-  await prisma.user.delete({ where: { id } });
+  await getPrisma().user.delete({ where: { id } });
 
   return { message: "Usuario eliminado exitosamente" };
 };

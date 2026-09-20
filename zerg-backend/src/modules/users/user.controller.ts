@@ -36,6 +36,15 @@ export const update = async (req: AuthRequest, res: Response) => {
 
 export const remove = async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
+
+  if (req.user?.userId === id) {
+    res.status(400).json({
+      success: false,
+      message: "No puedes eliminar tu propio usuario",
+    });
+    return;
+  }
+
   const result = await userService.remove(id);
 
   res.status(200).json({

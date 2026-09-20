@@ -1,49 +1,158 @@
-//MODELO USUARIO 
+// ==================== DATASOURCE & GENERATOR ====================
 
 datasource db {
   provider = "postgresql"
 }
 
-generator client{
+generator client {
   provider = "prisma-client-js"
 }
 
-enum RolUsuario{
+// ==================== ENUMS ====================
+
+enum RolUsuario {
   ADMIN
   CLIENTE
 }
 
-enum ProveedorAuth{
+enum ProveedorAuth {
   LOCAL
   GOOGLE
 }
 
-
-model User{
-  id String @id @default(uuid())
-  nombre String 
-  email String @unique
-  passwordHash String? 
-
-
-  googleId String? @unique
-  proveedor ProveedorAuth @default(LOCAL)
-
-  rol RolUsuario @default(CLIENTE)
-  avatarUrl String? 
-  isActive Boolean @default(true)
-  
-  lastLoginAt DateTime?
-
-  creadoEn DateTime @default(now())
-  actualizado DateTime @updatedAt
-
-  @@map("users")
-
+enum StatusOrden {
+  PENDIENTE
+  ENVIADO
+  COMPLETADO
+  CANCELADO
 }
 
+// ==================== USUARIO ====================
 
+model User {
+  id           String         @id @default(uuid())
+  nombre       String
+  email        String         @unique
+  passwordHash String?
+  googleId     String?        @unique
+  proveedor    ProveedorAuth  @default(LOCAL)
+  rol          RolUsuario     @default(CLIENTE)
+  avatarUrl    String?
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  creadoEn     DateTime       @default(now())
+  actualizado  DateTime       @updatedAt
+  orders       Order[]
+  reviews      Review[]
 
+  @@map("users")
+}
 
+// ==================== CATEGORÍAS ====================
 
+model Category {
+  id          String    @id @default(uuid())
+  nombre      String    @unique
+  slug        String    @unique
+  descripcion String?
+  imagenUrl   String?
+  isActive    Boolean   @default(true)
+  creadoEn    DateTime  @default(now())
+  actualizado DateTime  @updatedAt
+  products    Product[]
 
+  @@map("categories")
+}
+
+// ==================== PRODUCTOS ====================
+
+model Product {
+  id          String      @id @default(uuid())
+  nombre      String
+  slug        String      @unique
+  descripcion String?
+  imagenUrl   String?
+  isActivo    Boolean     @default(true)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  creadoEn    DateTime    @default(now())
+  actualizado DateTime    @updatedAt
+  plans       Plan[]
+  reviews     Review[]
+
+  @@map("products")
+}
+
+// ==================== PLANES (VARIANTES) ====================
+
+model Plan {
+  id             String      @id @default(uuid())
+  nombre         String
+  slug           String      @unique
+  duracion       String
+  precio         Decimal     @db.Decimal(10, 2)
+  precioOriginal Decimal?    @db.Decimal(10, 2)
+  descripcion    String?
+  isActivo       Boolean     @default(true)
+  productId      String
+  product        Product     @relation(fields: [productId], references: [id])
+  creadoEn       DateTime    @default(now())
+  actualizado    DateTime    @updatedAt
+  orderItems     OrderItem[]
+
+  @@map("plans")
+}
+
+// ==================== ORDENES ====================
+
+model Order {
+  id            String        @id @default(uuid())
+  numeroOrden   String        @unique
+  nombreCliente String
+  email         String
+  telefono      String?
+  whatsappLink  String?
+  status        StatusOrden   @default(PENDIENTE)
+  notas         String?
+  total         Decimal       @db.Decimal(10, 2)
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+  creadoEn      DateTime      @default(now())
+  actualizado   DateTime      @updatedAt
+  items         OrderItem[]
+
+  @@map("orders")
+}
+
+// ==================== ITEMS DE ORDEN ====================
+
+model OrderItem {
+  id             String   @id @default(uuid())
+  cantidad       Int      @default(1)
+  precioUnitario Decimal  @db.Decimal(10, 2)
+  orderId        String
+  order          Order    @relation(fields: [orderId], references: [id])
+  planId         String
+  plan           Plan     @relation(fields: [planId], references: [id])
+  creadoEn       DateTime @default(now())
+
+  @@map("order_items")
+}
+
+// ==================== RESEÑAS ====================
+
+model Review {
+  id          String   @id @default(uuid())
+  puntuacion  Int
+  comentario  String?
+  isApproved  Boolean  @default(false)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  creadoEn    DateTime @default(now())
+  actualizado DateTime @updatedAt
+
+  @@unique([productId, userId])
+  @@map("reviews")
+} 

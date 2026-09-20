@@ -1,4 +1,4 @@
-import prisma from "../../config/database.js";
+import { getPrisma } from "../../config/database.js";
 import { hashPassword, comparePassword } from "../../utils/hash.js";
 import { generateToken } from "../../utils/token.js";
 import {
@@ -9,7 +9,7 @@ import {
 import type { RegisterDTO, LoginDTO } from "../../validations/auth.schema.js";
 
 export const register = async (dto: RegisterDTO) => {
-  const existingUser = await prisma.user.findUnique({
+  const existingUser = await getPrisma().user.findUnique({
     where: { email: dto.email },
   });
 
@@ -19,7 +19,7 @@ export const register = async (dto: RegisterDTO) => {
 
   const passwordHash = await hashPassword(dto.password);
 
-  const user = await prisma.user.create({
+  const user = await getPrisma().user.create({
     data: {
       nombre: dto.nombre,
       email: dto.email,
@@ -46,7 +46,7 @@ export const register = async (dto: RegisterDTO) => {
 };
 
 export const login = async (dto: LoginDTO) => {
-  const user = await prisma.user.findUnique({
+  const user = await getPrisma().user.findUnique({
     where: { email: dto.email },
   });
 
@@ -64,7 +64,7 @@ export const login = async (dto: LoginDTO) => {
     throw new UnauthorizedError("Credenciales inválidas");
   }
 
-  await prisma.user.update({
+  await getPrisma().user.update({
     where: { id: user.id },
     data: { lastLoginAt: new Date() },
   });
@@ -89,7 +89,7 @@ export const login = async (dto: LoginDTO) => {
 };
 
 export const getProfile = async (userId: string) => {
-  const user = await prisma.user.findUnique({
+  const user = await getPrisma().user.findUnique({
     where: { id: userId },
     select: {
       id: true,

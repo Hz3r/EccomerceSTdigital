@@ -1,7 +1,14 @@
 import jwt from "jsonwebtoken";
 import type { RolUsuario } from "@prisma/client";
 
-const JWT_SECRET = process.env.JWT_SECRET || "zerg-secret-key-change-in-production";
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error("JWT_SECRET no está definido en las variables de entorno");
+  }
+  return secret;
+}
+
 const JWT_EXPIRES_IN = "7d";
 
 export interface TokenPayload {
@@ -11,9 +18,9 @@ export interface TokenPayload {
 }
 
 export const generateToken = (payload: TokenPayload): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 };
 
 export const verifyToken = (token: string): TokenPayload => {
-  return jwt.verify(token, JWT_SECRET) as TokenPayload;
+  return jwt.verify(token, getJwtSecret()) as TokenPayload;
 };
