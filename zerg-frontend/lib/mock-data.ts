@@ -60,67 +60,67 @@ function product(
 
 export const mockProducts: Product[] = [
   product("netflix-premium", "Netflix Premium", "cat-streaming", "Perfil privado en calidad 4K Ultra HD con audio espacial. Disfruta series, películas y documentales en cualquier dispositivo.", [
-    ["1 mes", 6.5, 8],
-    ["3 meses", 18],
-    ["6 meses", 34, 39],
+    ["1 mes", 24.9, 29.9],
+    ["3 meses", 67.9],
+    ["6 meses", 128.9, 147.9],
   ]),
   product("disney-plus", "Disney+ Premium", "cat-streaming", "Disney, Pixar, Marvel, Star Wars y National Geographic en un solo lugar, con calidad 4K.", [
-    ["1 mes", 4.5],
-    ["3 meses", 12.5, 13.5],
+    ["1 mes", 16.9],
+    ["3 meses", 47.9, 50.9],
   ]),
   product("max-hbo", "Max", "cat-streaming", "Series originales de HBO, películas de Warner Bros. y lo mejor de DC.", [
-    ["1 mes", 4.9, 5.9],
-    ["6 meses", 26],
+    ["1 mes", 18.9, 21.9],
+    ["6 meses", 98.9],
   ]),
   product("prime-video", "Prime Video", "cat-streaming", "Películas, series Amazon Originals y deportes en vivo.", [
-    ["1 mes", 3.9],
-    ["12 meses", 39, 46.8],
+    ["1 mes", 14.9],
+    ["12 meses", 147.9, 177.9],
   ]),
   product("crunchyroll", "Crunchyroll Mega Fan", "cat-streaming", "El catálogo de anime más grande del mundo, sin anuncios y con estrenos simultáneos.", [
-    ["1 mes", 3.5],
-    ["3 meses", 9.9],
+    ["1 mes", 12.9],
+    ["3 meses", 37.9],
   ]),
   product("spotify-premium", "Spotify Premium", "cat-musica", "Música sin anuncios, descargas offline y saltos ilimitados en tu propia cuenta.", [
-    ["1 mes", 3.9, 4.9],
-    ["3 meses", 10.9],
-    ["12 meses", 39],
+    ["1 mes", 14.9, 18.9],
+    ["3 meses", 40.9],
+    ["12 meses", 147.9],
   ]),
   product("youtube-premium", "YouTube Premium", "cat-musica", "YouTube sin anuncios, reproducción en segundo plano y YouTube Music incluido.", [
-    ["1 mes", 4.2],
-    ["6 meses", 23, 25.2],
+    ["1 mes", 15.9],
+    ["6 meses", 86.9, 95.9],
   ]),
   product("chatgpt-plus", "ChatGPT Plus", "cat-ia", "Acceso a los modelos más avanzados, generación de imágenes y respuestas más rápidas.", [
-    ["1 mes", 14.9, 20],
+    ["1 mes", 56.9, 75.9],
   ]),
   product("gemini-advanced", "Gemini Advanced", "cat-ia", "Asistente de IA avanzado con 2 TB de almacenamiento incluido.", [
-    ["1 mes", 12.9, 19.9],
-    ["3 meses", 36],
+    ["1 mes", 48.9, 75.9],
+    ["3 meses", 136.9],
   ]),
   product("canva-pro", "Canva Pro", "cat-diseno", "Plantillas premium, kit de marca, quitar fondos y millones de recursos.", [
-    ["1 mes", 2.9],
-    ["12 meses", 24.9, 34.8],
+    ["1 mes", 10.9],
+    ["12 meses", 94.9, 131.9],
   ]),
   product("capcut-pro", "CapCut Pro", "cat-diseno", "Edición de video profesional con efectos, plantillas y exportación sin marca de agua.", [
-    ["1 mes", 3.9],
-    ["12 meses", 32],
+    ["1 mes", 14.9],
+    ["12 meses", 121.9],
   ]),
   product("microsoft-365", "Microsoft 365", "cat-productividad", "Word, Excel, PowerPoint y 1 TB en OneDrive para tu cuenta personal.", [
-    ["12 meses", 19.9, 29.9],
+    ["12 meses", 75.9, 113.9],
   ]),
   product("duolingo-max", "Duolingo Super", "cat-productividad", "Aprende idiomas sin anuncios, con vidas ilimitadas y práctica personalizada.", [
-    ["12 meses", 15.9],
+    ["12 meses", 59.9],
   ]),
   product("game-pass", "Xbox Game Pass Ultimate", "cat-gaming", "Cientos de juegos en consola, PC y la nube, más EA Play incluido.", [
-    ["1 mes", 9.9, 14.99],
-    ["3 meses", 27.9],
+    ["1 mes", 37.9, 56.9],
+    ["3 meses", 105.9],
   ]),
   product("playstation-plus", "PlayStation Plus Extra", "cat-gaming", "Catálogo de juegos de PS4 y PS5, multijugador en línea y descuentos exclusivos.", [
-    ["1 mes", 9.5],
-    ["12 meses", 89, 125],
+    ["1 mes", 35.9],
+    ["12 meses", 337.9, 474.9],
   ]),
   product("nordvpn", "NordVPN", "cat-seguridad", "VPN rápida y segura para hasta 10 dispositivos, con bloqueo de anuncios y malware.", [
-    ["1 mes", 3.9],
-    ["12 meses", 29.9, 46.8],
+    ["1 mes", 14.9],
+    ["12 meses", 113.9, 177.9],
   ]),
 ];
 

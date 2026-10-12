@@ -1,7 +1,10 @@
 import type { Plan, Product } from "@/types";
 
+const PEN = new Intl.NumberFormat("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// Precios en soles peruanos: S/ 24.90
 export function formatPrice(value: number) {
-  return `$${value.toFixed(2)}`;
+  return `S/ ${PEN.format(value)}`;
 }
 
 export function activePlans(product: Product): Plan[] {

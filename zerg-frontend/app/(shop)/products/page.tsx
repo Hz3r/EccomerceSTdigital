@@ -15,10 +15,10 @@ import type { Category, Product } from "@/types";
 
 const DURATIONS = ["1 mes", "3 meses", "6 meses", "12 meses"];
 const PRICE_RANGES = [
-  { id: "lt5", label: "Menos de $5", test: (n: number) => n < 5 },
-  { id: "5-10", label: "$5 a $10", test: (n: number) => n >= 5 && n <= 10 },
-  { id: "10-20", label: "$10 a $20", test: (n: number) => n > 10 && n <= 20 },
-  { id: "gt20", label: "Más de $20", test: (n: number) => n > 20 },
+  { id: "lt15", label: "Menos de S/ 15", test: (n: number) => n < 15 },
+  { id: "15-30", label: "S/ 15 a S/ 30", test: (n: number) => n >= 15 && n <= 30 },
+  { id: "30-60", label: "S/ 30 a S/ 60", test: (n: number) => n > 30 && n <= 60 },
+  { id: "gt60", label: "Más de S/ 60", test: (n: number) => n > 60 },
 ];
 const SORTS = [
   { id: "popular", label: "Populares" },
