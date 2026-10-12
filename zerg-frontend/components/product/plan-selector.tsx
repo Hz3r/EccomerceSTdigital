@@ -1,71 +1,56 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ShoppingCart, Check } from "lucide-react";
-import { useCart } from "@/hooks/useCart";
-import type { Plan, Product } from "@/types";
+import { Check } from "lucide-react";
+import { discountPercent, formatPrice } from "@/lib/catalog";
+import { cn } from "@/lib/utils";
+import type { Plan } from "@/types";
 
 interface PlanSelectorProps {
   plans: Plan[];
-  product: Product;
+  value?: string;
+  onChange: (planId: string) => void;
 }
 
-export function PlanSelector({ plans, product }: PlanSelectorProps) {
-  const { addItem, items } = useCart();
-  const activePlans = plans.filter((p) => p.isActivo);
-
+export function PlanSelector({ plans, value, onChange }: PlanSelectorProps) {
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-medium text-foreground">Selecciona un plan</h3>
-      <div className="space-y-2">
-        {activePlans.map((plan) => {
-          const isInCart = items.some((i) => i.planId === plan.id);
-          return (
-            <div
-              key={plan.id}
-              className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{plan.nombre}</span>
-                  {plan.precioOriginal && plan.precioOriginal > plan.precio && (
-                    <Badge variant="destructive" className="text-[10px]">
-                      -{Math.round(((plan.precioOriginal - plan.precio) / plan.precioOriginal) * 100)}%
-                    </Badge>
-                  )}
-                </div>
-                <div className="mt-0.5 flex items-center gap-2">
-                  {plan.precioOriginal && plan.precioOriginal > plan.precio && (
-                    <span className="text-xs text-muted-foreground line-through">
-                      ${plan.precioOriginal.toFixed(2)}
-                    </span>
-                  )}
-                  <span className="text-sm font-semibold">${plan.precio.toFixed(2)}</span>
-                  <span className="text-xs text-muted-foreground">/ {plan.duracion}</span>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                variant={isInCart ? "outline" : "default"}
-                onClick={() => addItem(plan, product)}
-              >
-                {isInCart ? (
-                  <>
-                    <Check className="size-3.5" />
-                    Agregado
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart className="size-3.5" />
-                    Agregar
-                  </>
+    <div role="radiogroup" aria-label="Duración del plan" className="grid grid-cols-2 gap-2">
+      {plans.map((plan) => {
+        const selected = plan.id === value;
+        const discount = discountPercent(plan);
+        return (
+          <button
+            key={plan.id}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(plan.id)}
+            className={cn(
+              "relative flex flex-col items-start rounded-xl border bg-background px-3.5 py-3 text-left transition-all",
+              selected
+                ? "border-brand-strong ring-3 ring-brand/20"
+                : "hover:border-foreground/25"
+            )}
+          >
+            {discount > 0 && (
+              <span className="absolute -top-2 right-2 rounded-full bg-brand-yellow px-2 py-0.5 text-[10px] font-bold text-brand-ink">
+                -{discount}%
+              </span>
+            )}
+            <span className="flex w-full items-center justify-between text-sm font-semibold">
+              {plan.duracion}
+              <span
+                className={cn(
+                  "flex size-4 items-center justify-center rounded-full border",
+                  selected ? "border-brand-strong bg-brand-strong text-white" : "border-input"
                 )}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
+              >
+                {selected && <Check className="size-3" />}
+              </span>
+            </span>
+            <span className="mt-1 text-xs text-muted-foreground">{formatPrice(plan.precio)}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

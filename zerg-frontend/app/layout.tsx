@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ZERG Store",
-  description: "Tu tienda de servicios digitales y streaming",
+  title: {
+    default: "ZERG · Servicios digitales y streaming",
+    template: "%s · ZERG",
+  },
+  description: "Streaming, música, IA y gaming al mejor precio, con entrega inmediata y garantía.",
+  icons: { icon: "/zerg-icon.png", apple: "/zerg-icon.png" },
 };
 
 export default function RootLayout({
@@ -24,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

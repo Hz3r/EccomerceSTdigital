@@ -1,17 +1,30 @@
 import api from "./axios";
+import { mockCategories, mockProducts } from "./mock-data";
 import type { Product, Category, Review, Order, User, ApiResponse } from "@/types";
 
+// Modo diseño: sin NEXT_PUBLIC_API_URL (o con NEXT_PUBLIC_USE_MOCKS=true) el catálogo
+// se sirve desde lib/mock-data.ts para poder trabajar el frontend sin backend.
+export const USE_MOCKS =
+  process.env.NEXT_PUBLIC_USE_MOCKS === "true" || !process.env.NEXT_PUBLIC_API_URL;
+
 export async function getProducts(): Promise<Product[]> {
+  if (USE_MOCKS) return mockProducts;
   const res = await api.get<ApiResponse<Product[]>>("/products");
   return res.data.data;
 }
 
 export async function getProductBySlug(slug: string): Promise<Product> {
+  if (USE_MOCKS) {
+    const product = mockProducts.find((p) => p.slug === slug);
+    if (!product) throw new Error("Producto no encontrado");
+    return product;
+  }
   const res = await api.get<ApiResponse<Product>>(`/products/${slug}`);
   return res.data.data;
 }
 
 export async function getCategories(): Promise<Category[]> {
+  if (USE_MOCKS) return mockCategories;
   const res = await api.get<ApiResponse<Category[]>>("/categories");
   return res.data.data;
 }
@@ -51,6 +64,22 @@ export async function createOrder(order: {
   userId?: string;
   items: { planId: string; cantidad: number }[];
 }): Promise<Order> {
+  if (USE_MOCKS) {
+    const now = new Date().toISOString();
+    return {
+      id: `mock-${Date.now()}`,
+      numeroOrden: `ZRG-${Date.now().toString().slice(-6)}`,
+      nombreCliente: order.nombreCliente,
+      email: order.email,
+      telefono: order.telefono,
+      notas: order.notas,
+      status: "PENDIENTE",
+      total: 0,
+      userId: order.userId,
+      creadoEn: now,
+      actualizado: now,
+    };
+  }
   const res = await api.post<ApiResponse<Order>>("/orders", order);
   return res.data.data;
 }

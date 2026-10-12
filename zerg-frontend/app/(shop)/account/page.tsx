@@ -27,30 +27,33 @@ export default function AccountPage() {
   if (!user) return null;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8 md:px-6">
-      <h1 className="text-2xl font-bold text-slate-900">Mi cuenta</h1>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-6 md:py-12">
+      <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Mi cuenta</h1>
 
-      <div className="mt-6 rounded-xl border p-6">
-        <div className="flex items-center gap-4">
-          <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+      <div className="mt-8 overflow-hidden rounded-3xl border bg-card">
+        <div className="h-24 bg-brand-gradient">
+          <div className="size-full bg-checker opacity-60" />
+        </div>
+        <div className="-mt-10 flex items-end gap-4 px-6">
+          <div className="flex size-20 items-center justify-center rounded-full bg-brand-ink ring-4 ring-card">
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.nombre} className="size-full rounded-full object-cover" />
             ) : (
-              <User className="size-8 text-muted-foreground" />
+              <User className="size-8 text-brand" />
             )}
           </div>
-          <div>
-            <h2 className="text-lg font-semibold">{user.nombre}</h2>
+          <div className="pb-1">
+            <h2 className="text-lg font-bold">{user.nombre}</h2>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
 
-        <div className="mt-6 space-y-3">
-          <div className="flex justify-between rounded-lg bg-muted/50 px-4 py-3">
+        <div className="mt-6 space-y-3 px-6">
+          <div className="flex justify-between rounded-lg bg-brand-mint px-4 py-3">
             <span className="text-sm text-muted-foreground">Rol</span>
             <span className="text-sm font-medium">{user.rol}</span>
           </div>
-          <div className="flex justify-between rounded-lg bg-muted/50 px-4 py-3">
+          <div className="flex justify-between rounded-lg bg-brand-mint px-4 py-3">
             <span className="text-sm text-muted-foreground">Miembro desde</span>
             <span className="text-sm font-medium">
               {new Date(user.creadoEn).toLocaleDateString("es-MX")}
@@ -58,8 +61,8 @@ export default function AccountPage() {
           </div>
         </div>
 
-        <div className="mt-6">
-          <Button variant="outline" className="w-full" onClick={logout}>
+        <div className="p-6">
+          <Button variant="outline" className="h-11 w-full rounded-xl" onClick={logout}>
             Cerrar sesión
           </Button>
         </div>
