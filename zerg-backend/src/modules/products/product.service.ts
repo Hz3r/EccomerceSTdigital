@@ -9,32 +9,42 @@ export const getAll = async () => {
       },
       plans: {
         where: { isActivo: true },
-        select: { id: true, nombre: true, precio: true, duracion: true },
+        orderBy: { precio: "asc" },
       },
     },
     orderBy: { creadoEn: "desc" },
   });
 };
 
-export const getById = async (id: string) => {
-  const product = await getPrisma().product.findUnique({
-    where: { id },
-    include: {
-      category: {
-        select: { id: true, nombre: true, slug: true },
-      },
-      plans: true,
-      reviews: {
-        where: { isApproved: true },
-        select: {
-          id: true,
-          puntuacion: true,
-          comentario: true,
-          user: { select: { id: true, nombre: true } },
-        },
-      },
+const productDetailInclude = {
+  category: {
+    select: { id: true, nombre: true, slug: true },
+  },
+  plans: true,
+  reviews: {
+    where: { isApproved: true },
+    select: {
+      id: true,
+      puntuacion: true,
+      comentario: true,
+      isApproved: true,
+      creadoEn: true,
+      user: { select: { id: true, nombre: true } },
     },
-  });
+  },
+} as const;
+
+// Acepta el id o el slug del producto (la tienda usa URLs con slug).
+export const getById = async (idOrSlug: string) => {
+  const product =
+    (await getPrisma().product.findUnique({
+      where: { id: idOrSlug },
+      include: productDetailInclude,
+    })) ??
+    (await getPrisma().product.findUnique({
+      where: { slug: idOrSlug },
+      include: productDetailInclude,
+    }));
 
   if (!product) {
     throw new NotFoundError("Producto no encontrado");

@@ -7,10 +7,22 @@ import type { Product, Category, Review, Order, User, ApiResponse } from "@/type
 export const USE_MOCKS =
   process.env.NEXT_PUBLIC_USE_MOCKS === "true" || !process.env.NEXT_PUBLIC_API_URL;
 
+// Prisma serializa los Decimal como texto ("24.90"): se convierten a número para poder operar.
+function normalizeProduct(product: Product): Product {
+  return {
+    ...product,
+    plans: product.plans?.map((plan) => ({
+      ...plan,
+      precio: Number(plan.precio),
+      precioOriginal: plan.precioOriginal == null ? undefined : Number(plan.precioOriginal),
+    })),
+  };
+}
+
 export async function getProducts(): Promise<Product[]> {
   if (USE_MOCKS) return mockProducts;
   const res = await api.get<ApiResponse<Product[]>>("/products");
-  return res.data.data;
+  return res.data.data.map(normalizeProduct);
 }
 
 export async function getProductBySlug(slug: string): Promise<Product> {
@@ -20,7 +32,7 @@ export async function getProductBySlug(slug: string): Promise<Product> {
     return product;
   }
   const res = await api.get<ApiResponse<Product>>(`/products/${slug}`);
-  return res.data.data;
+  return normalizeProduct(res.data.data);
 }
 
 export async function getCategories(): Promise<Category[]> {

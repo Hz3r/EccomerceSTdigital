@@ -22,8 +22,9 @@ export const getById = async (req: AuthRequest, res: Response) => {
 };
 
 export const create = async (req: AuthRequest, res: Response) => {
-  const { nombreCliente, email, telefono, whatsappLink, notas, userId, items } =
+  const { nombreCliente, email, telefono, whatsappLink, notas, items } =
     req.body;
+  const userId = req.user?.userId;
 
   const order = await orderService.create({
     nombreCliente,

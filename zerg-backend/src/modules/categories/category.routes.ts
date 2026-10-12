@@ -5,11 +5,12 @@ import { roleMiddleware } from "../../middlewares/role.middleware.js";
 
 const router: RouterType = Router();
 
+router.get("/", categoryController.getAll);
+router.get("/:id", categoryController.getById);
+
 router.use(authMiddleware);
 router.use(roleMiddleware("ADMIN"));
 
-router.get("/", categoryController.getAll);
-router.get("/:id", categoryController.getById);
 router.post("/", categoryController.create);
 router.put("/:id", categoryController.update);
 router.delete("/:id", categoryController.remove);

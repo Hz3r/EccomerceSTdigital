@@ -204,7 +204,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <p className="mt-6 mb-2.5 text-xs font-bold tracking-widest text-muted-foreground uppercase">
-                  Elige la duración
+                  Elige tu plan
                 </p>
                 <PlanSelector plans={plans} value={plan.id} onChange={setPlanId} />
 

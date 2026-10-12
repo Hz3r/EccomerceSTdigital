@@ -13,7 +13,7 @@ interface PlanSelectorProps {
 
 export function PlanSelector({ plans, value, onChange }: PlanSelectorProps) {
   return (
-    <div role="radiogroup" aria-label="Duración del plan" className="grid grid-cols-2 gap-2">
+    <div role="radiogroup" aria-label="Plan" className="grid grid-cols-2 gap-2">
       {plans.map((plan) => {
         const selected = plan.id === value;
         const discount = discountPercent(plan);
@@ -37,7 +37,7 @@ export function PlanSelector({ plans, value, onChange }: PlanSelectorProps) {
               </span>
             )}
             <span className="flex w-full items-center justify-between text-sm font-semibold">
-              {plan.duracion}
+              {plan.nombre}
               <span
                 className={cn(
                   "flex size-4 items-center justify-center rounded-full border",
@@ -47,7 +47,10 @@ export function PlanSelector({ plans, value, onChange }: PlanSelectorProps) {
                 {selected && <Check className="size-3" />}
               </span>
             </span>
-            <span className="mt-1 text-xs text-muted-foreground">{formatPrice(plan.precio)}</span>
+            <span className="mt-1 text-xs text-muted-foreground">
+              {plan.nombre !== plan.duracion && `${plan.duracion} · `}
+              {formatPrice(plan.precio)}
+            </span>
           </button>
         );
       })}

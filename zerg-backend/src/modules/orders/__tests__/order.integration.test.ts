@@ -10,6 +10,7 @@ vi.mock("../../../middlewares/auth.middleware.js", () => ({
     req.user = { userId: "test-user-id", email: "test@test.com", rol: "ADMIN" };
     next();
   },
+  optionalAuthMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
 vi.mock("../../../middlewares/role.middleware.js", () => ({
@@ -80,6 +81,25 @@ describe("Order Integration Tests", () => {
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
+    });
+
+    it("debería crear una orden como invitado ignorando el userId del body", async () => {
+      mockPrisma.plan.findUnique.mockResolvedValue(mockPlan);
+      mockPrisma.order.create.mockResolvedValue(mockOrder);
+
+      const response = await request(app)
+        .post("/api/orders")
+        .send({
+          nombreCliente: "Invitado",
+          email: "invitado@test.com",
+          userId: "otro-usuario",
+          items: [{ planId: "test-plan-id", cantidad: 1 }],
+        });
+
+      expect(response.status).toBe(201);
+      expect(mockPrisma.order.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: undefined }) })
+      );
     });
 
     it("debería retornar 400 si no hay items", async () => {

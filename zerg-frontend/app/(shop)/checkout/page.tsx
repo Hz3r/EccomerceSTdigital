@@ -71,7 +71,6 @@ export default function CheckoutPage() {
       const order = await createOrder({
         ...form,
         notas: [`Método de pago: ${paymentLabel}`, form.notas].filter(Boolean).join(" · "),
-        userId: user?.id,
         items: items.map((i) => ({
           planId: i.planId,
           cantidad: i.cantidad,
