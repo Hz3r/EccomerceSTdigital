@@ -56,6 +56,19 @@ describe("Product Integration Tests", () => {
       expect(response.body.success).toBe(true);
     });
 
+    it("debería retornar un producto por slug", async () => {
+      mockPrisma.product.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(mockProduct);
+
+      const response = await request(app).get("/api/products/netflix-premium");
+
+      expect(response.status).toBe(200);
+      expect(mockPrisma.product.findUnique).toHaveBeenLastCalledWith(
+        expect.objectContaining({ where: { slug: "netflix-premium" } })
+      );
+    });
+
     it("debería retornar 404 si el producto no existe", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(null);
 

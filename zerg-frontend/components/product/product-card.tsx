@@ -77,21 +77,21 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
           <div className="mt-3 flex gap-2">
             {plans.length > 1 ? (
               <select
-                aria-label="Duración del plan"
+                aria-label="Plan"
                 value={plan?.id}
                 onChange={(e) => setPlanId(e.target.value)}
                 className="h-9 w-[5.25rem] shrink-0 cursor-pointer rounded-lg border border-input bg-background px-2 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
               >
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.duracion}
+                    {p.nombre}
                   </option>
                 ))}
               </select>
             ) : (
               plan && (
-                <span className="inline-flex h-9 w-[5.25rem] shrink-0 items-center justify-center rounded-lg border border-input text-xs font-medium">
-                  {plan.duracion}
+                <span className="inline-flex h-9 w-[5.25rem] shrink-0 items-center justify-center truncate rounded-lg border border-input px-1 text-xs font-medium">
+                  {plan.nombre}
                 </span>
               )
             )}

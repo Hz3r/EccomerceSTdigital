@@ -20,11 +20,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // La tienda es pública: ante un token vencido solo se limpia la sesión, sin forzar el login.
+    // Las páginas que sí requieren cuenta (/account) redirigen por su cuenta.
+    if (error.response?.status === 401 && error.config?.headers?.Authorization) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.replace("/login");
       }
     }
     return Promise.reject(error);
