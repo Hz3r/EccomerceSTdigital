@@ -13,7 +13,7 @@ API en Express 5 + Prisma 7 sobre **PostgreSQL**.
    pnpm install
    npx prisma generate
    npx prisma migrate deploy   # crea las tablas
-   pnpm seed                   # datos de ejemplo (admin@zerg.com / admin123)
+   pnpm seed                   # catálogo de ejemplo (prisma/catalog.ts) y admin (admin@zerg.com / admin123)
    ```
 4. **Iniciar la API**: `pnpm dev` → `http://localhost:3001` (debe mostrar `ZERG-BACKEND: ONLINE`).
 
