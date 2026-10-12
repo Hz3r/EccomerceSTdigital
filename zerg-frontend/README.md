@@ -34,3 +34,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Modo diseño
+
+Si no defines `NEXT_PUBLIC_API_URL` (o pones `NEXT_PUBLIC_USE_MOCKS=true`), la tienda usa los datos de ejemplo de `lib/mock-data.ts` para el catálogo y simula la creación de pedidos, así el frontend se puede diseñar sin el backend.
+
+- Colores de marca ZERG: tokens `--brand*` en `app/globals.css` (utilidades `bg-brand`, `text-brand-strong`, `bg-brand-ink`, `bg-brand-yellow`, `bg-brand-gradient`, `bg-checker`).
+- Logo e ícono: `public/zerg-logo.png` y `public/zerg-icon.png`.

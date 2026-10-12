@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -31,70 +32,68 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-[60vh] items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900">Crear cuenta</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Regístrate para empezar a comprar
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-          <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre</Label>
-            <Input
-              id="nombre"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              minLength={6}
-            />
-          </div>
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Creando cuenta...
-              </>
-            ) : (
-              "Crear cuenta"
-            )}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-muted-foreground">
+    <AuthShell
+      title="Crea tu cuenta"
+      subtitle="Regístrate en segundos y guarda el historial de tus compras."
+      footer={
+        <>
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="font-medium text-foreground hover:underline">
-            Inicia sesión
+          <Link href="/login" className="font-semibold text-brand-strong hover:underline">
+            Ingresa aquí
           </Link>
-        </p>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+        <div className="space-y-2">
+          <Label htmlFor="nombre">Nombre</Label>
+          <Input
+            id="nombre"
+            autoComplete="name"
+            className="h-11 rounded-xl"
+            value={form.nombre}
+            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Correo electrónico</Label>
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            className="h-11 rounded-xl"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Contraseña</Label>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="new-password"
+            className="h-11 rounded-xl"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            required
+            minLength={6}
+          />
+          <p className="text-xs text-muted-foreground">Mínimo 6 caracteres.</p>
+        </div>
+        <Button type="submit" className="h-11 w-full rounded-xl font-semibold" disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Creando cuenta...
+            </>
+          ) : (
+            "Crear cuenta"
+          )}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }
