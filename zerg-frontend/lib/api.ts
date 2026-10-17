@@ -41,11 +41,20 @@ export async function getCategories(): Promise<Category[]> {
   return res.data.data;
 }
 
+// Mientras no haya reseñas reales se muestran opiniones de ejemplo para ver el diseño.
+// Antes de lanzar la tienda, define NEXT_PUBLIC_SAMPLE_REVIEWS=false para ocultarlas.
+const SAMPLE_REVIEWS = process.env.NEXT_PUBLIC_SAMPLE_REVIEWS !== "false";
+
 // Últimas opiniones aprobadas de clientes (portada).
 export async function getLatestReviews(limit = 12): Promise<Review[]> {
-  if (USE_MOCKS) return mockTestimonials.slice(0, limit);
-  const res = await api.get<ApiResponse<Review[]>>("/reviews/latest", { params: { limit } });
-  return res.data.data;
+  const samples = SAMPLE_REVIEWS ? mockTestimonials.slice(0, limit) : [];
+  if (USE_MOCKS) return samples;
+  try {
+    const res = await api.get<ApiResponse<Review[]>>("/reviews/latest", { params: { limit } });
+    return res.data.data.length > 0 ? res.data.data : samples;
+  } catch {
+    return samples;
+  }
 }
 
 export async function getReviewsByProduct(productId: string): Promise<Review[]> {

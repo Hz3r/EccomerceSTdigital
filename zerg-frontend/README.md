@@ -41,3 +41,4 @@ Si no defines `NEXT_PUBLIC_API_URL` (o pones `NEXT_PUBLIC_USE_MOCKS=true`), la t
 
 - Colores de marca ZERG: tokens `--brand*` en `app/globals.css` (utilidades `bg-brand`, `text-brand-strong`, `bg-brand-ink`, `bg-brand-yellow`, `bg-brand-gradient`, `bg-checker`).
 - Logo e ícono: `public/zerg-logo.png` y `public/zerg-icon.png`.
+- Opiniones de la portada: si el backend no devuelve reseñas aprobadas, se muestran las de ejemplo de `lib/mock-data.ts`. Antes de lanzar, define `NEXT_PUBLIC_SAMPLE_REVIEWS=false` para ocultarlas.
