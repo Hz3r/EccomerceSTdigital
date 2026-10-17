@@ -23,6 +23,8 @@ export function Testimonials({ reviews }: { reviews: Review[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   if (reviews.length === 0) return null;
 
+  // Las opiniones de ejemplo (lib/mock-data.ts) no se presentan como compras verificadas.
+  const verified = reviews.some((r) => !r.id.startsWith("testimonial-"));
   const average = reviews.reduce((sum, r) => sum + r.puntuacion, 0) / reviews.length;
   const positive = Math.round((reviews.filter((r) => r.puntuacion >= 4).length / reviews.length) * 100);
   const scroll = (dir: 1 | -1) =>
@@ -41,10 +43,12 @@ export function Testimonials({ reviews }: { reviews: Review[] }) {
         <p className="mt-4 text-sm text-white/70">
           <span className="font-bold text-brand-bright">{positive}%</span> de opiniones positivas
         </p>
-        <p className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
-          <BadgeCheck className="size-3.5 text-brand-bright" />
-          Compras verificadas
-        </p>
+        {verified && (
+          <p className="mt-6 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium">
+            <BadgeCheck className="size-3.5 text-brand-bright" />
+            Compras verificadas
+          </p>
+        )}
         <div className="mt-6 flex gap-2">
           <button
             type="button"

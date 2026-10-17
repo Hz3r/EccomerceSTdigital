@@ -289,7 +289,7 @@ export default function Home() {
             <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
               <SectionHeader
                 title="Opiniones de clientes"
-                subtitle="Reseñas reales de personas que ya compraron en ZERG"
+                subtitle="Lo que opinan quienes ya compraron en ZERG"
                 className="mb-6"
               />
               <Testimonials reviews={reviews} />
