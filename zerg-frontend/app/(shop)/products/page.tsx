@@ -225,7 +225,7 @@ function Catalog({ params }: { params: URLSearchParams }) {
                   onClick={() => setLayout(id)}
                   className={cn(
                     "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-semibold transition-colors",
-                    layout === id ? "bg-brand-ink text-white" : "text-muted-foreground hover:text-foreground"
+                    layout === id ? "bg-surface-ink text-white" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Icon className="size-3.5" />
@@ -322,7 +322,7 @@ interface FilterGroup {
 function FilterPanel({ groups, count, onClear }: { groups: FilterGroup[]; count: number; onClear: () => void }) {
   return (
     <div className="overflow-hidden rounded-2xl border bg-background">
-      <div className="flex items-center justify-between bg-brand-ink px-4 py-3.5 text-white">
+      <div className="flex items-center justify-between bg-surface-ink px-4 py-3.5 text-white">
         <span className="text-sm font-bold">Filtros</span>
         <button
           type="button"

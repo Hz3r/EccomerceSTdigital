@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CategoryIcon } from "@/components/product/category-icon";
 import { mockCategories } from "@/lib/mock-data";
 import { useAuth } from "@/hooks/useAuth";
@@ -122,7 +123,7 @@ export function Navbar() {
               <Link
                 href="/products?ofertas=1"
                 onClick={() => setMobileOpen(false)}
-                className="mt-2 flex items-center gap-3 rounded-lg bg-brand-ink px-3 py-2.5 text-sm font-semibold text-white"
+                className="mt-2 flex items-center gap-3 rounded-lg bg-surface-ink px-3 py-2.5 text-sm font-semibold text-white"
               >
                 <Tag className="size-4 text-brand-yellow" />
                 Ofertas
@@ -135,7 +136,8 @@ export function Navbar() {
 
         <SearchBar className="hidden max-w-xl flex-1 md:flex" inputRef={searchRef} />
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          <ThemeToggle />
           {!isLoading &&
             (user ? (
               <DropdownMenu>
@@ -168,7 +170,7 @@ export function Navbar() {
               <>
                 <Button
                   variant="outline"
-                  className="hidden h-10 rounded-lg border-foreground/80 px-4 font-semibold sm:inline-flex"
+                  className="hidden h-10 rounded-lg border-foreground/30 px-4 font-semibold sm:inline-flex"
                   render={<Link href="/register" />}
                   nativeButton={false}
                 >
@@ -236,7 +238,7 @@ export function Navbar() {
           ))}
           <Link
             href="/products?ofertas=1"
-            className="ml-2 flex items-center gap-1.5 rounded-lg bg-brand-ink px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-brand-ink-soft"
+            className="ml-2 flex items-center gap-1.5 rounded-lg bg-surface-ink px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-surface-ink-hover"
           >
             <Tag className="size-3.5 text-brand-yellow" />
             Ofertas

@@ -312,7 +312,7 @@ export default function ProductDetailPage() {
               <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {STEPS.map((s, i) => (
                   <li key={s.title} className="rounded-2xl border p-5">
-                    <span className="flex size-9 items-center justify-center rounded-lg bg-brand-ink text-sm font-black text-brand">
+                    <span className="flex size-9 items-center justify-center rounded-lg bg-surface-ink text-sm font-black text-brand">
                       {i + 1}
                     </span>
                     <p className="mt-4 font-semibold">{s.title}</p>

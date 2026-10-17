@@ -35,7 +35,7 @@ export default function AccountPage() {
           <div className="size-full bg-checker opacity-60" />
         </div>
         <div className="-mt-10 flex items-end gap-4 px-6">
-          <div className="flex size-20 items-center justify-center rounded-full bg-brand-ink ring-4 ring-card">
+          <div className="flex size-20 items-center justify-center rounded-full bg-surface-ink ring-4 ring-card">
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt={user.nombre} className="size-full rounded-full object-cover" />
             ) : (

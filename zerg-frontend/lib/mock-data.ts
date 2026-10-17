@@ -197,3 +197,37 @@ export const mockReviews: Review[] = mockProducts.flatMap((p, i) =>
 for (const p of mockProducts) {
   p.reviews = mockReviews.filter((r) => r.productId === p.id);
 }
+
+// Opiniones de clientes para la portada (modo diseño).
+function testimonial(i: number, nombre: string, slug: string, puntuacion: number, comentario: string, fecha: string): Review {
+  const product = mockProducts.find((p) => p.slug === slug)!;
+  const date = `${fecha}T15:00:00.000Z`;
+  const userId = `cliente-${i}`;
+  return {
+    id: `testimonial-${i}`,
+    puntuacion,
+    comentario,
+    isApproved: true,
+    productId: product.id,
+    product,
+    userId,
+    user: { id: userId, nombre, email: "", rol: "CLIENTE", isActive: true, creadoEn: date, actualizado: date },
+    creadoEn: date,
+    actualizado: date,
+  };
+}
+
+export const mockTestimonials: Review[] = [
+  testimonial(0, "Camila Rojas", "netflix-premium", 5, "Me llegó el acceso en menos de 5 minutos. Ya llevo 4 meses renovando sin ningún problema.", "2026-10-15"),
+  testimonial(1, "Diego Quispe", "chatgpt-plus", 5, "Excelente precio para ChatGPT Plus, lo uso para la universidad todos los días. Súper recomendado.", "2026-10-14"),
+  testimonial(2, "Valeria Torres", "canva-pro", 5, "Canva Pro activado en mi propia cuenta, sin complicaciones. La atención por WhatsApp fue rapidísima.", "2026-10-13"),
+  testimonial(3, "Luis Fernández", "spotify-premium", 4, "Todo bien, tardó unos 15 minutos por la hora, pero me avisaron por WhatsApp. Funciona perfecto.", "2026-10-12"),
+  testimonial(4, "Andrea Huamán", "adobe-creative-cloud", 5, "Tenía miedo de comprar Adobe por fuera, pero todo legal y en mi correo. Ahorro muchísimo.", "2026-10-11"),
+  testimonial(5, "Jorge Mendoza", "game-pass", 5, "Game Pass Ultimate al toque. Ya es mi tercera compra con ZERG.", "2026-10-10"),
+  testimonial(6, "Fiorella Castillo", "midjourney", 5, "Me ayudaron a configurar Midjourney paso a paso. Atención de primera.", "2026-10-09"),
+  testimonial(7, "Renzo Vargas", "disney-plus", 5, "Perfil privado y en 4K como decía. Mis hijos felices con Disney+.", "2026-10-08"),
+  testimonial(8, "Mariana Salazar", "claude-pro", 5, "Claude Pro para escribir mi tesis, me salvó. Pago con Yape y listo en minutos.", "2026-10-07"),
+  testimonial(9, "Kevin Paredes", "nordvpn", 4, "Buena VPN y buen precio. Me hubiera gustado un tutorial más detallado, pero el soporte me ayudó.", "2026-10-06"),
+  testimonial(10, "Sofía Ramírez", "capcut-pro", 5, "CapCut Pro sin marca de agua para mis videos de TikTok. 100% recomendado.", "2026-10-05"),
+  testimonial(11, "Bruno Chávez", "youtube-premium", 5, "Por fin YouTube sin anuncios a buen precio. Rápido y confiable.", "2026-10-04"),
+];

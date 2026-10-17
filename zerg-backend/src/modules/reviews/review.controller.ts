@@ -11,6 +11,16 @@ export const getAll = async (_req: AuthRequest, res: Response) => {
   });
 };
 
+export const getLatest = async (req: AuthRequest, res: Response) => {
+  const limit = Number(req.query.limit) || undefined;
+  const reviews = await reviewService.getLatest(limit);
+
+  res.status(200).json({
+    success: true,
+    data: reviews,
+  });
+};
+
 export const getByProduct = async (req: AuthRequest, res: Response) => {
   const productId = req.params.productId as string;
   const reviews = await reviewService.getByProduct(productId);

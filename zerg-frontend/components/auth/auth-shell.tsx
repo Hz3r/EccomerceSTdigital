@@ -21,7 +21,7 @@ export function AuthShell({
   return (
     <div className="bg-brand-mint/60 px-4 py-10 md:px-6 md:py-16">
       <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border bg-card shadow-[0_30px_60px_-30px_rgb(7_21_18/0.3)] md:grid-cols-2">
-        <div className="relative isolate hidden flex-col justify-between overflow-hidden bg-brand-ink p-10 text-white md:flex">
+        <div className="relative isolate hidden flex-col justify-between overflow-hidden bg-surface-ink p-10 text-white md:flex">
           <div className="absolute inset-0 -z-10 bg-grid-soft opacity-60" />
           <div className="absolute -top-20 -left-20 -z-10 size-72 rounded-full bg-brand/30 blur-3xl" />
           <Image src="/zerg-icon.png" alt="" width={96} height={96} className="size-20 rounded-full" />

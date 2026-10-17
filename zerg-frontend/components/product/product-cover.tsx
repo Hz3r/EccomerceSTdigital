@@ -8,10 +8,11 @@ interface ProductCoverProps {
   product: Product;
   className?: string;
   size?: "sm" | "md" | "lg";
+  showCategory?: boolean;
 }
 
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
-export function ProductCover({ product, className, size = "md" }: ProductCoverProps) {
+export function ProductCover({ product, className, size = "md", showCategory = true }: ProductCoverProps) {
   if (product.imagenUrl) {
     return (
       <div className={cn("relative overflow-hidden bg-muted", className)}>
@@ -67,15 +68,17 @@ export function ProductCover({ product, className, size = "md" }: ProductCoverPr
         >
           {initials}
         </span>
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 font-medium backdrop-blur-sm",
-            size === "lg" ? "text-sm" : "text-[11px]"
-          )}
-        >
-          <CategoryIcon slug={product.category?.slug} className={size === "lg" ? "size-4" : "size-3"} />
-          {product.category?.nombre ?? "Digital"}
-        </span>
+        {showCategory && (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full bg-black/25 px-2.5 py-1 font-medium backdrop-blur-sm",
+              size === "lg" ? "text-sm" : "text-[11px]"
+            )}
+          >
+            <CategoryIcon slug={product.category?.slug} className={size === "lg" ? "size-4" : "size-3"} />
+            {product.category?.nombre ?? "Digital"}
+          </span>
+        )}
       </div>
     </div>
   );

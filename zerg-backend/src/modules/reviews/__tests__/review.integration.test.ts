@@ -34,6 +34,20 @@ describe("Review Integration Tests", () => {
     vi.clearAllMocks();
   });
 
+  describe("GET /api/reviews/latest", () => {
+    it("debería retornar solo reseñas aprobadas y limitar la cantidad", async () => {
+      mockPrisma.review.findMany.mockResolvedValue([mockReview]);
+
+      const response = await request(app).get("/api/reviews/latest?limit=500");
+
+      expect(response.status).toBe(200);
+      expect(response.body.data).toEqual([mockReview]);
+      expect(mockPrisma.review.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { isApproved: true }, take: 50 })
+      );
+    });
+  });
+
   describe("GET /api/reviews/product/:productId", () => {
     it("debería retornar las reseñas de un producto", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(mockProduct);

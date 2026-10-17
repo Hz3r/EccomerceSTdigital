@@ -31,7 +31,7 @@ function Steps({ current }: { current: number }) {
             className={cn(
               "flex size-6 items-center justify-center rounded-full text-[11px]",
               i < current && "bg-brand text-brand-ink",
-              i === current && "bg-brand-ink text-white",
+              i === current && "bg-surface-ink text-white",
               i > current && "bg-muted text-muted-foreground"
             )}
           >

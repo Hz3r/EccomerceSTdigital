@@ -1,5 +1,5 @@
 import api from "./axios";
-import { mockCategories, mockProducts } from "./mock-data";
+import { mockCategories, mockProducts, mockTestimonials } from "./mock-data";
 import type { Product, Category, Review, Order, User, ApiResponse } from "@/types";
 
 // Modo diseño: sin NEXT_PUBLIC_API_URL (o con NEXT_PUBLIC_USE_MOCKS=true) el catálogo
@@ -38,6 +38,13 @@ export async function getProductBySlug(slug: string): Promise<Product> {
 export async function getCategories(): Promise<Category[]> {
   if (USE_MOCKS) return mockCategories;
   const res = await api.get<ApiResponse<Category[]>>("/categories");
+  return res.data.data;
+}
+
+// Últimas opiniones aprobadas de clientes (portada).
+export async function getLatestReviews(limit = 12): Promise<Review[]> {
+  if (USE_MOCKS) return mockTestimonials.slice(0, limit);
+  const res = await api.get<ApiResponse<Review[]>>("/reviews/latest", { params: { limit } });
   return res.data.data;
 }
 

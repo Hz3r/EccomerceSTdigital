@@ -88,7 +88,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="bg-brand-ink text-white">
+      <div className="bg-surface-ink text-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-3 md:items-center md:px-6">
           <div>
             <p className="text-[11px] font-bold tracking-widest text-white/50 uppercase">Métodos de pago</p>
