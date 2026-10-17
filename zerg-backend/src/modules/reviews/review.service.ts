@@ -15,6 +15,23 @@ export const getAll = async () => {
   });
 };
 
+// Reseñas aprobadas más recientes para la portada de la tienda (sin datos personales).
+export const getLatest = async (limit = 12) => {
+  return getPrisma().review.findMany({
+    where: { isApproved: true },
+    select: {
+      id: true,
+      puntuacion: true,
+      comentario: true,
+      creadoEn: true,
+      product: { select: { id: true, nombre: true, slug: true } },
+      user: { select: { id: true, nombre: true } },
+    },
+    orderBy: { creadoEn: "desc" },
+    take: Math.min(Math.max(limit, 1), 50),
+  });
+};
+
 export const getByProduct = async (productId: string) => {
   const productExists = await getPrisma().product.findUnique({
     where: { id: productId },

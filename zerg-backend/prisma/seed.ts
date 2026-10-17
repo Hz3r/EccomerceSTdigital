@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
-import { seedCategories, seedProducts } from "./catalog.js";
+import { seedCategories, seedProducts, seedReviews } from "./catalog.js";
 
 dotenv.config();
 
@@ -88,6 +88,32 @@ async function main() {
   });
 
   console.log(`\nProductos: ${seedProducts.length}`);
+
+  // ==================== OPINIONES DE EJEMPLO ====================
+  // Clientes ficticios de desarrollo con reseñas aprobadas para la portada.
+  const clientPasswordHash = await bcrypt.hash("cliente123", 10);
+  for (const r of seedReviews) {
+    const user = await prisma.user.upsert({
+      where: { email: r.email },
+      update: {},
+      create: { nombre: r.nombre, email: r.email, passwordHash: clientPasswordHash, rol: "CLIENTE" },
+    });
+    const product = await prisma.product.findUniqueOrThrow({ where: { slug: r.producto } });
+    const fecha = new Date(`${r.fecha}T15:00:00.000Z`);
+    await prisma.review.upsert({
+      where: { productId_userId: { productId: product.id, userId: user.id } },
+      update: { puntuacion: r.puntuacion, comentario: r.comentario, isApproved: true },
+      create: {
+        puntuacion: r.puntuacion,
+        comentario: r.comentario,
+        isApproved: true,
+        productId: product.id,
+        userId: user.id,
+        creadoEn: fecha,
+      },
+    });
+  }
+  console.log(`Opiniones: ${seedReviews.length}`);
   console.log("\nSeed completado exitosamente!");
 }
 

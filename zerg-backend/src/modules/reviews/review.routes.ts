@@ -5,6 +5,7 @@ import { roleMiddleware } from "../../middlewares/role.middleware.js";
 
 const router: RouterType = Router();
 
+router.get("/latest", reviewController.getLatest);
 router.get("/product/:productId", reviewController.getByProduct);
 
 router.use(authMiddleware);

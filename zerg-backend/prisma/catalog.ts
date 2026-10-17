@@ -1000,3 +1000,19 @@ export const seedProducts: SeedProduct[] = [
     ],
   },
 ];
+
+// Opiniones de ejemplo (clientes ficticios de desarrollo, aprobadas).
+export const seedReviews = [
+  { nombre: "Camila Rojas", email: "camila.rojas@cliente.zerg.dev", producto: "netflix-premium", puntuacion: 5, comentario: "Me llegó el acceso en menos de 5 minutos. Ya llevo 4 meses renovando sin ningún problema.", fecha: "2026-10-15" },
+  { nombre: "Diego Quispe", email: "diego.quispe@cliente.zerg.dev", producto: "chatgpt-plus", puntuacion: 5, comentario: "Excelente precio para ChatGPT Plus, lo uso para la universidad todos los días. Súper recomendado.", fecha: "2026-10-14" },
+  { nombre: "Valeria Torres", email: "valeria.torres@cliente.zerg.dev", producto: "canva-pro", puntuacion: 5, comentario: "Canva Pro activado en mi propia cuenta, sin complicaciones. La atención por WhatsApp fue rapidísima.", fecha: "2026-10-13" },
+  { nombre: "Luis Fernández", email: "luis.fernandez@cliente.zerg.dev", producto: "spotify-premium", puntuacion: 4, comentario: "Todo bien, tardó unos 15 minutos por la hora, pero me avisaron por WhatsApp. Funciona perfecto.", fecha: "2026-10-12" },
+  { nombre: "Andrea Huamán", email: "andrea.huaman@cliente.zerg.dev", producto: "adobe-creative-cloud", puntuacion: 5, comentario: "Tenía miedo de comprar Adobe por fuera, pero todo legal y en mi correo. Ahorro muchísimo.", fecha: "2026-10-11" },
+  { nombre: "Jorge Mendoza", email: "jorge.mendoza@cliente.zerg.dev", producto: "game-pass", puntuacion: 5, comentario: "Game Pass Ultimate al toque. Ya es mi tercera compra con ZERG.", fecha: "2026-10-10" },
+  { nombre: "Fiorella Castillo", email: "fiorella.castillo@cliente.zerg.dev", producto: "midjourney", puntuacion: 5, comentario: "Me ayudaron a configurar Midjourney paso a paso. Atención de primera.", fecha: "2026-10-09" },
+  { nombre: "Renzo Vargas", email: "renzo.vargas@cliente.zerg.dev", producto: "disney-plus", puntuacion: 5, comentario: "Perfil privado y en 4K como decía. Mis hijos felices con Disney+.", fecha: "2026-10-08" },
+  { nombre: "Mariana Salazar", email: "mariana.salazar@cliente.zerg.dev", producto: "claude-pro", puntuacion: 5, comentario: "Claude Pro para escribir mi tesis, me salvó. Pago con Yape y listo en minutos.", fecha: "2026-10-07" },
+  { nombre: "Kevin Paredes", email: "kevin.paredes@cliente.zerg.dev", producto: "nordvpn", puntuacion: 4, comentario: "Buena VPN y buen precio. Me hubiera gustado un tutorial más detallado, pero el soporte me ayudó.", fecha: "2026-10-06" },
+  { nombre: "Sofía Ramírez", email: "sofia.ramirez@cliente.zerg.dev", producto: "capcut-pro", puntuacion: 5, comentario: "CapCut Pro sin marca de agua para mis videos de TikTok. 100% recomendado.", fecha: "2026-10-05" },
+  { nombre: "Bruno Chávez", email: "bruno.chavez@cliente.zerg.dev", producto: "youtube-premium", puntuacion: 5, comentario: "Por fin YouTube sin anuncios a buen precio. Rápido y confiable.", fecha: "2026-10-04" },
+];

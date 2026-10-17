@@ -12,14 +12,19 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ProductCard } from "@/components/product/product-card";
 import { ProductCover } from "@/components/product/product-cover";
-import { ProductCarousel } from "@/components/home/product-carousel";
+import { ProductTile } from "@/components/product/product-tile";
+import { CategorySpotlight } from "@/components/home/category-spotlight";
+import { ExploreCategories } from "@/components/home/explore-categories";
+import { GrowWithZerg } from "@/components/home/grow-with-zerg";
+import { NewArrivals } from "@/components/home/new-arrivals";
+import { Rail } from "@/components/home/rail";
+import { SectionHeader } from "@/components/home/section-header";
+import { Testimonials } from "@/components/home/testimonials";
 import { Newsletter } from "@/components/layout/newsletter";
-import { getCategories, getProducts } from "@/lib/api";
+import { getCategories, getLatestReviews, getProducts } from "@/lib/api";
 import { bestDiscount, cheapestPlan, formatPrice } from "@/lib/catalog";
-import { cn } from "@/lib/utils";
-import type { Category, Product } from "@/types";
+import type { Category, Product, Review } from "@/types";
 
 const FEATURES = [
   { icon: Zap, title: "Entrega inmediata", text: "Recibe tu acceso en minutos, 24/7." },
@@ -33,32 +38,38 @@ const PLATFORMS = [
   "ChatGPT", "Canva", "Microsoft 365", "Xbox", "PlayStation", "NordVPN",
 ];
 
-const PAGE_SIZE = 10;
+const RAILS = [
+  { slug: "ia", title: "Inteligencia Artificial", subtitle: "Asistentes, imagen, video, voz y código" },
+  { slug: "diseno", title: "Diseño y creatividad", subtitle: "Edición, recursos y herramientas para creadores" },
+  { slug: "streaming", title: "Streaming", subtitle: "Series, películas y TV en vivo" },
+];
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
-  const [visible, setVisible] = useState(PAGE_SIZE);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   useEffect(() => {
-    Promise.all([getProducts().catch(() => []), getCategories().catch(() => [])])
-      .then(([prods, cats]) => {
+    Promise.all([
+      getProducts().catch(() => []),
+      getCategories().catch(() => []),
+      getLatestReviews().catch(() => []),
+    ])
+      .then(([prods, cats, revs]) => {
         setProducts(prods.filter((p) => p.isActivo));
         setCategories(cats.filter((c) => c.isActive));
+        setReviews(revs);
       })
       .finally(() => setIsLoading(false));
   }, []);
 
-  const popular = useMemo(
-    () => [...products].sort((a, b) => bestDiscount(b) - bestDiscount(a)).slice(0, 8),
-    [products]
-  );
-  const filtered = useMemo(
-    () => (activeCategory === "all" ? products : products.filter((p) => p.categoryId === activeCategory)),
-    [products, activeCategory]
-  );
+  // Tendencias: los productos con mejor descuento, empezando por un destacado de IA.
+  const trending = useMemo(() => {
+    const sorted = [...products].sort((a, b) => bestDiscount(b) - bestDiscount(a));
+    const hero = products.find((p) => p.slug === "chatgpt-plus");
+    return hero ? [hero, ...sorted.filter((p) => p.id !== hero.id)].slice(0, 9) : sorted.slice(0, 9);
+  }, [products]);
   const featured = products.find((p) => p.slug === "netflix-premium") ?? products[0];
   const featuredPlan = featured && cheapestPlan(featured);
 
@@ -67,7 +78,7 @@ export default function Home() {
       {/* Hero */}
       <section className="bg-brand-mint/70 px-4 pt-6 pb-24 md:px-6 md:pt-10">
         <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1.75fr_1fr]">
-          <div className="relative isolate overflow-hidden rounded-3xl bg-brand-ink px-6 py-10 text-white md:px-12 md:py-14">
+          <div className="relative isolate overflow-hidden rounded-3xl bg-surface-ink px-6 py-10 text-white md:px-12 md:py-14">
             <div className="absolute inset-0 -z-10 bg-grid-soft opacity-60" />
             <div className="absolute -top-24 -right-24 -z-10 size-80 rounded-full bg-brand/30 blur-3xl" />
             <div className="absolute -bottom-32 left-1/3 -z-10 size-72 rounded-full bg-brand-neon/15 blur-3xl" />
@@ -149,7 +160,7 @@ export default function Home() {
               <Link
                 href={featured ? `/product/${featured.slug}` : "/products"}
                 aria-label="Ver producto"
-                className="flex size-12 items-center justify-center rounded-full bg-brand-ink text-white transition-transform hover:scale-105"
+                className="flex size-12 items-center justify-center rounded-full bg-surface-ink text-white transition-transform hover:scale-105"
               >
                 <ArrowRight className="size-5" />
               </Link>
@@ -175,21 +186,74 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Populares */}
-      <div className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
-        {isLoading ? (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-96 animate-pulse rounded-2xl bg-muted" />
-            ))}
+      {isLoading ? (
+        <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 pt-16 sm:grid-cols-2 md:px-6 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-80 animate-pulse rounded-3xl bg-muted" />
+          ))}
+        </div>
+      ) : (
+        <>
+          {/* Lo más buscado */}
+          <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
+            <SectionHeader
+              title="Lo más buscado"
+              subtitle="Las categorías favoritas de nuestros clientes"
+              href="/products"
+              className="mb-6"
+            />
+            <CategorySpotlight categories={categories} products={products} />
+          </section>
+
+          {/* Tendencias */}
+          {trending.length > 0 && (
+            <section className="mt-16 border-y bg-brand-mint/50 py-14 md:mt-20">
+              <div className="mx-auto max-w-7xl px-4 md:px-6">
+                <SectionHeader
+                  title="Tendencias de la semana"
+                  subtitle="Lo que más se está comprando ahora mismo"
+                  href="/products?ofertas=1"
+                  linkLabel="Ver ofertas"
+                />
+                <div className="mt-6 grid auto-rows-[150px] grid-cols-2 gap-3 sm:grid-cols-3 lg:auto-rows-[170px] lg:grid-cols-[1.6fr_repeat(4,1fr)]">
+                  <ProductTile
+                    product={trending[0]}
+                    size="lg"
+                    className="col-span-2 row-span-2 sm:col-span-3 lg:col-span-1"
+                  />
+                  {trending.slice(1, 9).map((p) => (
+                    <ProductTile key={p.id} product={p} />
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* Carruseles por categoría */}
+          <div className="mx-auto w-full max-w-7xl space-y-14 px-4 pt-16 md:px-6 md:pt-20">
+            {RAILS.map((rail) => {
+              const items = products.filter((p) => p.category?.slug === rail.slug).slice(0, 12);
+              if (items.length === 0) return null;
+              return (
+                <Rail
+                  key={rail.slug}
+                  title={rail.title}
+                  subtitle={rail.subtitle}
+                  href={`/products?categoria=${rail.slug}`}
+                  itemClassName="w-[44%] sm:w-[30%] md:w-[23%] lg:w-[18.6%]"
+                >
+                  {items.map((p) => (
+                    <ProductTile key={p.id} product={p} className="aspect-[4/3.4]" />
+                  ))}
+                </Rail>
+              );
+            })}
           </div>
-        ) : (
-          popular.length > 0 && <ProductCarousel title="Productos populares" products={popular} />
-        )}
-      </div>
+        </>
+      )}
 
       {/* Plataformas */}
-      <section className="mt-12 border-y bg-brand-mint/50 py-10">
+      <section className="mt-16 border-y bg-brand-mint/50 py-10 md:mt-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">Plataformas</h2>
         </div>
@@ -208,127 +272,50 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Todos los productos */}
+      {!isLoading && (
+        <>
+          {/* Explorar categorías */}
+          <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
+            <SectionHeader
+              title="Explora por categoría"
+              subtitle="Todo lo digital que necesitas, ordenado para que lo encuentres rápido"
+              className="mb-6"
+            />
+            <ExploreCategories categories={categories} products={products} />
+          </section>
+
+          {/* Opiniones */}
+          {reviews.length > 0 && (
+            <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
+              <SectionHeader
+                title="Opiniones de clientes"
+                subtitle="Reseñas reales de personas que ya compraron en ZERG"
+                className="mb-6"
+              />
+              <Testimonials reviews={reviews} />
+            </section>
+          )}
+
+          {/* Recién llegados */}
+          <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
+            <SectionHeader
+              title="Recién llegados"
+              subtitle="Los últimos servicios que sumamos al catálogo"
+              href="/products"
+              className="mb-6"
+            />
+            <NewArrivals products={products} />
+          </section>
+        </>
+      )}
+
+      {/* Crece con ZERG */}
       <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
-        <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">Todos los productos</h2>
-        <div className="scrollbar-none -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
-          {[{ id: "all", nombre: "Todos" }, ...categories].map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => {
-                setActiveCategory(c.id);
-                setVisible(PAGE_SIZE);
-              }}
-              className={cn(
-                "shrink-0 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                activeCategory === c.id
-                  ? "border-brand-ink bg-brand-ink text-white"
-                  : "bg-background text-muted-foreground hover:border-foreground/30 hover:text-foreground"
-              )}
-            >
-              {c.nombre}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {isLoading
-            ? Array.from({ length: 10 }).map((_, i) => <div key={i} className="h-96 animate-pulse rounded-2xl bg-muted" />)
-            : filtered.slice(0, visible).map((p) => <ProductCard key={p.id} product={p} />)}
-        </div>
-        {!isLoading && filtered.length === 0 && (
-          <p className="py-12 text-center text-sm text-muted-foreground">No hay productos en esta categoría todavía.</p>
-        )}
-        {visible < filtered.length && (
-          <div className="mt-8 flex justify-center">
-            <Button className="h-10 rounded-lg px-6 font-semibold" onClick={() => setVisible((v) => v + PAGE_SIZE)}>
-              Cargar más productos
-            </Button>
-          </div>
-        )}
-      </section>
-
-      {/* Promociones */}
-      <section className="mx-auto grid w-full max-w-7xl gap-4 px-4 pt-16 md:grid-cols-[1.75fr_1fr] md:px-6 md:pt-20">
-        <PromoTile
-          href="/products?categoria=streaming"
-          className="bg-brand-ink text-white"
-          eyebrow="Para revendedores"
-          title="Precios especiales al por mayor"
-          text="Arma tu propio negocio de streaming con stock, soporte y precios exclusivos para distribuidores."
-          cta="Quiero ser distribuidor"
-          decoration={<div className="absolute inset-0 -z-10 bg-grid-soft opacity-70" />}
-        />
-        <PromoTile
-          href="/products?categoria=musica"
-          className="bg-brand-yellow text-brand-ink"
-          eyebrow="Música"
-          title="Spotify y YouTube Premium"
-          cta="Ver planes"
-          decoration={<div className="absolute inset-0 -z-10 bg-checker opacity-50 [mask-image:linear-gradient(to_top_left,black,transparent_60%)]" />}
-        />
-        <PromoTile
-          href="/products?categoria=ia"
-          className="bg-brand-gradient text-brand-ink"
-          eyebrow="Inteligencia Artificial"
-          title="Potencia tu trabajo con IA"
-          cta="Explorar"
-          decoration={<div className="absolute inset-0 -z-10 bg-checker opacity-40 [mask-image:linear-gradient(to_top_left,black,transparent_60%)]" />}
-        />
-        <PromoTile
-          href="/products?categoria=gaming"
-          className="bg-[linear-gradient(120deg,var(--brand-ink),#123a5c)] text-white"
-          eyebrow="Gaming"
-          title="Todo para tu setup gamer"
-          text="Game Pass, PlayStation Plus y más, con activación inmediata y precios que sí convienen."
-          cta="Mejora tu experiencia"
-          decoration={<div className="absolute -right-10 -bottom-10 -z-10 size-56 rotate-45 rounded-3xl bg-brand-neon/15" />}
-        />
+        <SectionHeader title="Crece con ZERG" subtitle="Dos formas de ganar. Cero barreras para empezar." className="mb-6" />
+        <GrowWithZerg />
       </section>
 
       <Newsletter />
     </div>
-  );
-}
-
-function PromoTile({
-  href,
-  className,
-  eyebrow,
-  title,
-  text,
-  cta,
-  decoration,
-}: {
-  href: string;
-  className: string;
-  eyebrow: string;
-  title: string;
-  text?: string;
-  cta: string;
-  decoration?: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "group relative isolate flex min-h-56 flex-col justify-between overflow-hidden rounded-3xl p-6 transition-transform duration-300 hover:-translate-y-1 md:p-8",
-        className
-      )}
-    >
-      {decoration}
-      <div>
-        <p className="text-xs font-bold tracking-widest uppercase opacity-70">{eyebrow}</p>
-        <h3 className="mt-2 max-w-sm text-2xl font-extrabold tracking-tight md:text-3xl">{title}</h3>
-        {text && <p className="mt-3 max-w-md text-sm opacity-75">{text}</p>}
-      </div>
-      <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold">
-        {cta}
-        <span className="flex size-8 items-center justify-center rounded-full bg-current/15 transition-transform group-hover:translate-x-1">
-          <ArrowRight className="size-4" />
-        </span>
-      </span>
-    </Link>
   );
 }

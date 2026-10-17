@@ -13,7 +13,7 @@ export function Newsletter() {
         {/* Cuadros decorativos inspirados en los rombos del logo */}
         <div className="absolute inset-y-0 right-0 w-1/2 bg-checker [mask-image:linear-gradient(to_left,black,transparent)]" />
         <span className="absolute top-8 right-10 size-8 rotate-45 rounded-md bg-brand-yellow shadow-lg" />
-        <span className="absolute top-20 right-24 size-5 rotate-45 rounded bg-brand-ink/80" />
+        <span className="absolute top-20 right-24 size-5 rotate-45 rounded bg-surface-ink/80" />
         <span className="absolute right-14 bottom-10 size-6 rotate-45 rounded-md bg-brand-yellow/90" />
 
         <div className="relative px-6 py-10 md:px-12 md:py-14">
@@ -25,7 +25,7 @@ export function Newsletter() {
           </p>
 
           {sent ? (
-            <p className="mt-8 inline-flex items-center gap-2 rounded-xl bg-brand-ink px-4 py-3 text-sm font-medium text-white">
+            <p className="mt-8 inline-flex items-center gap-2 rounded-xl bg-surface-ink px-4 py-3 text-sm font-medium text-white">
               <Check className="size-4 text-brand" />
               ¡Listo! Te avisaremos de las próximas ofertas.
             </p>
@@ -52,7 +52,7 @@ export function Newsletter() {
               />
               <button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-ink-soft"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-surface-ink-hover"
               >
                 <Send className="size-4" />
                 Suscribirme

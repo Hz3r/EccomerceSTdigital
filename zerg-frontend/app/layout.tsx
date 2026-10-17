@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   icons: { icon: "/zerg-icon.png", apple: "/zerg-icon.png" },
 };
 
+// Tema oscuro por defecto: el HTML llega con la clase "dark" y este script la quita
+// antes de pintar si el visitante eligió el tema claro (evita el parpadeo).
+const themeScript = `try{if(localStorage.getItem("theme")==="light")document.documentElement.classList.remove("dark")}catch(e){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,8 +33,12 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
