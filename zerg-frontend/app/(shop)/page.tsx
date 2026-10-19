@@ -23,6 +23,7 @@ import { Testimonials } from "@/components/home/testimonials";
 import { Newsletter } from "@/components/layout/newsletter";
 import { BrandIcon } from "@/components/brand/logo";
 import { useSite } from "@/hooks/useSiteSettings";
+import { useLiveVersion } from "@/lib/live";
 import { getCategories, getLatestReviews, getProducts } from "@/lib/api";
 import { bestDiscount, cheapestPlan, formatPrice } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
@@ -50,6 +51,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [reviews, setReviews] = useState<Review[]>([]);
 
+  // Se actualiza en vivo cuando el admin cambia el catálogo
+  const liveVersion = useLiveVersion("products", "plans", "categories", "reviews");
+
   useEffect(() => {
     Promise.all([
       getProducts().catch(() => []),
@@ -62,7 +66,7 @@ export default function Home() {
         setReviews(revs);
       })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [liveVersion]);
 
   // Tendencias: los productos con mejor descuento, empezando por un destacado de IA.
   // Tendencias: las elegidas en el admin (Portada) o, si no hay, las de mejor descuento.

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { STATUS_META } from "@/components/charts/status-breakdown"
+import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -42,13 +43,16 @@ export default function OrdersPage() {
   const [filter, setFilter] = React.useState<StatusOrden | "TODAS">("TODAS")
   const [detail, setDetail] = React.useState<Order | null>(null)
 
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("orders")
+
   React.useEffect(() => {
     api
       .get("/orders")
       .then((res) => setOrders(res.data.data))
       .catch(() => {})
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [liveVersion])
 
   const updateStatus = async (order: Order, status: StatusOrden) => {
     const previous = order.status

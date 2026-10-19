@@ -19,6 +19,7 @@ import {
   type DataTableColumn,
   type DataTableAction,
 } from "@/components/data-table/data-table"
+import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
 import {
@@ -57,7 +58,9 @@ export default function PlansPage() {
     }
   }, [])
 
-  React.useEffect(() => { fetchData() }, [fetchData])
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("plans", "products")
+  React.useEffect(() => { fetchData() }, [fetchData, liveVersion])
 
   const handleToggleStatus = async (plan: Plan) => {
     try {

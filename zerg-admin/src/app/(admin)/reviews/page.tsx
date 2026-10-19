@@ -3,6 +3,7 @@
 import * as React from "react"
 import { CheckIcon, EyeOffIcon, Loader2, Star, TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { cn } from "@/lib/utils"
 import type { Review } from "@/types"
@@ -15,6 +16,9 @@ export default function ReviewsPage() {
   const [isLoading, setIsLoading] = React.useState(true)
   const [filter, setFilter] = React.useState<Filter>("pendientes")
 
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("reviews")
+
   React.useEffect(() => {
     api
       .get("/reviews")
@@ -26,7 +30,7 @@ export default function ReviewsPage() {
       })
       .catch(() => {})
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [liveVersion])
 
   const setApproved = async (review: Review, isApproved: boolean) => {
     setReviews((prev) => prev.map((r) => (r.id === review.id ? { ...r, isApproved } : r)))

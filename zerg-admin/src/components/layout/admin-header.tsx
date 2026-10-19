@@ -15,8 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BellIcon, ExternalLink, LogOutIcon, MenuIcon, MessageSquareQuote, ShoppingCartIcon } from "lucide-react";
+import { BellIcon, ExternalLink, LogOutIcon, MenuIcon, MessageSquareQuote, PanelLeftClose, PanelLeftOpen, ShoppingCartIcon } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useLiveStatus, useLiveVersion } from "@/lib/live";
 import api from "@/lib/axios";
 import { STORE_URL } from "@/lib/format";
 import type { AdminStats } from "@/types";
@@ -25,7 +26,8 @@ import { findNavItem, navigation } from "./navigation";
 
 export function AdminHeader() {
   const { user, logout } = useAuth();
-  const { setOpen } = useSidebar();
+  const { setOpen, collapsed, toggleCollapsed } = useSidebar();
+  const live = useLiveStatus();
   const pathname = usePathname();
   const [pending, setPending] = useState({ orders: 0, reviews: 0 });
 
@@ -33,12 +35,14 @@ export function AdminHeader() {
   const group = navigation.find((g) => g.items.some((i) => i.href === current?.href));
 
   // Avisos reales: pedidos pendientes y reseñas por aprobar.
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("orders", "reviews");
   useEffect(() => {
     api
       .get<{ data: AdminStats }>("/admin/stats")
       .then((res) => setPending({ orders: res.data.data.pendingOrders, reviews: res.data.data.pendingReviews ?? 0 }))
       .catch(() => {});
-  }, [pathname]);
+  }, [pathname, liveVersion]);
 
   const notifications = [
     pending.orders > 0 && {
@@ -62,6 +66,15 @@ export function AdminHeader() {
           <MenuIcon className="size-5" />
           <span className="sr-only">Abrir menú</span>
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden text-muted-foreground md:inline-flex"
+          onClick={toggleCollapsed}
+          aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
+        >
+          {collapsed ? <PanelLeftOpen className="size-5" /> : <PanelLeftClose className="size-5" />}
+        </Button>
         <div className="min-w-0">
           {group && (
             <p className="text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase">{group.title}</p>
@@ -71,6 +84,16 @@ export function AdminHeader() {
       </div>
 
       <div className="flex items-center gap-1.5 md:gap-2">
+        <span
+          className="hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-muted-foreground lg:inline-flex"
+          title={live ? "Recibiendo cambios de la tienda en tiempo real" : "Sin conexión en tiempo real; se reintenta sola"}
+        >
+          <span className={live ? "relative flex size-2" : "flex size-2"}>
+            {live && <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand opacity-60" />}
+            <span className={live ? "relative inline-flex size-2 rounded-full bg-brand" : "inline-flex size-2 rounded-full bg-muted-foreground/50"} />
+          </span>
+          {live ? "En vivo" : "Sin conexión"}
+        </span>
         <a
           href={STORE_URL}
           target="_blank"
