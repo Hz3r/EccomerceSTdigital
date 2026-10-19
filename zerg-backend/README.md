@@ -17,6 +17,18 @@ API en Express 5 + Prisma 7 sobre **PostgreSQL**.
    ```
 4. **Iniciar la API**: `pnpm dev` → `http://localhost:3001` (debe mostrar `ZERG-BACKEND: ONLINE`).
 
+### Al actualizar el proyecto (git pull)
+
+Si cambió `prisma/schema.prisma` (por ejemplo, al llegar "Contenido del sitio"), en `zerg-backend`:
+
+```bash
+npx prisma migrate deploy   # aplica las migraciones nuevas
+npx prisma generate         # regenera el cliente de Prisma
+pnpm dev                    # reinicia el backend
+```
+
+Sin esto, el admin muestra el aviso "El contenido aún no se puede guardar".
+
 `npx prisma studio` es solo un visor de la base de datos; no inicia la API ni la base.
 
 ## Frontend

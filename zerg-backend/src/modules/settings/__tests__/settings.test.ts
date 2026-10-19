@@ -74,6 +74,23 @@ describe("Settings API", () => {
     expect(res.body.data.portada.hero.tituloDestacado).toBe(defaultSettings.portada.hero.tituloDestacado);
   });
 
+  it("GET responde con valores por defecto y aviso si falta la migración", async () => {
+    mockPrisma.siteSetting.findUnique.mockRejectedValue(Object.assign(new Error("table does not exist"), { code: "P2021" }));
+    const res = await request(app).get("/api/settings");
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual(defaultSettings);
+    expect(res.body.setupRequired).toBe(true);
+    expect(res.body.message).toContain("prisma migrate deploy");
+  });
+
+  it("PUT explica cómo preparar la base si falta la migración", async () => {
+    mockPrisma.siteSetting.findUnique.mockResolvedValue(null);
+    mockPrisma.siteSetting.upsert.mockRejectedValue(Object.assign(new Error("table does not exist"), { code: "P2021" }));
+    const res = await request(app).put("/api/settings").send({ header: { anuncio: "Hola" } });
+    expect(res.status).toBe(503);
+    expect(res.body.message).toContain("prisma generate");
+  });
+
   it("PUT rechaza un cuerpo que no es objeto", async () => {
     const res = await request(app).put("/api/settings").send([1, 2]);
     expect(res.status).toBe(400);

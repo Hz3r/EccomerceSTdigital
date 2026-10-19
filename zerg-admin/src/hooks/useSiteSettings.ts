@@ -11,16 +11,32 @@ export function useSiteSettings() {
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading");
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError] = useState("");
+  // Aviso del backend cuando falta aplicar la migración (se muestran los valores por defecto)
+  const [setupMessage, setSetupMessage] = useState("");
+  // Motivo legible cuando no se pudo cargar nada
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     api
-      .get<{ data: SiteSettings }>("/settings")
+      .get<{ data: SiteSettings; setupRequired?: boolean; message?: string }>("/settings")
       .then((res) => {
         setSaved(res.data.data);
         setDraft(res.data.data);
+        if (res.data.setupRequired) setSetupMessage(res.data.message ?? "");
         setStatus("ready");
       })
-      .catch(() => setStatus("error"));
+      .catch((err) => {
+        const response = (err as { response?: { status?: number; data?: { message?: string } } }).response;
+        const base = api.defaults.baseURL;
+        setLoadError(
+          !response
+            ? `No hay conexión con el backend (${base}). Revisa que esté encendido con \`pnpm dev\` en zerg-backend.`
+            : response.status === 404
+              ? "El backend no tiene la ruta /api/settings: está corriendo una versión anterior. Haz git pull y reinícialo."
+              : response.data?.message ?? `El backend respondió con error ${response.status}.`
+        );
+        setStatus("error");
+      });
   }, []);
 
   const update = useCallback(<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => {
@@ -51,5 +67,5 @@ export function useSiteSettings() {
   const isDirty = (keys: (keyof SiteSettings)[]) =>
     Boolean(saved && draft && keys.some((k) => JSON.stringify(saved[k]) !== JSON.stringify(draft[k])));
 
-  return { draft, status, error, savedAt, update, save, discard, isDirty };
+  return { draft, status, error, savedAt, setupMessage, loadError, update, save, discard, isDirty };
 }

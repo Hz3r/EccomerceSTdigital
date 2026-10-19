@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { getPrisma } from "../../config/database.js";
-import { BadRequestError } from "../../errors/appError.js";
+import { AppError, BadRequestError } from "../../errors/appError.js";
 import { defaultSettings, type SiteSettings } from "./settings.defaults.js";
 
 const SETTINGS_KEY = "site";
@@ -34,10 +34,39 @@ export function sanitize<T extends Shape>(shape: T, input: unknown): T {
   return shape;
 }
 
-export const get = async (): Promise<SiteSettings> => {
-  const row = await getPrisma().siteSetting.findUnique({ where: { key: SETTINGS_KEY } });
-  return sanitize(defaultSettings as unknown as Shape, row?.value) as unknown as SiteSettings;
+export const SETUP_MESSAGE =
+  "Falta preparar la base de datos para el contenido del sitio. En zerg-backend ejecuta " +
+  "`npx prisma migrate deploy` y `npx prisma generate`, y reinicia el backend.";
+
+// La tabla no existe (migración sin aplicar) o el cliente de Prisma no se regeneró tras actualizar.
+function isSetupError(err: unknown) {
+  const code = (err as { code?: string })?.code;
+  return code === "P2021" || code === "P2022" || (err instanceof TypeError && /siteSetting|findUnique|upsert|deleteMany/.test(err.message));
+}
+
+let warned = false;
+
+/** Contenido actual. Si la base aún no está preparada, devuelve los valores por defecto con un aviso. */
+export const getWithStatus = async (): Promise<{ settings: SiteSettings; setupRequired: boolean }> => {
+  try {
+    const row = await getPrisma().siteSetting.findUnique({ where: { key: SETTINGS_KEY } });
+    return { settings: sanitize(defaultSettings as unknown as Shape, row?.value) as unknown as SiteSettings, setupRequired: false };
+  } catch (err) {
+    if (!isSetupError(err)) throw err;
+    if (!warned) {
+      console.warn(`[settings] ${SETUP_MESSAGE}`);
+      warned = true;
+    }
+    return { settings: defaultSettings, setupRequired: true };
+  }
 };
+
+export const get = async (): Promise<SiteSettings> => (await getWithStatus()).settings;
+
+function rethrowSetup(err: unknown): never {
+  if (isSetupError(err)) throw new AppError(SETUP_MESSAGE, 503);
+  throw err;
+}
 
 export const update = async (input: unknown): Promise<SiteSettings> => {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
@@ -48,16 +77,18 @@ export const update = async (input: unknown): Promise<SiteSettings> => {
   const merged = deepMerge(current as unknown as Record<string, unknown>, input as Record<string, unknown>);
   const value = sanitize(defaultSettings as unknown as Shape, merged) as unknown as SiteSettings;
 
-  await getPrisma().siteSetting.upsert({
-    where: { key: SETTINGS_KEY },
-    update: { value: value as unknown as Prisma.InputJsonValue },
-    create: { key: SETTINGS_KEY, value: value as unknown as Prisma.InputJsonValue },
-  });
+  await getPrisma()
+    .siteSetting.upsert({
+      where: { key: SETTINGS_KEY },
+      update: { value: value as unknown as Prisma.InputJsonValue },
+      create: { key: SETTINGS_KEY, value: value as unknown as Prisma.InputJsonValue },
+    })
+    .catch(rethrowSetup);
   return value;
 };
 
 export const reset = async (): Promise<SiteSettings> => {
-  await getPrisma().siteSetting.deleteMany({ where: { key: SETTINGS_KEY } });
+  await getPrisma().siteSetting.deleteMany({ where: { key: SETTINGS_KEY } }).catch(rethrowSetup);
   return defaultSettings;
 };
 

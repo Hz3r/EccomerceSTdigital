@@ -267,17 +267,53 @@ export function SaveBar({ dirty, saving, savedAt, error, onSave, onDiscard }: {
   );
 }
 
-export function SettingsState({ status }: { status: "loading" | "error" }) {
-  return status === "loading" ? (
-    <div className="flex h-60 items-center justify-center">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
-    </div>
-  ) : (
-    <div className="rounded-2xl border border-dashed p-10 text-center text-sm">
-      <p className="font-semibold">No se pudo cargar el contenido</p>
-      <p className="mt-1 text-muted-foreground">
-        Revisa que el backend esté encendido. <Link href="/" className="underline">Volver al dashboard</Link>
+const SETUP_STEPS = ["npx prisma migrate deploy", "npx prisma generate", "pnpm dev"];
+
+export function SettingsState({ status, reason }: { status: "loading" | "error"; reason?: string }) {
+  if (status === "loading") {
+    return (
+      <div className="flex h-60 items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-2xl border border-dashed p-8 text-sm">
+      <p className="font-semibold">No se pudo cargar el contenido del sitio</p>
+      {reason && <p className="mt-1 text-muted-foreground">{reason}</p>}
+      <SetupSteps />
+      <p className="mt-4 text-muted-foreground">
+        <Link href="/" className="underline">Volver al dashboard</Link>
       </p>
+    </div>
+  );
+}
+
+function SetupSteps() {
+  return (
+    <div className="mt-4 rounded-xl bg-muted/60 p-4">
+      <p className="text-xs font-semibold">Si acabas de actualizar el proyecto, en la carpeta zerg-backend ejecuta:</p>
+      <ol className="mt-2 space-y-1 font-mono text-xs">
+        {SETUP_STEPS.map((cmd, i) => (
+          <li key={cmd}>
+            <span className="text-muted-foreground">{i + 1}.</span> {cmd}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// Aviso cuando el backend responde pero aún no tiene la tabla del contenido.
+export function SetupBanner({ message }: { message: string }) {
+  if (!message) return null;
+  return (
+    <div role="alert" className="rounded-2xl border border-viz-warning/50 bg-viz-warning/10 p-4 text-sm">
+      <p className="font-semibold">El contenido aún no se puede guardar</p>
+      <p className="mt-1 text-muted-foreground">
+        Se muestran los valores por defecto. Falta preparar la base de datos del backend.
+      </p>
+      <SetupSteps />
     </div>
   );
 }

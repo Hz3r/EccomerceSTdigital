@@ -1,6 +1,6 @@
 "use client";
 
-import { Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TagsInput, TextField, Toggle } from "@/components/cms/form";
+import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TagsInput, TextField, Toggle } from "@/components/cms/form";
 import { useCatalogOptions } from "@/hooks/useCatalogOptions";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import type { SiteSettings } from "@/types";
@@ -21,10 +21,10 @@ const SECTION_LABELS: { key: keyof Secciones; label: string; hint: string }[] = 
 ];
 
 export default function HomeContentPage() {
-  const { draft, status, error, savedAt, update, save, discard, isDirty } = useSiteSettings();
+  const { draft, status, error, savedAt, setupMessage, loadError, update, save, discard, isDirty } = useSiteSettings();
   const { categories, products } = useCatalogOptions();
 
-  if (!draft) return <SettingsState status={status === "error" ? "error" : "loading"} />;
+  if (!draft) return <SettingsState status={status === "error" ? "error" : "loading"} reason={loadError} />;
   const portada = draft.portada;
   const set = <K extends keyof typeof portada>(key: K, value: (typeof portada)[K]) => update("portada", { ...portada, [key]: value });
   const hero = portada.hero;
@@ -34,6 +34,7 @@ export default function HomeContentPage() {
   return (
     <div className="space-y-6">
       <PageIntro title="Portada" description="Edita lo que ven tus clientes al entrar a la tienda: el banner principal, los productos en tendencia y qué secciones se muestran." />
+      <SetupBanner message={setupMessage} />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Banner principal" description="El bloque oscuro grande de la parte superior.">
