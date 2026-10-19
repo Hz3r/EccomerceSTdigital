@@ -21,6 +21,7 @@ import { Rating } from "@/components/product/rating";
 import { ProductCarousel } from "@/components/home/product-carousel";
 import { Newsletter } from "@/components/layout/newsletter";
 import { useCart } from "@/hooks/useCart";
+import { useLiveVersion } from "@/lib/live";
 import { getProductBySlug, getProducts } from "@/lib/api";
 import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
@@ -60,13 +61,19 @@ export default function ProductDetailPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("descripcion");
   const [favorite, setFavorite] = useState(false);
 
+  // Se actualiza en vivo cuando el admin cambia el catálogo
+  const liveVersion = useLiveVersion("products", "plans", "reviews");
+
   useEffect(() => {
     if (!slug) return;
     Promise.all([getProductBySlug(slug).catch(() => null), getProducts().catch(() => [])])
       .then(([prod, all]) => {
         setProduct(prod);
         if (prod) {
-          setPlanId(cheapestPlan(prod)?.id);
+          // Conserva el plan elegido si sigue disponible tras una actualización en vivo
+          setPlanId((current) =>
+            prod.plans?.some((p) => p.id === current && p.isActivo) ? current : cheapestPlan(prod)?.id
+          );
           setRelated(
             all
               .filter((p) => p.isActivo && p.id !== prod.id)
@@ -76,7 +83,7 @@ export default function ProductDetailPage() {
         }
       })
       .finally(() => setIsLoading(false));
-  }, [slug]);
+  }, [slug, liveVersion]);
 
   const plans = useMemo(() => (product ? activePlans(product) : []), [product]);
   const reviews = useMemo(() => (product?.reviews ?? []).filter((r) => r.isApproved), [product]);

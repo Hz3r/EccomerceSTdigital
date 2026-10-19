@@ -20,6 +20,7 @@ import uploadRoutes from "./modules/upload/upload.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import settingsRoutes from "./modules/settings/settings.routes.js";
 import { AppError } from "./errors/appError.js";
+import { emitOnMutation, eventsHandler } from "./realtime/events.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,9 @@ app.use(
   })
 );
 
+// Tiempo real: la tienda y el admin escuchan aquí los cambios (fuera del límite general).
+app.get("/api/events", eventsHandler);
+
 app.use(generalLimiter);
 
 app.use(express.json({ limit: "1mb" }));
@@ -70,6 +74,8 @@ app.use(
 app.get("/", (_req: Request, res: Response) => {
   res.send("ZERG-BACKEND: ONLINE");
 });
+
+app.use(emitOnMutation);
 
 // El límite estricto es solo para intentos de acceso (login y registro);
 // /auth/profile se consulta en cada carga de página y no debe cerrar la sesión.

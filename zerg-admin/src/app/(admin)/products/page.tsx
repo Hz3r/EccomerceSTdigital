@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { ImageField } from "@/components/image-field"
+import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { assetUrl, formatPrice, slugify, STORE_URL } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -89,9 +90,12 @@ function ProductsPageInner() {
     }
   }, [])
 
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("products", "plans", "categories")
+
   React.useEffect(() => {
     fetchData()
-  }, [fetchData])
+  }, [fetchData, liveVersion])
 
   const openEdit = async (prod: Product) => {
     // El detalle trae también los planes inactivos

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { getCategories } from "@/lib/api";
+import { useLiveVersion } from "@/lib/live";
 import { mockCategories } from "@/lib/mock-data";
 import { defaultSettings, getSiteSettings, type SiteSettings } from "@/lib/site-settings";
 import type { Category } from "@/types";
@@ -16,12 +17,14 @@ const SiteContext = createContext<SiteContextType>({ settings: defaultSettings, 
 // Carga una vez el contenido del sitio y las categorías para el header, la portada y el pie.
 export function SiteSettingsProvider({ children }: { children: React.ReactNode }) {
   const [value, setValue] = useState<SiteContextType>({ settings: defaultSettings, categories: mockCategories });
+  // Se vuelve a cargar cuando el admin guarda contenido o cambia categorías
+  const version = useLiveVersion("settings", "categories");
 
   useEffect(() => {
     Promise.all([getSiteSettings(), getCategories().catch(() => mockCategories)]).then(([settings, categories]) =>
       setValue({ settings, categories: categories.filter((c) => c.isActive) })
     );
-  }, []);
+  }, [version]);
 
   return <SiteContext.Provider value={value}>{children}</SiteContext.Provider>;
 }

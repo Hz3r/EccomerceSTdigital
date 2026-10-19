@@ -19,6 +19,7 @@ import { BarList } from "@/components/charts/bar-list";
 import { Sparkline } from "@/components/charts/sparkline";
 import { STATUS_META, StatusBreakdown } from "@/components/charts/status-breakdown";
 import { useAuth } from "@/hooks/useAuth";
+import { useLiveVersion } from "@/lib/live";
 import api from "@/lib/axios";
 import { formatCompactPrice, formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -101,12 +102,15 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState(false);
 
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("orders", "products", "plans", "users", "reviews");
+
   useEffect(() => {
     api
       .get<{ data: AdminStats }>("/admin/stats")
       .then((res) => setStats(res.data.data))
       .catch(() => setError(true));
-  }, []);
+  }, [liveVersion]);
 
   if (error) {
     return (

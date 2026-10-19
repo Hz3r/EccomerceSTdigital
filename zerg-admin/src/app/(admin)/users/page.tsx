@@ -20,6 +20,7 @@ import {
   type DataTableAction,
 } from "@/components/data-table/data-table"
 import { useAuth } from "@/hooks/useAuth"
+import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import {
   PencilIcon,
@@ -49,9 +50,11 @@ export default function UsersPage() {
     }
   }, [])
 
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("users")
   React.useEffect(() => {
     fetchUsers()
-  }, [fetchUsers])
+  }, [fetchUsers, liveVersion])
 
   const handleToggleStatus = async (user: User) => {
     try {

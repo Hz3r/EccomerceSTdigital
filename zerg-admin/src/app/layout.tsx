@@ -22,7 +22,8 @@ export const metadata: Metadata = {
 };
 
 // Tema oscuro por defecto; el script lo quita antes de pintar si se eligió el claro.
-const themeScript = `try{if(localStorage.getItem("admin-theme")==="light")document.documentElement.classList.remove("dark")}catch(e){}`;
+// El menú compacto también se fija aquí: lo guardado o, sin preferencia, compacto en tablet.
+const themeScript = `try{var d=document.documentElement;if(localStorage.getItem("admin-theme")==="light")d.classList.remove("dark");var s=localStorage.getItem("admin-sidebar");d.dataset.sidebar=s||(innerWidth<1280?"collapsed":"expanded")}catch(e){}`;
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ProductCard } from "@/components/product/product-card";
 import { Newsletter } from "@/components/layout/newsletter";
+import { useLiveVersion } from "@/lib/live";
 import { getCategories, getProducts } from "@/lib/api";
 import { activePlans, bestDiscount, cheapestPlan } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
@@ -64,6 +65,9 @@ function Catalog({ params }: { params: URLSearchParams }) {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [visible, setVisible] = useState(PAGE_SIZE);
 
+  // Se actualiza en vivo cuando el admin cambia el catálogo
+  const liveVersion = useLiveVersion("products", "plans", "categories");
+
   useEffect(() => {
     Promise.all([getProducts().catch(() => []), getCategories().catch(() => [])])
       .then(([prods, cats]) => {
@@ -71,7 +75,7 @@ function Catalog({ params }: { params: URLSearchParams }) {
         setCategories(cats.filter((c) => c.isActive));
       })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [liveVersion]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();

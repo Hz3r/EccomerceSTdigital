@@ -20,6 +20,7 @@ import {
   type DataTableAction,
 } from "@/components/data-table/data-table"
 import { ImageModal } from "@/components/image-modal"
+import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { assetUrl } from "@/lib/format"
 import {
@@ -52,7 +53,9 @@ export default function CategoriesPage() {
     }
   }, [])
 
-  React.useEffect(() => { fetchCategories() }, [fetchCategories])
+  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
+  const liveVersion = useLiveVersion("categories")
+  React.useEffect(() => { fetchCategories() }, [fetchCategories, liveVersion])
 
   const handleToggleStatus = async (cat: Category) => {
     try {

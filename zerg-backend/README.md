@@ -37,6 +37,11 @@ Luego `pnpm dev` en `zerg-frontend` (puerto 3000). Sin esa variable, la tienda u
 - `GET /api/admin/stats` (ADMIN) incluye las series del dashboard de los últimos 30 días.
 - Tras actualizar el código, aplica la migración nueva con `npx prisma migrate deploy` y vuelve a ejecutar `pnpm seed` para cargar las órdenes de ejemplo del dashboard.
 
+## Tiempo real
+
+- `GET /api/events` es un flujo Server-Sent Events. Cada cambio exitoso (POST/PUT/PATCH/DELETE) en settings, productos, planes, categorías, reseñas, órdenes o usuarios envía `{ topic, action }` (sin datos), y la tienda y el admin vuelven a pedir lo que necesitan.
+- Detrás de un proxy (Nginx), desactiva el buffering para esa ruta (`proxy_buffering off`); el servidor ya envía `X-Accel-Buffering: no`.
+
 ## Rutas públicas de la tienda
 
 - `GET /api/products`, `GET /api/products/:idOrSlug`
