@@ -7,7 +7,7 @@ export const getAll = async () => {
       items: {
         include: {
           plan: {
-            select: { id: true, nombre: true, precio: true },
+            select: { id: true, nombre: true, precio: true, duracion: true, product: { select: { nombre: true, slug: true } } },
           },
         },
       },

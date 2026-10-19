@@ -4,7 +4,7 @@ import { NotFoundError, BadRequestError } from "../../errors/appError.js";
 
 const UPLOADS_DIR = "uploads";
 
-const ALLOWED_FOLDERS = ["products", "categories", "avatars", "general"];
+const ALLOWED_FOLDERS = ["products", "categories", "avatars", "general", "branding"];
 
 export const getUploadUrl = (folder: string, filename: string) => {
   return `/api/uploads/${folder}/${filename}`;

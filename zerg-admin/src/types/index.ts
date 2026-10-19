@@ -98,14 +98,71 @@ export interface AdminStats {
   totalCategories: number;
   totalOrders: number;
   totalUsers: number;
+  totalCustomers: number;
+  activeProducts: number;
   pendingOrders: number;
+  pendingReviews: number;
   revenue: {
     thisMonth: number;
     lastMonth: number;
     growth: number;
   };
+  last30Days: {
+    revenue: number;
+    orders: number;
+    averageTicket: number;
+  };
+  charts: {
+    ventasPorDia: { fecha: string; ingresos: number; ordenes: number }[];
+    ordenesPorEstado: { estado: StatusOrden; cantidad: number }[];
+    ventasPorCategoria: { categoria: string; slug: string; ingresos: number }[];
+    productosMasVendidos: { producto: string; slug: string; unidades: number; ingresos: number }[];
+  };
   recentOrders: Order[];
   topProducts: Product[];
+}
+
+// Contenido editable de la tienda (GET/PUT /api/settings).
+export interface SiteSettings {
+  marca: { nombre: string; logoUrl: string; iconoUrl: string };
+  header: {
+    anuncio: string;
+    buscadorPlaceholder: string;
+    mostrarOfertas: boolean;
+    categoriasMenu: string[];
+  };
+  portada: {
+    hero: {
+      etiqueta: string;
+      titulo: string;
+      tituloDestacado: string;
+      descripcion: string;
+      ctaPrimarioTexto: string;
+      ctaPrimarioUrl: string;
+      ctaSecundarioTexto: string;
+      ctaSecundarioUrl: string;
+    };
+    destacado: { productoSlug: string; etiqueta: string; descripcion: string };
+    tendencias: string[];
+    spotlight: string[];
+    carruseles: string[];
+    plataformas: string[];
+    secciones: Record<
+      | "beneficios"
+      | "masBuscado"
+      | "tendencias"
+      | "carruseles"
+      | "plataformas"
+      | "categorias"
+      | "opiniones"
+      | "recienLlegados"
+      | "creceConZerg"
+      | "boletin",
+      boolean
+    >;
+  };
+  contacto: { whatsapp: string; email: string; horario: string };
+  footer: { descripcion: string; metodosPago: string[] };
 }
 
 export interface ApiResponse<T> {

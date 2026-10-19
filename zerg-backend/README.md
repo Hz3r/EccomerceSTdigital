@@ -29,6 +29,14 @@ NEXT_PUBLIC_API_URL=http://localhost:3001/api
 
 Luego `pnpm dev` en `zerg-frontend` (puerto 3000). Sin esa variable, la tienda usa datos de ejemplo.
 
+## Contenido editable (CMS) e imágenes
+
+- `GET /api/settings` (público) devuelve el contenido del sitio: marca, header, portada, contacto y pie. Sin datos guardados usa los valores de `src/modules/settings/settings.defaults.ts`.
+- `PUT /api/settings` (ADMIN) guarda cambios parciales; las claves desconocidas o con tipo incorrecto se descartan.
+- `POST /api/upload/:folder` (ADMIN) sube imágenes a `uploads/` (`products`, `categories`, `branding`, ...). Se sirven en `/api/uploads/...` y pueden mostrarse desde la tienda y el admin.
+- `GET /api/admin/stats` (ADMIN) incluye las series del dashboard de los últimos 30 días.
+- Tras actualizar el código, aplica la migración nueva con `npx prisma migrate deploy` y vuelve a ejecutar `pnpm seed` para cargar las órdenes de ejemplo del dashboard.
+
 ## Rutas públicas de la tienda
 
 - `GET /api/products`, `GET /api/products/:idOrSlug`

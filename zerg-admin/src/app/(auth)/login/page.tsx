@@ -1,16 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { BarChart3, Loader2, MailIcon, PanelsTopLeft, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { MailIcon, Store } from "lucide-react";
-import Image from "next/image";
 import { PasswordInput } from "@/components/ui/password-imput";
+import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
+const PERKS = [
+  { icon: BarChart3, text: "Ventas y métricas en tiempo real" },
+  { icon: PanelsTopLeft, text: "Edita la portada, el logo y el header de tu tienda" },
+  { icon: ShieldCheck, text: "Acceso exclusivo para administradores" },
+];
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -18,7 +23,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login, user, isLoading: authLoading } = useAuth();
-  const router = useRouter();
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -30,83 +34,111 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-
     try {
       await login(email, password);
       window.location.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+      const apiMessage = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+      setError(apiMessage ?? (err instanceof Error ? err.message : "Error al iniciar sesión"));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#2d59db] p-6 relative overflow-hidden">
-      <div className="absolute top-0 right-0 z-0 pointer-events-none opacity-40 md:opacity-60">
-        <Image
-          src={'/images/background-login.png'}
-          alt=""
-          width={500}
-          height={500}
-          className="object-contain"
-          priority
-        />
+    <div className="relative grid min-h-screen bg-background lg:grid-cols-[1.1fr_1fr]">
+      {/* Panel de marca */}
+      <div className="relative isolate hidden overflow-hidden bg-surface-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
+        <div className="absolute inset-0 -z-10 bg-grid-soft opacity-60" />
+        <div className="absolute -top-32 -left-24 -z-10 size-[28rem] rounded-full bg-brand/25 blur-3xl" />
+        <div className="absolute -right-20 bottom-0 -z-10 size-80 rounded-full bg-brand-neon/15 blur-3xl" />
+        <Logo className="h-10" />
+
+        <div className="relative">
+          <div className="relative mb-10 w-fit">
+            <Image
+              src="/zerg-icon.png"
+              alt=""
+              width={512}
+              height={512}
+              priority
+              className="size-40 rounded-full shadow-[0_0_80px_-10px_var(--brand-neon)]"
+            />
+            <span className="absolute -top-2 -right-4 size-7 rotate-45 rounded-md bg-brand-yellow" />
+            <span className="absolute right-6 -bottom-3 size-4 rotate-45 rounded bg-brand-neon" />
+          </div>
+          <h1 className="max-w-md text-4xl leading-tight font-extrabold tracking-tight">
+            El centro de control de <span className="text-brand-gradient">tu tienda</span>
+          </h1>
+          <ul className="mt-8 space-y-4">
+            {PERKS.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-3 text-sm text-white/80">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-brand/20 text-brand-bright ring-1 ring-brand/30">
+                  <Icon className="size-4" />
+                </span>
+                {text}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="text-xs text-white/40">© {new Date().getFullYear()} ZERG · Panel de administración</p>
       </div>
-      <div className="absolute bottom-0 left-0 z-0 pointer-events-none opacity-40 md:opacity-60">
-        <Image
-          alt=""
-          src={'/images/Ellipse.png'}
-          width={250}
-          height={250}
-          className="object-contain"
-          priority
-        />
-      </div>
-      <Card className="w-full max-w-md bg-transparent z-10 xt-white border-none shadow-none ring-0">
-        <CardHeader className="text-center">
-          <Store className="mx-auto h-24 w-24" color="white" />
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+
+      {/* Formulario */}
+      <div className="relative flex items-center justify-center p-6">
+        <ThemeToggle className="absolute top-4 right-4" />
+        <div className="w-full max-w-sm">
+          <Logo className="mb-10 h-9 lg:hidden" />
+          <h2 className="text-3xl font-extrabold tracking-tight">Inicia sesión</h2>
+          <p className="mt-1.5 text-sm text-muted-foreground">Ingresa con tu cuenta de administrador.</p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             {error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
+              <div role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
-
-            <div className="relative">
-
-              <MailIcon className="absolute left-2 top-2 h-4 w-4 text-white" />
-
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="placeholder:text-white pl-7 text-white"
-              />
+            <div className="space-y-2">
+              <Label htmlFor="email">Correo electrónico</Label>
+              <div className="relative">
+                <MailIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="admin@zerg.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-11 rounded-xl pl-9"
+                />
+              </div>
             </div>
-
-            <div className="relative">
-
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
               <PasswordInput
                 id="password"
+                autoComplete="current-password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className=" text-white   placeholder:text-white" />
+                className="h-11 rounded-xl"
+              />
             </div>
-
-            <Button type="submit" className="w-full bg-white text-[#2148C0] hover:bg-white/80 border-none rounded-sm" disabled={isLoading}>
-              {isLoading ? "Iniciando sesión..." : "LOGIN"}
+            <Button type="submit" className="h-11 w-full rounded-xl text-sm font-semibold" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Ingresando...
+                </>
+              ) : (
+                "Ingresar al panel"
+              )}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

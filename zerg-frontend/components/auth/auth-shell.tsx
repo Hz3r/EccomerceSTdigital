@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { BrandIcon } from "@/components/brand/logo";
 import { ShieldCheck, Zap, Headphones } from "lucide-react";
 
 const PERKS = [
@@ -24,7 +24,7 @@ export function AuthShell({
         <div className="relative isolate hidden flex-col justify-between overflow-hidden bg-surface-ink p-10 text-white md:flex">
           <div className="absolute inset-0 -z-10 bg-grid-soft opacity-60" />
           <div className="absolute -top-20 -left-20 -z-10 size-72 rounded-full bg-brand/30 blur-3xl" />
-          <Image src="/zerg-icon.png" alt="" width={96} height={96} className="size-20 rounded-full" />
+          <BrandIcon className="size-20 rounded-full object-cover" />
           <div>
             <h2 className="text-3xl leading-tight font-extrabold tracking-tight">
               Tu entretenimiento,

@@ -129,6 +129,18 @@ describe("Review Integration Tests", () => {
       expect(response.body.success).toBe(true);
     });
 
+    it("debería ocultar una reseña con isApproved=false", async () => {
+      mockPrisma.review.findUnique.mockResolvedValue(mockReview);
+      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: false });
+
+      const response = await request(app).patch("/api/reviews/test-review-id/approve").send({ isApproved: false });
+
+      expect(response.status).toBe(200);
+      expect(mockPrisma.review.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { isApproved: false } })
+      );
+    });
+
     it("debería retornar 404 si la reseña no existe", async () => {
       mockPrisma.review.findUnique.mockResolvedValue(null);
 

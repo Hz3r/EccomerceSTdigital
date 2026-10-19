@@ -61,11 +61,12 @@ export const create = async (req: AuthRequest, res: Response) => {
 
 export const approve = async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const review = await reviewService.approve(id);
+  const isApproved = req.body?.isApproved !== false;
+  const review = await reviewService.approve(id, isApproved);
 
   res.status(200).json({
     success: true,
-    message: "Reseña aprobada",
+    message: isApproved ? "Reseña aprobada" : "Reseña ocultada",
     data: review,
   });
 };

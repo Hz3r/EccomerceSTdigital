@@ -28,15 +28,14 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CategoryIcon } from "@/components/product/category-icon";
-import { mockCategories } from "@/lib/mock-data";
+import { useSite } from "@/hooks/useSiteSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { cn } from "@/lib/utils";
 
-const NAV_CATEGORIES = mockCategories.slice(0, 6);
-
 function SearchBar({ className, inputRef }: { className?: string; inputRef?: React.Ref<HTMLInputElement> }) {
   const router = useRouter();
+  const { header } = useSite().settings;
   const [query, setQuery] = useState("");
 
   return (
@@ -58,7 +57,7 @@ function SearchBar({ className, inputRef }: { className?: string; inputRef?: Rea
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Buscar Netflix, Spotify, Canva..."
+        placeholder={header.buscadorPlaceholder}
         className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
       />
       <kbd className="hidden items-center gap-0.5 rounded-md border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground lg:inline-flex">
@@ -74,6 +73,12 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const { settings, categories } = useSite();
+  const { header } = settings;
+  // Categorías del menú en el orden elegido en el admin (Marca y header)
+  const navCategories = header.categoriasMenu
+    .map((slug) => categories.find((c) => c.slug === slug))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -109,7 +114,7 @@ export function Navbar() {
                 <LayoutGrid className="size-4 text-brand-strong" />
                 Todos los productos
               </Link>
-              {mockCategories.map((c) => (
+              {categories.map((c) => (
                   <Link
                     key={c.id}
                     href={`/products?categoria=${c.slug}`}
@@ -120,14 +125,16 @@ export function Navbar() {
                     {c.nombre}
                   </Link>
               ))}
-              <Link
-                href="/products?ofertas=1"
-                onClick={() => setMobileOpen(false)}
-                className="mt-2 flex items-center gap-3 rounded-lg bg-surface-ink px-3 py-2.5 text-sm font-semibold text-white"
-              >
-                <Tag className="size-4 text-brand-yellow" />
-                Ofertas
-              </Link>
+              {header.mostrarOfertas && (
+                <Link
+                  href="/products?ofertas=1"
+                  onClick={() => setMobileOpen(false)}
+                  className="mt-2 flex items-center gap-3 rounded-lg bg-surface-ink px-3 py-2.5 text-sm font-semibold text-white"
+                >
+                  <Tag className="size-4 text-brand-yellow" />
+                  Ofertas
+                </Link>
+              )}
             </nav>
           </SheetContent>
         </Sheet>
@@ -226,7 +233,7 @@ export function Navbar() {
             <ChevronDown className="size-3.5" />
             Todos los productos
           </Link>
-          {NAV_CATEGORIES.map((c) => (
+          {navCategories.map((c) => (
               <Link
                 key={c.id}
                 href={`/products?categoria=${c.slug}`}
@@ -236,17 +243,21 @@ export function Navbar() {
                 {c.nombre}
               </Link>
           ))}
-          <Link
-            href="/products?ofertas=1"
-            className="ml-2 flex items-center gap-1.5 rounded-lg bg-surface-ink px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-surface-ink-hover"
-          >
-            <Tag className="size-3.5 text-brand-yellow" />
-            Ofertas
-          </Link>
-          <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-brand-ink">
-            <Zap className="size-3.5 fill-current" />
-            Entrega inmediata 24/7
-          </span>
+          {header.mostrarOfertas && (
+            <Link
+              href="/products?ofertas=1"
+              className="ml-2 flex items-center gap-1.5 rounded-lg bg-surface-ink px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-surface-ink-hover"
+            >
+              <Tag className="size-3.5 text-brand-yellow" />
+              Ofertas
+            </Link>
+          )}
+          {header.anuncio && (
+            <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-brand-ink">
+              <Zap className="size-3.5 fill-current" />
+              {header.anuncio}
+            </span>
+          )}
         </div>
       </nav>
     </header>
