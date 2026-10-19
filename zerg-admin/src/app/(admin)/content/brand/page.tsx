@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Search, ShoppingCart, Tag, Zap } from "lucide-react";
 import { ImageField } from "@/components/image-field";
-import { Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
+import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
 import { useCatalogOptions } from "@/hooks/useCatalogOptions";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { assetUrl } from "@/lib/format";
@@ -11,16 +11,17 @@ import { assetUrl } from "@/lib/format";
 const KEYS = ["marca", "header"] as const;
 
 export default function BrandContentPage() {
-  const { draft, status, error, savedAt, update, save, discard, isDirty } = useSiteSettings();
+  const { draft, status, error, savedAt, setupMessage, loadError, update, save, discard, isDirty } = useSiteSettings();
   const { categories } = useCatalogOptions();
 
-  if (!draft) return <SettingsState status={status === "error" ? "error" : "loading"} />;
+  if (!draft) return <SettingsState status={status === "error" ? "error" : "loading"} reason={loadError} />;
   const { marca, header } = draft;
   const menu = header.categoriasMenu.map((slug) => categories.find((c) => c.value === slug)?.label ?? slug);
 
   return (
     <div className="space-y-6">
       <PageIntro title="Marca y header" description="El logo, el nombre y la barra superior que se ven en todas las páginas de la tienda." />
+      <SetupBanner message={setupMessage} />
 
       {/* Vista previa del header */}
       <div className="overflow-hidden rounded-2xl border bg-background">

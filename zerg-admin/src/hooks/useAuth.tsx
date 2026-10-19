@@ -39,9 +39,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(freshUser);
           setToken(savedToken);
         })
-        .catch(() => {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
+        .catch((err) => {
+          const status = err?.response?.status;
+          if (status === 401 || status === 403) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            return;
+          }
+          // Backend caído o reiniciándose: se mantiene la sesión guardada en vez de cerrarla.
+          try {
+            const cached = JSON.parse(savedUser);
+            if (cached?.rol === "ADMIN") {
+              setUser(cached);
+              setToken(savedToken);
+            }
+          } catch {}
         })
         .finally(() => setIsLoading(false));
     } else {
