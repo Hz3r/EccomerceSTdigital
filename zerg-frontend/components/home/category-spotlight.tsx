@@ -35,15 +35,18 @@ const THEMES: Record<string, { card: string; badge: string; pill: string; button
 
 const SHORT_NAMES: Record<string, string> = { ia: "IA", diseno: "Diseño" };
 
-export function CategorySpotlight({ categories, products }: { categories: Category[]; products: Product[] }) {
-  const cards = ["ia", "streaming", "diseno", "gaming"]
+// Colores para categorías sin tema propio (las creadas desde el admin).
+const FALLBACK_THEMES = [THEMES.streaming, THEMES.ia, THEMES.gaming, THEMES.diseno];
+
+export function CategorySpotlight({ categories, products, slugs }: { categories: Category[]; products: Product[]; slugs: string[] }) {
+  const cards = slugs
     .map((slug) => categories.find((c) => c.slug === slug))
     .filter((c): c is Category => Boolean(c));
 
   return (
     <div className="grid gap-x-4 gap-y-10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((cat) => {
-        const theme = THEMES[cat.slug];
+      {cards.map((cat, i) => {
+        const theme = THEMES[cat.slug] ?? FALLBACK_THEMES[i % FALLBACK_THEMES.length];
         const items = products.filter((p) => p.category?.slug === cat.slug);
         return (
           <article

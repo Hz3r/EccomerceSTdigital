@@ -12,7 +12,7 @@ const ALLOWED_MIME_TYPES = [
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const ALLOWED_FOLDERS = ["products", "categories", "avatars", "general"];
+const ALLOWED_FOLDERS = ["products", "categories", "avatars", "general", "branding"];
 
 const storage = multer.diskStorage({
   destination: (req, _file, cb) => {

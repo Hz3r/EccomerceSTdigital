@@ -7,4 +7,5 @@ node_modules
 # Uploads (keep folder structure with .gitkeep)
 uploads/*
 !uploads/*/
+uploads/*/*
 !uploads/**/.gitkeep

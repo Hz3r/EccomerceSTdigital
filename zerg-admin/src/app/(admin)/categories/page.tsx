@@ -21,6 +21,7 @@ import {
 } from "@/components/data-table/data-table"
 import { ImageModal } from "@/components/image-modal"
 import api from "@/lib/axios"
+import { assetUrl } from "@/lib/format"
 import {
   PlusIcon,
   PencilIcon,
@@ -148,7 +149,7 @@ export default function CategoriesPage() {
           onClick={(e) => { e.stopPropagation(); setSelectedCategory(item); setImageModalOpen(true) }}
         >
           {item.imagenUrl ? (
-            <img src={item.imagenUrl} alt={item.nombre} className="h-8 w-8 rounded object-cover" />
+            <img src={assetUrl(item.imagenUrl)} alt={item.nombre} className="h-8 w-8 rounded object-cover" />
           ) : (
             <ImageIcon className="h-8 w-8 text-muted-foreground" />
           )}
@@ -166,8 +167,8 @@ export default function CategoriesPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Categorías</h1>
-          <p className="mt-1 text-sm text-slate-600">Gestiona las categorías de tu tienda</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Categorías</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Gestiona las categorías de tu tienda</p>
         </div>
         <Button size="sm" onClick={openCreate}>
           <PlusIcon className="size-4" />
@@ -228,6 +229,7 @@ export default function CategoriesPage() {
         value={selectedCategory?.imagenUrl ?? ""}
         onSave={handleImageSave}
         title="Imagen de la categoría"
+        folder="categories"
       />
     </div>
   )

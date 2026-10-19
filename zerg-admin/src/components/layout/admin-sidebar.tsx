@@ -29,7 +29,7 @@ export function AdminSidebar({ children }: { children?: React.ReactNode }) {
     <SidebarContext.Provider value={{ open, setOpen }}>
       {children}
       {/* Desktop Sidebar - Fixed */}
-      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:w-64 md:flex-col bg-slate-900 text-white">
+      <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-40 md:flex md:w-64 md:flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
         <SidebarContent />
       </aside>
 
@@ -39,7 +39,7 @@ export function AdminSidebar({ children }: { children?: React.ReactNode }) {
           <SheetContent
             side="left"
             showCloseButton={false}
-            className="w-64 p-0 bg-slate-900 border-slate-800"
+            className="w-64 bg-sidebar p-0"
           >
             <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
             <SidebarContent onLinkClick={() => setOpen(false)} />

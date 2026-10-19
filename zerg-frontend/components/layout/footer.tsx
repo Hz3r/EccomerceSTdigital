@@ -1,17 +1,18 @@
+"use client";
+
 import Link from "next/link";
 import { MessageCircle, Mail, Clock, ShieldCheck, Zap } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
-import { mockCategories } from "@/lib/mock-data";
+import { useSite } from "@/hooks/useSiteSettings";
+import type { Category } from "@/types";
 
-const PAYMENT_METHODS = ["Yape", "Plin", "VISA", "Mastercard", "PayPal", "Binance"];
-
-const COLUMNS = [
+const columns = (categories: Category[]) => [
   {
     title: "Tienda",
     links: [
       { label: "Todos los productos", href: "/products" },
       { label: "Ofertas", href: "/products?ofertas=1" },
-      ...mockCategories.slice(0, 3).map((c) => ({ label: c.nombre, href: `/products?categoria=${c.slug}` })),
+      ...categories.slice(0, 3).map((c) => ({ label: c.nombre, href: `/products?categoria=${c.slug}` })),
     ],
   },
   {
@@ -36,6 +37,10 @@ const COLUMNS = [
 ];
 
 export function Footer() {
+  const { settings, categories } = useSite();
+  const { contacto, footer } = settings;
+  const whatsapp = contacto.whatsapp.replace(/\D/g, "");
+
   return (
     <footer className="mt-auto">
       <div className="border-t bg-background">
@@ -43,11 +48,13 @@ export function Footer() {
           <div>
             <Logo className="h-10" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Tu tienda de servicios digitales: streaming, música, IA y más, con entrega inmediata y soporte real.
+              {footer.descripcion}
             </p>
 
             <a
-              href="#"
+              href={whatsapp ? `https://wa.me/${whatsapp}` : "#"}
+              target={whatsapp ? "_blank" : undefined}
+              rel="noreferrer"
               className="mt-6 flex max-w-xs items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:border-brand/40"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand-strong">
@@ -62,16 +69,16 @@ export function Footer() {
             <ul className="mt-5 space-y-2 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Mail className="size-4 text-brand-strong" />
-                soporte@zerg.store
+                {contacto.email}
               </li>
               <li className="flex items-center gap-2">
                 <Clock className="size-4 text-brand-strong" />
-                Lun a Dom · 8:00 a 23:00
+                {contacto.horario}
               </li>
             </ul>
           </div>
 
-          {COLUMNS.map((col) => (
+          {columns(categories).map((col) => (
             <div key={col.title}>
               <h3 className="text-xs font-bold tracking-widest text-muted-foreground uppercase">{col.title}</h3>
               <ul className="mt-4 space-y-3">
@@ -93,7 +100,7 @@ export function Footer() {
           <div>
             <p className="text-[11px] font-bold tracking-widest text-white/50 uppercase">Métodos de pago</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {PAYMENT_METHODS.map((m) => (
+              {footer.metodosPago.map((m) => (
                 <span
                   key={m}
                   className="rounded-md border border-white/20 px-2.5 py-1 text-[11px] font-bold tracking-wide text-white/85"
@@ -120,7 +127,7 @@ export function Footer() {
         </div>
         <div className="border-t border-white/10">
           <p className="mx-auto max-w-7xl px-4 py-4 text-xs text-white/50 md:px-6">
-            © {new Date().getFullYear()} ZERG. Todos los derechos reservados.
+            © {new Date().getFullYear()} {settings.marca.nombre}. Todos los derechos reservados.
           </p>
         </div>
       </div>

@@ -20,6 +20,7 @@ import {
   type DataTableAction,
 } from "@/components/data-table/data-table"
 import api from "@/lib/axios"
+import { formatPrice } from "@/lib/format"
 import {
   PlusIcon,
   PencilIcon,
@@ -142,14 +143,14 @@ export default function PlansPage() {
     {
       key: "precio",
       label: "Precio",
-      render: (item) => <span className="font-medium">${Number(item.precio).toFixed(2)}</span>,
+      render: (item) => <span className="font-medium">{formatPrice(item.precio)}</span>,
     },
     {
       key: "precioOriginal",
       label: "Precio Original",
       render: (item) =>
         item.precioOriginal ? (
-          <span className="text-muted-foreground line-through">${Number(item.precioOriginal).toFixed(2)}</span>
+          <span className="text-muted-foreground line-through">{formatPrice(item.precioOriginal ?? 0)}</span>
         ) : (
           "-"
         ),
@@ -178,8 +179,8 @@ export default function PlansPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Planes</h1>
-          <p className="mt-1 text-sm text-slate-600">Gestiona los planes y variantes de productos</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Planes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Gestiona los planes y variantes de productos</p>
         </div>
         <Button size="sm" onClick={openCreate}>
           <PlusIcon className="size-4" />

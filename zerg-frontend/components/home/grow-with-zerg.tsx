@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { BrandIcon } from "@/components/brand/logo";
 import { ArrowRight, Headphones, Percent, RefreshCw, ShieldCheck, Store, Users } from "lucide-react";
 
 export function GrowWithZerg() {
@@ -55,13 +55,7 @@ export function GrowWithZerg() {
 
           <div className="relative mx-auto hidden aspect-square w-full max-w-[18rem] md:block">
             <div className="absolute inset-4 rounded-full bg-brand-neon/20 blur-2xl" />
-            <Image
-              src="/zerg-icon.png"
-              alt=""
-              width={512}
-              height={512}
-              className="relative size-full rounded-full shadow-[0_0_80px_-10px_var(--brand-neon)]"
-            />
+            <BrandIcon className="relative size-full rounded-full object-cover shadow-[0_0_80px_-10px_var(--brand-neon)]" />
             <span className="absolute top-6 -left-3 size-8 rotate-45 rounded-md bg-brand-yellow shadow-lg" />
             <span className="absolute -right-2 bottom-16 size-6 rotate-45 rounded-md bg-brand-neon" />
             <span className="absolute right-10 -bottom-1 size-4 rotate-45 rounded bg-brand-yellow" />

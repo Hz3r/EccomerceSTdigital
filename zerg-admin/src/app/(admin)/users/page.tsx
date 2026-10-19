@@ -163,8 +163,8 @@ export default function UsersPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Usuarios</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-2xl font-extrabold tracking-tight">Clientes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             Gestiona los usuarios de tu tienda
           </p>
         </div>

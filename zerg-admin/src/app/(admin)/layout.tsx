@@ -14,10 +14,10 @@ export default function AdminLayout({
     <AuthProvider>
       <AuthGuard>
         <AdminSidebar>
-          <div className="min-h-screen bg-slate-50">
+          <div className="min-h-screen bg-muted/40">
             <div className="pl-0 md:pl-64">
               <AdminHeader />
-              <main className="p-4 md:p-6">{children}</main>
+              <main className="mx-auto max-w-[1400px] p-4 md:p-6 lg:p-8">{children}</main>
             </div>
           </div>
         </AdminSidebar>

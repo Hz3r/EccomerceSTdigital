@@ -110,7 +110,8 @@ export const create = async (data: {
   });
 };
 
-export const approve = async (id: string) => {
+// Aprueba (o con isApproved=false, oculta) una reseña.
+export const approve = async (id: string, isApproved = true) => {
   const review = await getPrisma().review.findUnique({ where: { id } });
 
   if (!review) {
@@ -119,7 +120,7 @@ export const approve = async (id: string) => {
 
   return getPrisma().review.update({
     where: { id },
-    data: { isApproved: true },
+    data: { isApproved },
   });
 };
 

@@ -156,3 +156,13 @@ model Review {
   @@unique([productId, userId])
   @@map("reviews")
 } 
+// ==================== CONFIGURACIÓN DEL SITIO (CMS) ====================
+
+// Contenido editable desde el panel admin: marca, header, portada, contacto y pie.
+model SiteSetting {
+  key         String   @id
+  value       Json
+  actualizado DateTime @updatedAt
+
+  @@map("site_settings")
+}

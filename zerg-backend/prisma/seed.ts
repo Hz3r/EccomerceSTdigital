@@ -114,6 +114,42 @@ async function main() {
     });
   }
   console.log(`Opiniones: ${seedReviews.length}`);
+
+  // ==================== PEDIDOS DE EJEMPLO (dashboard) ====================
+  // Solo se crean una vez; se reconocen por el prefijo SEED- del número de orden.
+  const existingSeedOrders = await prisma.order.count({ where: { numeroOrden: { startsWith: "SEED-" } } });
+  if (existingSeedOrders === 0) {
+    const plans = await prisma.plan.findMany({ where: { isActivo: true, product: { isActivo: true } } });
+    let seed = 42;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+    const pick = <T,>(list: T[]) => list[Math.floor(rand() * list.length)];
+    const statuses = ["COMPLETADO", "COMPLETADO", "COMPLETADO", "ENVIADO", "PENDIENTE", "CANCELADO"] as const;
+
+    for (let i = 0; i < 80; i++) {
+      const daysAgo = Math.floor(rand() * 30);
+      const fecha = new Date();
+      fecha.setDate(fecha.getDate() - daysAgo);
+      fecha.setHours(9 + Math.floor(rand() * 13), Math.floor(rand() * 60), 0, 0);
+      const cliente = pick(seedReviews);
+      const items = Array.from({ length: 1 + Math.floor(rand() * 2) }, () => ({ plan: pick(plans), cantidad: 1 + Math.floor(rand() * 2) }));
+      const total = items.reduce((sum, it) => sum + Number(it.plan.precio) * it.cantidad, 0);
+
+      await prisma.order.create({
+        data: {
+          numeroOrden: `SEED-${String(i + 1).padStart(4, "0")}`,
+          nombreCliente: cliente.nombre,
+          email: cliente.email,
+          status: pick([...statuses]),
+          total,
+          creadoEn: fecha,
+          items: {
+            create: items.map((it) => ({ planId: it.plan.id, cantidad: it.cantidad, precioUnitario: it.plan.precio })),
+          },
+        },
+      });
+    }
+    console.log("Pedidos de ejemplo: 80");
+  }
   console.log("\nSeed completado exitosamente!");
 }
 

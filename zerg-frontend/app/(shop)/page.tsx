@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -22,8 +21,11 @@ import { Rail } from "@/components/home/rail";
 import { SectionHeader } from "@/components/home/section-header";
 import { Testimonials } from "@/components/home/testimonials";
 import { Newsletter } from "@/components/layout/newsletter";
+import { BrandIcon } from "@/components/brand/logo";
+import { useSite } from "@/hooks/useSiteSettings";
 import { getCategories, getLatestReviews, getProducts } from "@/lib/api";
 import { bestDiscount, cheapestPlan, formatPrice } from "@/lib/catalog";
+import { cn } from "@/lib/utils";
 import type { Category, Product, Review } from "@/types";
 
 const FEATURES = [
@@ -33,18 +35,16 @@ const FEATURES = [
   { icon: Headphones, title: "Soporte humano", text: "Te atendemos por WhatsApp al instante." },
 ];
 
-const PLATFORMS = [
-  "Netflix", "Disney+", "Max", "Prime Video", "Spotify", "YouTube", "Crunchyroll",
-  "ChatGPT", "Canva", "Microsoft 365", "Xbox", "PlayStation", "NordVPN",
-];
-
-const RAILS = [
-  { slug: "ia", title: "Inteligencia Artificial", subtitle: "Asistentes, imagen, video, voz y código" },
-  { slug: "diseno", title: "Diseño y creatividad", subtitle: "Edición, recursos y herramientas para creadores" },
-  { slug: "streaming", title: "Streaming", subtitle: "Series, películas y TV en vivo" },
-];
+// Títulos propios para algunos carruseles; el resto usa el nombre y la descripción de la categoría.
+const RAIL_COPY: Record<string, { title: string; subtitle: string }> = {
+  ia: { title: "Inteligencia Artificial", subtitle: "Asistentes, imagen, video, voz y código" },
+  diseno: { title: "Diseño y creatividad", subtitle: "Edición, recursos y herramientas para creadores" },
+  streaming: { title: "Streaming", subtitle: "Series, películas y TV en vivo" },
+};
 
 export default function Home() {
+  const { portada } = useSite().settings;
+  const { hero, destacado, secciones } = portada;
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -65,12 +65,17 @@ export default function Home() {
   }, []);
 
   // Tendencias: los productos con mejor descuento, empezando por un destacado de IA.
+  // Tendencias: las elegidas en el admin (Portada) o, si no hay, las de mejor descuento.
   const trending = useMemo(() => {
+    const manual = portada.tendencias
+      .map((slug) => products.find((p) => p.slug === slug))
+      .filter((p): p is Product => Boolean(p));
+    if (manual.length > 0) return manual.slice(0, 9);
     const sorted = [...products].sort((a, b) => bestDiscount(b) - bestDiscount(a));
-    const hero = products.find((p) => p.slug === "chatgpt-plus");
-    return hero ? [hero, ...sorted.filter((p) => p.id !== hero.id)].slice(0, 9) : sorted.slice(0, 9);
-  }, [products]);
-  const featured = products.find((p) => p.slug === "netflix-premium") ?? products[0];
+    const lead = products.find((p) => p.slug === "chatgpt-plus");
+    return lead ? [lead, ...sorted.filter((p) => p.id !== lead.id)].slice(0, 9) : sorted.slice(0, 9);
+  }, [products, portada.tendencias]);
+  const featured = products.find((p) => p.slug === destacado.productoSlug) ?? products[0];
   const featuredPlan = featured && cheapestPlan(featured);
 
   return (
@@ -87,46 +92,47 @@ export default function Home() {
               <div>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/40 bg-brand/10 px-3 py-1 text-xs font-semibold text-brand-neon">
                   <Sparkles className="size-3.5" />
-                  Nuevos servicios cada semana
+                  {hero.etiqueta}
                 </span>
                 <h1 className="mt-5 text-3xl leading-[1.1] font-extrabold tracking-tight md:text-5xl">
-                  Todo tu entretenimiento
-                  <br />
-                  <span className="text-brand-gradient">en un solo lugar</span>
+                  {hero.titulo}
+                  {hero.tituloDestacado && (
+                    <>
+                      <br />
+                      <span className="text-brand-gradient">{hero.tituloDestacado}</span>
+                    </>
+                  )}
                 </h1>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70 md:text-base">
-                  Streaming, música, inteligencia artificial y gaming al mejor precio. Compra en segundos y recibe tu
-                  acceso al instante.
+                  {hero.descripcion}
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Button
                     className="h-11 rounded-xl bg-brand px-5 font-semibold text-brand-ink hover:bg-brand-bright"
-                    render={<Link href="/products" />}
+                    render={<Link href={hero.ctaPrimarioUrl || "/products"} />}
                     nativeButton={false}
                   >
-                    Ver catálogo
+                    {hero.ctaPrimarioTexto}
                     <ArrowRight className="size-4" />
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="h-11 rounded-xl border-white/20 bg-white/5 px-5 font-semibold text-white hover:bg-white/10 hover:text-white"
-                    render={<Link href="/products?ofertas=1" />}
-                    nativeButton={false}
-                  >
-                    Ver ofertas
-                  </Button>
+                  {hero.ctaSecundarioTexto && (
+                    <Button
+                      variant="outline"
+                      className="h-11 rounded-xl border-white/20 bg-white/5 px-5 font-semibold text-white hover:bg-white/10 hover:text-white"
+                      render={<Link href={hero.ctaSecundarioUrl || "/products"} />}
+                      nativeButton={false}
+                    >
+                      {hero.ctaSecundarioTexto}
+                    </Button>
+                  )}
                 </div>
               </div>
 
               <div className="relative mx-auto hidden aspect-square w-full max-w-xs md:block">
                 <div className="absolute inset-6 rounded-full bg-brand/20 blur-2xl" />
-                <Image
-                  src="/zerg-icon.png"
-                  alt=""
-                  width={512}
-                  height={512}
+                <BrandIcon
                   priority
-                  className="relative size-full rounded-full shadow-[0_0_60px_-10px_var(--brand-neon)]"
+                  className="relative size-full rounded-full object-cover shadow-[0_0_60px_-10px_var(--brand-neon)]"
                 />
                 <span className="absolute top-2 -left-2 size-7 rotate-45 rounded-md bg-brand-yellow shadow-lg" />
                 <span className="absolute -right-1 bottom-10 size-5 rotate-45 rounded bg-brand-neon" />
@@ -137,11 +143,11 @@ export default function Home() {
           <div className="relative isolate flex flex-col justify-between overflow-hidden rounded-3xl bg-brand-gradient p-6 text-brand-ink md:p-8">
             <div className="absolute inset-0 -z-10 bg-checker opacity-60 [mask-image:linear-gradient(to_bottom_left,black,transparent_70%)]" />
             <div>
-              <p className="text-xs font-bold tracking-widest uppercase opacity-70">Más vendido</p>
+              <p className="text-xs font-bold tracking-widest uppercase opacity-70">{destacado.etiqueta}</p>
               <h2 className="mt-2 text-2xl font-extrabold tracking-tight md:text-3xl">
                 {featured?.nombre ?? "Netflix Premium"}
               </h2>
-              <p className="mt-2 max-w-[16rem] text-sm opacity-80">Perfil privado en 4K, listo para usar en minutos.</p>
+              <p className="mt-2 max-w-[16rem] text-sm opacity-80">{destacado.descripcion}</p>
             </div>
             {featured && (
               <ProductCover
@@ -170,7 +176,7 @@ export default function Home() {
       </section>
 
       {/* Beneficios */}
-      <section className="-mt-16 px-4 md:px-6">
+      <section className={cn("-mt-16 px-4 md:px-6", !secciones.beneficios && "hidden")}>
         <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y rounded-2xl border bg-card shadow-[0_20px_50px_-25px_rgb(7_21_18/0.25)] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
           {FEATURES.map(({ icon: Icon, title, text }) => (
             <div key={title} className="flex items-start gap-3 p-5">
@@ -195,6 +201,7 @@ export default function Home() {
       ) : (
         <>
           {/* Lo más buscado */}
+          {secciones.masBuscado && (
           <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
             <SectionHeader
               title="Lo más buscado"
@@ -202,11 +209,12 @@ export default function Home() {
               href="/products"
               className="mb-6"
             />
-            <CategorySpotlight categories={categories} products={products} />
+            <CategorySpotlight categories={categories} products={products} slugs={portada.spotlight} />
           </section>
+          )}
 
           {/* Tendencias */}
-          {trending.length > 0 && (
+          {secciones.tendencias && trending.length > 0 && (
             <section className="mt-16 border-y bg-brand-mint/50 py-14 md:mt-20">
               <div className="mx-auto max-w-7xl px-4 md:px-6">
                 <SectionHeader
@@ -230,16 +238,18 @@ export default function Home() {
           )}
 
           {/* Carruseles por categoría */}
+          {secciones.carruseles && (
           <div className="mx-auto w-full max-w-7xl space-y-14 px-4 pt-16 md:px-6 md:pt-20">
-            {RAILS.map((rail) => {
-              const items = products.filter((p) => p.category?.slug === rail.slug).slice(0, 12);
+            {portada.carruseles.map((slug) => {
+              const items = products.filter((p) => p.category?.slug === slug).slice(0, 12);
+              const category = categories.find((c) => c.slug === slug);
               if (items.length === 0) return null;
               return (
                 <Rail
-                  key={rail.slug}
-                  title={rail.title}
-                  subtitle={rail.subtitle}
-                  href={`/products?categoria=${rail.slug}`}
+                  key={slug}
+                  title={RAIL_COPY[slug]?.title ?? category?.nombre ?? slug}
+                  subtitle={RAIL_COPY[slug]?.subtitle ?? category?.descripcion}
+                  href={`/products?categoria=${slug}`}
                   itemClassName="w-[44%] sm:w-[30%] md:w-[23%] lg:w-[18.6%]"
                 >
                   {items.map((p) => (
@@ -249,20 +259,22 @@ export default function Home() {
               );
             })}
           </div>
+          )}
         </>
       )}
 
       {/* Plataformas */}
+      {secciones.plataformas && portada.plataformas.length > 0 && (
       <section className="mt-16 border-y bg-brand-mint/50 py-10 md:mt-20">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <h2 className="text-2xl font-extrabold tracking-tight md:text-3xl">Plataformas</h2>
         </div>
         <div className="mt-6 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <div className="animate-marquee flex w-max gap-14">
-            {[...PLATFORMS, ...PLATFORMS].map((name, i) => (
+            {[...portada.plataformas, ...portada.plataformas].map((name, i) => (
               <span
                 key={i}
-                aria-hidden={i >= PLATFORMS.length}
+                aria-hidden={i >= portada.plataformas.length}
                 className="text-2xl font-black tracking-tight whitespace-nowrap text-foreground/25 transition-colors hover:text-brand-strong md:text-3xl"
               >
                 {name}
@@ -271,10 +283,12 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {!isLoading && (
         <>
           {/* Explorar categorías */}
+          {secciones.categorias && (
           <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
             <SectionHeader
               title="Explora por categoría"
@@ -283,9 +297,10 @@ export default function Home() {
             />
             <ExploreCategories categories={categories} products={products} />
           </section>
+          )}
 
           {/* Opiniones */}
-          {reviews.length > 0 && (
+          {secciones.opiniones && reviews.length > 0 && (
             <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
               <SectionHeader
                 title="Opiniones de clientes"
@@ -297,6 +312,7 @@ export default function Home() {
           )}
 
           {/* Recién llegados */}
+          {secciones.recienLlegados && (
           <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
             <SectionHeader
               title="Recién llegados"
@@ -306,16 +322,19 @@ export default function Home() {
             />
             <NewArrivals products={products} />
           </section>
+          )}
         </>
       )}
 
       {/* Crece con ZERG */}
+      {secciones.creceConZerg && (
       <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
         <SectionHeader title="Crece con ZERG" subtitle="Dos formas de ganar. Cero barreras para empezar." className="mb-6" />
         <GrowWithZerg />
       </section>
+      )}
 
-      <Newsletter />
+      {secciones.boletin ? <Newsletter /> : <div className="pb-16 md:pb-20" />}
     </div>
   );
 }

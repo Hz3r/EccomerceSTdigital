@@ -2,30 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ExternalLink, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  LayoutDashboard,
-  Package,
-  Tag,
-  CreditCard,
-  ShoppingCart,
-  Star,
-  Users,
-  LogOut,
-} from "lucide-react";
-
-export const menuItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/categories", label: "Categorías", icon: Tag },
-  { href: "/products", label: "Productos", icon: Package },
-  { href: "/plans", label: "Planes", icon: CreditCard },
-  { href: "/orders", label: "Órdenes", icon: ShoppingCart },
-  { href: "/reviews", label: "Reseñas", icon: Star },
-  { href: "/users", label: "Usuarios", icon: Users },
-];
+import { Logo } from "@/components/brand/logo";
+import { STORE_URL } from "@/lib/format";
+import { findNavItem, navigation } from "./navigation";
 
 interface SidebarContentProps {
   onLinkClick?: () => void;
@@ -34,55 +16,73 @@ interface SidebarContentProps {
 export function SidebarContent({ onLinkClick }: SidebarContentProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
+  const active = findNavItem(pathname);
 
   return (
     <div className="flex h-full flex-col">
-      {/* Logo */}
-      <div className="flex h-14 shrink-0 items-center justify-center border-b border-slate-800 bg-slate-950/50 md:h-16">
-        <h1 className="text-lg font-bold tracking-wider text-blue-400 md:text-xl">
-          ZERG <span className="text-white">Admin</span>
-        </h1>
+      <div className="flex h-16 shrink-0 items-center border-b border-sidebar-border px-5">
+        <Link href="/" onClick={onLinkClick} className="h-8">
+          <Logo className="h-8" />
+        </Link>
       </div>
 
-      {/* Menu */}
-      <nav className="mt-4 flex-1 space-y-1 px-3 md:mt-6">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onLinkClick}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-900/20"
-                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
-              )}
-            >
-              <item.icon
-                className={cn(
-                  "h-5 w-5 transition-colors",
-                  isActive ? "text-white" : "text-slate-500"
-                )}
-              />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5" aria-label="Menú del panel">
+        {navigation.map((group) => (
+          <div key={group.title}>
+            <p className="px-3 pb-2 text-[10px] font-bold tracking-[0.18em] text-muted-foreground uppercase">
+              {group.title}
+            </p>
+            <ul className="space-y-0.5">
+              {group.items.map((item) => {
+                const isActive = active?.href === item.href;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onLinkClick}
+                      aria-current={isActive ? "page" : undefined}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-brand/12 text-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      {isActive && <span className="absolute inset-y-1.5 left-0 w-1 rounded-r-full bg-brand" />}
+                      <item.icon
+                        className={cn(
+                          "size-4.5 shrink-0",
+                          isActive ? "text-brand-strong dark:text-brand-bright" : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
-      {/* Logout */}
-      <div className="mt-auto border-t border-slate-800 p-3">
-        <Separator className="mb-3 bg-slate-800 md:hidden" />
-        <Button
-          variant="ghost"
-          onClick={logout}
-          className="w-full justify-start gap-3 text-slate-400 hover:bg-red-500/10 hover:text-red-500"
+      <div className="space-y-1 border-t border-sidebar-border p-3">
+        <a
+          href={STORE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <LogOut className="h-5 w-5" />
+          <ExternalLink className="size-4.5" />
+          Ver tienda
+        </a>
+        <button
+          type="button"
+          onClick={logout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+        >
+          <LogOut className="size-4.5" />
           Cerrar sesión
-        </Button>
+        </button>
       </div>
     </div>
   );
