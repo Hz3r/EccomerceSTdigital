@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   DataTable,
   type DataTableColumn,
@@ -228,17 +229,22 @@ export default function PlansPage() {
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="producto">Producto</Label>
-              <select
-                id="producto"
-                value={formProductId}
-                onChange={(e) => setFormProductId(e.target.value)}
-                className="rounded-md border bg-background px-3 py-2 text-sm"
+              <Select
+                value={formProductId || null}
+                onValueChange={(v) => setFormProductId((v as string | null) ?? "")}
+                items={products.map((prod) => ({ value: prod.id, label: prod.nombre }))}
               >
-                <option value="">Seleccionar producto</option>
-                {products.map((prod) => (
-                  <option key={prod.id} value={prod.id}>{prod.nombre}</option>
-                ))}
-              </select>
+                <SelectTrigger id="producto" className="w-full">
+                  <SelectValue placeholder="Seleccionar producto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {products.map((prod) => (
+                    <SelectItem key={prod.id} value={prod.id}>
+                      {prod.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="duracion">Duración</Label>

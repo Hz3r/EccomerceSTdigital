@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, LayoutGrid, List, Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductCard } from "@/components/product/product-card";
 import { Newsletter } from "@/components/layout/newsletter";
 import { useLiveVersion } from "@/lib/live";
@@ -199,21 +200,22 @@ function Catalog({ params }: { params: URLSearchParams }) {
               </SheetContent>
             </Sheet>
 
-            <label className="relative">
-              <span className="sr-only">Ordenar por</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="h-10 cursor-pointer appearance-none rounded-lg border bg-background pr-9 pl-3 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              >
+            <Select
+              value={sort}
+              onValueChange={(v) => v && setSort(v as string)}
+              items={SORTS.map((s) => ({ value: s.id, label: s.label }))}
+            >
+              <SelectTrigger aria-label="Ordenar por" className="h-10 min-w-44 bg-background font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
                 {SORTS.map((s) => (
-                  <option key={s.id} value={s.id}>
+                  <SelectItem key={s.id} value={s.id}>
                     {s.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            </label>
+              </SelectContent>
+            </Select>
 
             <div className="ml-auto flex rounded-lg border p-1" role="group" aria-label="Vista">
               {(

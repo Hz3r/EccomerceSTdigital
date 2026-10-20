@@ -5,6 +5,7 @@ import { EyeIcon, Loader2, Mail, MessageCircle, TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { STATUS_META } from "@/components/charts/status-breakdown"
 import { useLiveVersion } from "@/lib/live"
@@ -19,21 +20,27 @@ const dateTime = new Intl.DateTimeFormat("es-PE", { dateStyle: "medium", timeSty
 function StatusSelect({ order, onChange }: { order: Order; onChange: (status: StatusOrden) => void }) {
   const meta = STATUS_META[order.status]
   return (
-    <label className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-      <meta.icon className="pointer-events-none absolute left-2 size-3.5" style={{ color: meta.color }} />
-      <span className="sr-only">Estado de la orden</span>
-      <select
-        value={order.status}
-        onChange={(e) => onChange(e.target.value as StatusOrden)}
-        className="h-8 cursor-pointer appearance-none rounded-lg border bg-background pr-3 pl-7 text-xs font-semibold"
-      >
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {STATUS_META[s].label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="inline-flex" onClick={(e) => e.stopPropagation()}>
+      <Select value={order.status} onValueChange={(v) => v && onChange(v as StatusOrden)}>
+        <SelectTrigger size="sm" aria-label="Estado de la orden" className="min-w-32 text-xs font-semibold">
+          <SelectValue>
+            <meta.icon className="size-3.5" style={{ color: meta.color }} />
+            {meta.label}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent align="start">
+          {STATUSES.map((s) => {
+            const m = STATUS_META[s]
+            return (
+              <SelectItem key={s} value={s} className="text-xs font-medium">
+                <m.icon className="size-3.5" style={{ color: m.color }} />
+                {m.label}
+              </SelectItem>
+            )
+          })}
+        </SelectContent>
+      </Select>
+    </div>
   )
 }
 
