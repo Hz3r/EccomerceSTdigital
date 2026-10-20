@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Heart, ShoppingCart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductCover } from "./product-cover";
 import { useCart } from "@/hooks/useCart";
 import { activePlans, bestDiscount, cheapestPlan, discountPercent, formatPrice } from "@/lib/catalog";
@@ -76,18 +77,23 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
 
           <div className="mt-3 flex gap-2">
             {plans.length > 1 ? (
-              <select
-                aria-label="Plan"
-                value={plan?.id}
-                onChange={(e) => setPlanId(e.target.value)}
-                className="h-9 w-[5.25rem] shrink-0 cursor-pointer rounded-lg border border-input bg-background px-2 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+              <Select
+                value={plan?.id ?? null}
+                onValueChange={(v) => v && setPlanId(v as string)}
+                items={plans.map((p) => ({ value: p.id, label: p.nombre }))}
               >
-                {plans.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger aria-label="Plan" className="h-9 w-[5.25rem] shrink-0 bg-background px-2 text-xs font-medium">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="start" className="min-w-40">
+                  {plans.map((p) => (
+                    <SelectItem key={p.id} value={p.id} className="text-xs">
+                      <span className="truncate">{p.nombre}</span>
+                      <span className="ml-auto shrink-0 text-muted-foreground tabular-nums">{formatPrice(p.precio)}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
               plan && (
                 <span className="inline-flex h-9 w-[5.25rem] shrink-0 items-center justify-center truncate rounded-lg border border-input px-1 text-xs font-medium">

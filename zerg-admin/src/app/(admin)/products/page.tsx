@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { ImageField } from "@/components/image-field"
 import { useLiveVersion } from "@/lib/live"
@@ -383,19 +384,22 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
             </div>
             <div className="space-y-2">
               <Label htmlFor="categoria">Categoría</Label>
-              <select
-                id="categoria"
-                value={draft.categoryId}
-                onChange={(e) => set("categoryId", e.target.value)}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
+              <Select
+                value={draft.categoryId || null}
+                onValueChange={(v) => set("categoryId", (v as string | null) ?? "")}
+                items={categories.map((cat) => ({ value: cat.id, label: cat.nombre }))}
               >
-                <option value="">Seleccionar...</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.nombre}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="categoria" className="w-full">
+                  <SelectValue placeholder="Seleccionar..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="space-y-2">

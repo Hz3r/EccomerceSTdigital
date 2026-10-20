@@ -5,6 +5,8 @@ import { ChevronDown, Columns3, Link2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageThumbField } from "@/components/image-field";
+import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UrlField, type UrlOption } from "@/components/cms/url-field";
 import { Field, Toggle, type PickOption } from "@/components/cms/form";
 import { ListControls, moveItem, removeItem, replaceItem } from "@/components/cms/list-controls";
 import { cn } from "@/lib/utils";
@@ -13,13 +15,36 @@ import type { MenuGroup, MenuItem, MenuLink } from "@/types";
 const MAX_ITEMS = 12;
 const MAX_GROUPS = 6;
 const MAX_LINKS = 30;
-const URL_OPTIONS_ID = "menu-url-options";
 
 const emptyItem = (patch: Partial<MenuItem> = {}): MenuItem => ({ etiqueta: "", categoria: "", url: "", desplegable: false, grupos: [], ...patch });
 const emptyGroup = (): MenuGroup => ({ titulo: "", enlaces: [] });
 const emptyLink = (patch: Partial<MenuLink> = {}): MenuLink => ({ etiqueta: "", url: "", imagenUrl: "", ...patch });
 
-const selectClass = "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30";
+// Selector que no guarda un valor: elegir una opción ejecuta una acción (ej. agregar al menú).
+function ActionSelect({ placeholder, options, onPick, disabled, size = "default", className }: {
+  placeholder: string;
+  options: PickOption[];
+  onPick: (value: string) => void;
+  disabled?: boolean;
+  size?: "sm" | "default";
+  className?: string;
+}) {
+  return (
+    <Select value={null} onValueChange={(v) => v && onPick(v as string)} disabled={disabled || options.length === 0}>
+      <SelectTrigger size={size} aria-label={placeholder} className={className}>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent align="start" className="min-w-56">
+        {options.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            <span className="truncate">{o.label}</span>
+            {o.hint && <span className="ml-auto shrink-0 text-xs text-muted-foreground">{o.hint}</span>}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 // Menú del header: enlaces simples o desplegables con columnas de subenlaces.
 export function MenuEditor({ value, onChange, categories, products }: {
@@ -34,20 +59,19 @@ export function MenuEditor({ value, onChange, categories, products }: {
     onChange([...value, item]);
     setOpen(value.length);
   };
+  // Sugerencias para los campos de enlace: categorías y productos de la tienda
+  const urlOptions: UrlOption[] = React.useMemo(
+    () => [
+      { url: "/products", label: "Todos los productos" },
+      { url: "/products?ofertas=1", label: "Ofertas" },
+      ...categories.map((c) => ({ url: `/products?categoria=${c.value}`, label: `Categoría: ${c.label}` })),
+      ...products.map((p) => ({ url: `/product/${p.value}`, label: p.label })),
+    ],
+    [categories, products]
+  );
 
   return (
     <div className="space-y-3">
-      {/* Sugerencias para los campos de enlace: categorías y productos de la tienda */}
-      <datalist id={URL_OPTIONS_ID}>
-        <option value="/products">Todos los productos</option>
-        <option value="/products?ofertas=1">Ofertas</option>
-        {categories.map((c) => (
-          <option key={c.value} value={`/products?categoria=${c.value}`}>{`Categoría: ${c.label}`}</option>
-        ))}
-        {products.map((p) => (
-          <option key={p.value} value={`/product/${p.value}`}>{p.label}</option>
-        ))}
-      </datalist>
 
       <ol className="space-y-2">
         {value.length === 0 && (
@@ -102,22 +126,36 @@ export function MenuEditor({ value, onChange, categories, products }: {
                 <div className="space-y-4 border-t p-3">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <Field label="Destino" htmlFor={`menu-${i}-destino`}>
-                      <select
-                        id={`menu-${i}-destino`}
-                        value={item.categoria}
-                        onChange={(e) => set({ categoria: e.target.value })}
-                        className={selectClass}
+                      <Select
+                        value={item.categoria || null}
+                        onValueChange={(v) => set({ categoria: (v as string | null) ?? "" })}
+                        items={[
+                          { value: null, label: "Enlace personalizado" },
+                          ...(item.categoria && !categories.some((c) => c.value === item.categoria)
+                            ? [{ value: item.categoria, label: `${item.categoria} (no encontrada)` }]
+                            : []),
+                          ...categories.map((c) => ({ value: c.value, label: `Categoría: ${c.label}` })),
+                        ]}
                       >
-                        <option value="">Enlace personalizado</option>
-                        {!item.categoria || categories.some((c) => c.value === item.categoria) ? null : (
-                          <option value={item.categoria}>{item.categoria} (no encontrada)</option>
-                        )}
-                        {categories.map((c) => (
-                          <option key={c.value} value={c.value}>
-                            Categoría: {c.label}
-                          </option>
-                        ))}
-                      </select>
+                        <SelectTrigger id={`menu-${i}-destino`} className="w-full data-placeholder:text-foreground">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>
+                            <Link2 className="size-3.5 text-muted-foreground" />
+                            Enlace personalizado
+                          </SelectItem>
+                          <SelectSeparator />
+                          {item.categoria && !categories.some((c) => c.value === item.categoria) && (
+                            <SelectItem value={item.categoria}>{item.categoria} (no encontrada)</SelectItem>
+                          )}
+                          {categories.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              Categoría: {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </Field>
                     <Field
                       label="Texto"
@@ -139,13 +177,12 @@ export function MenuEditor({ value, onChange, categories, products }: {
                       htmlFor={`menu-${i}-url`}
                       hint={item.desplegable ? "Opcional: se muestra como “Ver todo” dentro del desplegable." : "Ruta de la tienda (/products?q=...) o URL completa."}
                     >
-                      <Input
+                      <UrlField
                         id={`menu-${i}-url`}
-                        list={URL_OPTIONS_ID}
                         value={item.url}
                         placeholder="/products?q=steam"
-                        onChange={(e) => set({ url: e.target.value })}
-                        className="h-8"
+                        onChange={(url) => set({ url })}
+                        options={urlOptions}
                       />
                     </Field>
                   )}
@@ -158,7 +195,7 @@ export function MenuEditor({ value, onChange, categories, products }: {
                     }
                   />
                   {item.desplegable && (
-                    <GroupsEditor value={item.grupos} onChange={(grupos) => set({ grupos })} products={products} />
+                    <GroupsEditor value={item.grupos} onChange={(grupos) => set({ grupos })} products={products} urlOptions={urlOptions} />
                   )}
                 </div>
               )}
@@ -168,22 +205,12 @@ export function MenuEditor({ value, onChange, categories, products }: {
       </ol>
 
       <div className="flex flex-wrap gap-2">
-        <select
-          aria-label="Agregar categoría al menú"
-          value=""
+        <ActionSelect
+          placeholder="+ Agregar categoría"
+          options={categories.filter((c) => !value.some((m) => m.categoria === c.value))}
+          onPick={(categoria) => add(emptyItem({ categoria }))}
           disabled={value.length >= MAX_ITEMS}
-          onChange={(e) => e.target.value && add(emptyItem({ categoria: e.target.value }))}
-          className={cn(selectClass, "w-auto")}
-        >
-          <option value="">+ Agregar categoría</option>
-          {categories
-            .filter((c) => !value.some((m) => m.categoria === c.value))
-            .map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-        </select>
+        />
         <Button type="button" variant="outline" size="sm" disabled={value.length >= MAX_ITEMS} onClick={() => add(emptyItem())}>
           <Link2 className="size-3.5" />
           Enlace
@@ -207,7 +234,12 @@ export function MenuEditor({ value, onChange, categories, products }: {
 }
 
 // Columnas de un desplegable, cada una con su título y sus enlaces.
-function GroupsEditor({ value, onChange, products }: { value: MenuGroup[]; onChange: (v: MenuGroup[]) => void; products: PickOption[] }) {
+function GroupsEditor({ value, onChange, products, urlOptions }: {
+  value: MenuGroup[];
+  onChange: (v: MenuGroup[]) => void;
+  products: PickOption[];
+  urlOptions: UrlOption[];
+}) {
   return (
     <div className="space-y-3">
       <div className="grid gap-3 lg:grid-cols-2">
@@ -252,12 +284,12 @@ function GroupsEditor({ value, onChange, products }: { value: MenuGroup[]; onCha
                         onChange={(e) => setGroup({ enlaces: replaceItem(links, li, { etiqueta: e.target.value }) })}
                         className="h-7 text-xs"
                       />
-                      <Input
+                      <UrlField
                         value={link.url}
-                        list={URL_OPTIONS_ID}
                         aria-label="Enlace"
                         placeholder="/product/... o https://..."
-                        onChange={(e) => setGroup({ enlaces: replaceItem(links, li, { url: e.target.value }) })}
+                        onChange={(url) => setGroup({ enlaces: replaceItem(links, li, { url }) })}
+                        options={urlOptions}
                         className="h-7 text-xs"
                       />
                     </div>
@@ -277,26 +309,17 @@ function GroupsEditor({ value, onChange, products }: { value: MenuGroup[]; onCha
                   <Plus className="size-3.5" />
                   Enlace
                 </Button>
-                {products.length > 0 && (
-                  <select
-                    aria-label="Agregar producto como enlace"
-                    value=""
-                    disabled={full}
-                    onChange={(e) => {
-                      const p = products.find((o) => o.value === e.target.value);
-                      if (p) setGroup({ enlaces: [...links, emptyLink({ etiqueta: p.label, url: `/product/${p.value}` })] });
-                    }}
-                    className={cn(selectClass, "h-7 min-w-0 flex-1 text-xs")}
-                  >
-                    <option value="">+ Agregar producto…</option>
-                    {products.map((p) => (
-                      <option key={p.value} value={p.value}>
-                        {p.label}
-                        {p.hint ? ` · ${p.hint}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                <ActionSelect
+                  placeholder="+ Agregar producto…"
+                  options={products}
+                  disabled={full}
+                  size="sm"
+                  className="min-w-0 flex-1"
+                  onPick={(slug) => {
+                    const p = products.find((o) => o.value === slug);
+                    if (p) setGroup({ enlaces: [...links, emptyLink({ etiqueta: p.label, url: `/product/${p.value}` })] });
+                  }}
+                />
               </div>
             </div>
           );
