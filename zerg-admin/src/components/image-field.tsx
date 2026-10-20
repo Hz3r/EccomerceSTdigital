@@ -19,8 +19,8 @@ interface ImageFieldProps {
   previewClassName?: string
 }
 
-// Vista previa + subir archivo al backend (POST /upload/:folder) o pegar una URL.
-export function ImageField({ value, onChange, folder, id, className, previewClassName }: ImageFieldProps) {
+// Sube un archivo al backend (POST /upload/:folder) y entrega la URL resultante.
+function useImageUpload(folder: UploadFolder, onChange: (url: string) => void) {
   const fileRef = React.useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = React.useState(false)
   const [error, setError] = React.useState("")
@@ -48,6 +48,26 @@ export function ImageField({ value, onChange, folder, id, className, previewClas
     }
   }
 
+  const input = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/gif"
+      className="hidden"
+      onChange={(e) => {
+        const file = e.target.files?.[0]
+        if (file) upload(file)
+      }}
+    />
+  )
+
+  return { input, pick: () => fileRef.current?.click(), uploading, error }
+}
+
+// Vista previa + subir archivo al backend (POST /upload/:folder) o pegar una URL.
+export function ImageField({ value, onChange, folder, id, className, previewClassName }: ImageFieldProps) {
+  const { input, pick, uploading, error } = useImageUpload(folder, onChange)
+
   return (
     <div className={cn("flex gap-4", className)}>
       <div
@@ -64,18 +84,9 @@ export function ImageField({ value, onChange, folder, id, className, previewClas
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) upload(file)
-          }}
-        />
+        {input}
         <div className="flex gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <Button type="button" variant="outline" size="sm" onClick={pick} disabled={uploading}>
             {uploading ? <Loader2 className="size-3.5 animate-spin" /> : <UploadIcon className="size-3.5" />}
             {uploading ? "Subiendo..." : "Subir imagen"}
           </Button>
@@ -99,6 +110,54 @@ export function ImageField({ value, onChange, folder, id, className, previewClas
           <p className="text-[11px] text-muted-foreground">JPG, PNG, WebP o GIF · máx. 5 MB</p>
         )}
       </div>
+    </div>
+  )
+}
+
+// Miniatura para listas (logos de plataformas, íconos del menú): clic para subir, botón para quitar.
+export function ImageThumbField({ value, onChange, folder, label = "Imagen", className }: {
+  value: string
+  onChange: (url: string) => void
+  folder: UploadFolder
+  label?: string
+  className?: string
+}) {
+  const { input, pick, uploading, error } = useImageUpload(folder, onChange)
+
+  return (
+    <div className={cn("group/thumb relative shrink-0", className)}>
+      {input}
+      <button
+        type="button"
+        onClick={pick}
+        disabled={uploading}
+        title={error || (value ? `Cambiar ${label.toLowerCase()}` : `Subir ${label.toLowerCase()}`)}
+        aria-label={value ? `Cambiar ${label.toLowerCase()}` : `Subir ${label.toLowerCase()}`}
+        className={cn(
+          "flex size-full items-center justify-center overflow-hidden rounded-lg border bg-muted/50 transition-colors hover:border-brand",
+          error && "border-destructive",
+          !value && "border-dashed"
+        )}
+      >
+        {uploading ? (
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+        ) : value ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={assetUrl(value)} alt="" className="size-full object-contain p-1" />
+        ) : (
+          <UploadIcon className="size-4 text-muted-foreground" />
+        )}
+      </button>
+      {value && !uploading && (
+        <button
+          type="button"
+          aria-label={`Quitar ${label.toLowerCase()}`}
+          onClick={() => onChange("")}
+          className="absolute -top-1.5 -right-1.5 hidden size-5 items-center justify-center rounded-full border bg-background shadow-sm group-hover/thumb:flex hover:text-destructive focus-visible:flex"
+        >
+          <TrashIcon className="size-3" />
+        </button>
+      )}
     </div>
   )
 }
