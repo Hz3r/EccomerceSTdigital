@@ -122,6 +122,33 @@ export interface AdminStats {
   topProducts: Product[];
 }
 
+// Enlace dentro de un menú desplegable del header.
+export interface MenuLink {
+  etiqueta: string;
+  url: string;
+  imagenUrl: string;
+}
+
+// Columna de un menú desplegable.
+export interface MenuGroup {
+  titulo: string;
+  enlaces: MenuLink[];
+}
+
+// Elemento de la barra de categorías. Con `categoria` enlaza a esa categoría; si no, a `url`.
+export interface MenuItem {
+  etiqueta: string;
+  categoria: string;
+  url: string;
+  desplegable: boolean;
+  grupos: MenuGroup[];
+}
+
+export interface Plataforma {
+  nombre: string;
+  logoUrl: string;
+}
+
 // Contenido editable de la tienda (GET/PUT /api/settings).
 export interface SiteSettings {
   marca: { nombre: string; logoUrl: string; iconoUrl: string };
@@ -129,7 +156,7 @@ export interface SiteSettings {
     anuncio: string;
     buscadorPlaceholder: string;
     mostrarOfertas: boolean;
-    categoriasMenu: string[];
+    menu: MenuItem[];
   };
   portada: {
     hero: {
@@ -146,7 +173,7 @@ export interface SiteSettings {
     tendencias: string[];
     spotlight: string[];
     carruseles: string[];
-    plataformas: string[];
+    plataformas: Plataforma[];
     secciones: Record<
       | "beneficios"
       | "masBuscado"

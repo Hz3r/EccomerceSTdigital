@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { Search, ShoppingCart, Tag, Zap } from "lucide-react";
+import { ChevronDown, Search, ShoppingCart, Tag, Zap } from "lucide-react";
 import { ImageField } from "@/components/image-field";
-import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
+import { SetupBanner, Field, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
+import { MenuEditor } from "@/components/cms/menu-editor";
 import { useCatalogOptions } from "@/hooks/useCatalogOptions";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { assetUrl } from "@/lib/format";
@@ -12,11 +13,14 @@ const KEYS = ["marca", "header"] as const;
 
 export default function BrandContentPage() {
   const { draft, status, error, savedAt, setupMessage, loadError, update, save, discard, isDirty } = useSiteSettings();
-  const { categories } = useCatalogOptions();
+  const { categories, products } = useCatalogOptions();
 
   if (!draft) return <SettingsState status={status === "error" ? "error" : "loading"} reason={loadError} />;
   const { marca, header } = draft;
-  const menu = header.categoriasMenu.map((slug) => categories.find((c) => c.value === slug)?.label ?? slug);
+  const menu = header.menu.map((m) => ({
+    label: m.etiqueta || categories.find((c) => c.value === m.categoria)?.label || m.categoria || "Sin texto",
+    desplegable: m.desplegable,
+  }));
 
   return (
     <div className="space-y-6">
@@ -43,9 +47,10 @@ export default function BrandContentPage() {
         </div>
         <div className="flex items-center gap-3 overflow-hidden border-t px-5 py-2.5 text-xs">
           <span className="font-semibold">Todos los productos</span>
-          {menu.slice(0, 6).map((m) => (
-            <span key={m} className="whitespace-nowrap text-muted-foreground">
-              {m}
+          {menu.map((m, i) => (
+            <span key={i} className="inline-flex items-center gap-0.5 whitespace-nowrap text-muted-foreground">
+              {m.label}
+              {m.desplegable && <ChevronDown className="size-3" />}
             </span>
           ))}
           {header.mostrarOfertas && (
@@ -76,11 +81,15 @@ export default function BrandContentPage() {
           <TextField id="header-anuncio" label="Anuncio destacado" value={header.anuncio} onChange={(v) => update("header", { ...header, anuncio: v })} hint="La pastilla verde a la derecha del menú. Déjalo vacío para ocultarla." />
           <TextField id="header-buscador" label="Texto del buscador" value={header.buscadorPlaceholder} onChange={(v) => update("header", { ...header, buscadorPlaceholder: v })} />
           <Toggle label="Mostrar botón de Ofertas" checked={header.mostrarOfertas} onChange={(v) => update("header", { ...header, mostrarOfertas: v })} />
-          <Field label="Categorías del menú" hint="En este orden aparecen en la barra de categorías (se recomiendan hasta 6).">
-            <OrderedPicker options={categories} value={header.categoriasMenu} onChange={(v) => update("header", { ...header, categoriasMenu: v })} max={8} />
-          </Field>
         </Section>
       </div>
+
+      <Section
+        title="Menú de categorías"
+        description="Los enlaces de la barra bajo el buscador, en este orden. Activa “Menú desplegable” en cualquiera para mostrar subcategorías, productos o enlaces en columnas."
+      >
+        <MenuEditor value={header.menu} onChange={(menu) => update("header", { ...header, menu })} categories={categories} products={products} />
+      </Section>
 
       <SaveBar dirty={isDirty([...KEYS])} saving={status === "saving"} savedAt={savedAt} error={error} onSave={() => save([...KEYS])} onDiscard={discard} />
     </div>

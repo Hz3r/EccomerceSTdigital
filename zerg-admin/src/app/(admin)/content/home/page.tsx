@@ -1,6 +1,7 @@
 "use client";
 
-import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TagsInput, TextField, Toggle } from "@/components/cms/form";
+import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
+import { PlatformsEditor } from "@/components/cms/platforms-editor";
 import { useCatalogOptions } from "@/hooks/useCatalogOptions";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import type { SiteSettings } from "@/types";
@@ -12,7 +13,7 @@ const SECTION_LABELS: { key: keyof Secciones; label: string; hint: string }[] = 
   { key: "masBuscado", label: "Lo más buscado", hint: "Tarjetas de colores por categoría" },
   { key: "tendencias", label: "Tendencias de la semana", hint: "Grilla con el producto destacado" },
   { key: "carruseles", label: "Carruseles por categoría", hint: "Filas deslizables de productos" },
-  { key: "plataformas", label: "Plataformas", hint: "Marquesina con nombres de servicios" },
+  { key: "plataformas", label: "Plataformas", hint: "Marquesina con nombres o logos de servicios" },
   { key: "categorias", label: "Explora por categoría", hint: "Tarjetas con accesos a cada categoría" },
   { key: "opiniones", label: "Opiniones de clientes", hint: "Reseñas aprobadas" },
   { key: "recienLlegados", label: "Recién llegados", hint: "Listas de los últimos servicios" },
@@ -92,8 +93,8 @@ export default function HomeContentPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Plataformas" description="Nombres que se desplazan en la marquesina.">
-          <TagsInput value={portada.plataformas} onChange={(v) => set("plataformas", v)} placeholder="Ej. Netflix" />
+        <Section title="Plataformas" description="Se desplazan en la marquesina. Sube un logo (PNG transparente) para mostrar la imagen en lugar del nombre.">
+          <PlatformsEditor value={portada.plataformas} onChange={(v) => set("plataformas", v)} />
         </Section>
         <Section title="Secciones visibles" description="Oculta las secciones que no quieras mostrar por ahora.">
           <div className="grid gap-2 sm:grid-cols-2">

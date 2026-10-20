@@ -1,7 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import { getPrisma } from "../../config/database.js";
 import { AppError, BadRequestError } from "../../errors/appError.js";
-import { defaultSettings, type SiteSettings } from "./settings.defaults.js";
+import { defaultSettings, LIST_ITEM, type SiteSettings } from "./settings.defaults.js";
 
 const SETTINGS_KEY = "site";
 const MAX_STRING = 500;
@@ -14,6 +14,16 @@ type Shape = string | number | boolean | Shape[] | { [key: string]: Shape };
 export function sanitize<T extends Shape>(shape: T, input: unknown): T {
   if (Array.isArray(shape)) {
     if (!Array.isArray(input)) return shape;
+    const item = (shape as unknown as { [LIST_ITEM]?: Shape })[LIST_ITEM];
+    if (item && typeof item === "object" && !Array.isArray(item)) {
+      // Un texto suelto se toma como el primer campo (ej. plataformas guardadas antes solo con su nombre)
+      const firstKey = Object.keys(item)[0] ?? "";
+      return input
+        .map((v) => (typeof v === "string" ? { [firstKey]: v } : v))
+        .filter((v) => typeof v === "object" && v !== null && !Array.isArray(v))
+        .map((v) => sanitize(item, v))
+        .slice(0, MAX_ITEMS) as T;
+    }
     return input
       .filter((v) => typeof v === "string")
       .map((v: string) => v.trim().slice(0, MAX_STRING))
@@ -50,7 +60,7 @@ let warned = false;
 export const getWithStatus = async (): Promise<{ settings: SiteSettings; setupRequired: boolean }> => {
   try {
     const row = await getPrisma().siteSetting.findUnique({ where: { key: SETTINGS_KEY } });
-    return { settings: sanitize(defaultSettings as unknown as Shape, row?.value) as unknown as SiteSettings, setupRequired: false };
+    return { settings: sanitize(defaultSettings as unknown as Shape, migrate(row?.value)) as unknown as SiteSettings, setupRequired: false };
   } catch (err) {
     if (!isSetupError(err)) throw err;
     if (!warned) {
@@ -91,6 +101,18 @@ export const reset = async (): Promise<SiteSettings> => {
   await getPrisma().siteSetting.deleteMany({ where: { key: SETTINGS_KEY } }).catch(rethrowSetup);
   return defaultSettings;
 };
+
+// Adapta contenido guardado con versiones anteriores del formulario.
+export function migrate(value: unknown): unknown {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return value;
+  const header = (value as { header?: Record<string, unknown> }).header;
+  // Antes el menú era solo una lista de categorías (`categoriasMenu`)
+  if (header && Array.isArray(header.categoriasMenu) && header.menu === undefined) {
+    const menu = header.categoriasMenu.filter((slug) => typeof slug === "string").map((categoria) => ({ categoria }));
+    return { ...value, header: { ...header, menu } };
+  }
+  return value;
+}
 
 function deepMerge(base: Record<string, unknown>, patch: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = { ...base };

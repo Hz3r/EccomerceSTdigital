@@ -59,6 +59,9 @@
 }
 
 :root {
+  /* Barra de desplazamiento */
+  --scrollbar-thumb: #c4d3cd;
+  --scrollbar-thumb-hover: #0a9e78;
   /* ZERG brand */
   --brand: #05c48a;
   --brand-strong: #0a9e78;
@@ -107,6 +110,8 @@
 }
 
 .dark {
+  --scrollbar-thumb: #22362f;
+  --scrollbar-thumb-hover: #05c48a;
   color-scheme: dark;
   --brand-mint: #0b1815;
   --surface-ink: #0f1f1b;
@@ -155,6 +160,35 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Barras de desplazamiento: finas, redondeadas y con el verde de la marca al usarlas */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+  background-color: var(--scrollbar-thumb-hover);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--brand);
 }
 
 @layer utilities {
