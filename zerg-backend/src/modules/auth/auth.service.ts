@@ -15,7 +15,11 @@ export const register = async (dto: RegisterDTO) => {
   });
 
   if (existingUser) {
-    throw new ConflictError("El email ya está registrado");
+    throw new ConflictError(
+      existingUser.passwordHash
+        ? "Ya existe una cuenta con este correo. Inicia sesión."
+        : "Este correo ya tiene una cuenta creada con Google. Usa “Continuar con Google”."
+    );
   }
 
   const passwordHash = await hashPassword(dto.password);
@@ -110,6 +114,9 @@ export const google = async (credential: string) => {
     throw new UnauthorizedError("Cuenta desactivada");
   }
 
+  // Para avisar al cliente: cuenta nueva, cuenta que ya usaba Google o cuenta con contraseña recién vinculada.
+  const status: "created" | "existing" | "linked" = !user ? "created" : user.googleId ? "existing" : "linked";
+
   const now = new Date();
   if (user) {
     user = await prisma.user.update({
@@ -146,6 +153,7 @@ export const google = async (credential: string) => {
       creadoEn: user.creadoEn,
     },
     token,
+    status,
   };
 };
 

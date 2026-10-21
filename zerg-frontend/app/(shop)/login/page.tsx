@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { GoogleButton } from "@/components/auth/google-button";
+import { announceGoogle, announceLogin } from "@/components/auth/auth-toasts";
 import { apiErrorMessage } from "@/lib/auth-redirect";
 import { Loader2 } from "lucide-react";
 
@@ -61,12 +62,12 @@ function LoginForm() {
       <GoogleButton
         className="mb-6"
         busy={pending === "google"}
-        onCredential={(credential) => run("google", () => loginWithGoogle(credential))}
+        onCredential={(credential) => run("google", async () => announceGoogle(await loginWithGoogle(credential), "login"))}
       />
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          run("email", () => login(form.email, form.password));
+          run("email", async () => announceLogin(await login(form.email, form.password)));
         }}
         className="space-y-4"
       >
