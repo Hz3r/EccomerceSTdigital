@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { createOrder } from "@/lib/api";
+import { apiErrorMessage, loginHref } from "@/lib/auth-redirect";
 import { formatPrice } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { ArrowLeft, Check, CheckCircle2, Loader2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { User } from "@/types";
 
 const PAYMENT_METHODS = [
   { id: "yape", label: "Yape" },
@@ -45,17 +48,36 @@ function Steps({ current }: { current: number }) {
   );
 }
 
+// Comprar requiere cuenta: sin sesión se envía al login y, al ingresar, se vuelve aquí con el carrito intacto.
 export default function CheckoutPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const needsLogin = !isLoading && !user;
+
+  useEffect(() => {
+    if (needsLogin) router.replace(loginHref("/checkout"));
+  }, [needsLogin, router]);
+
+  if (!user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  return <Checkout user={user} />;
+}
+
+function Checkout({ user }: { user: User }) {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
   const [payment, setPayment] = useState(PAYMENT_METHODS[0].id);
   const [form, setForm] = useState({
-    nombreCliente: user?.nombre || "",
-    email: user?.email || "",
+    nombreCliente: user.nombre,
+    email: user.email,
     telefono: "",
     notas: "",
   });
@@ -79,8 +101,8 @@ export default function CheckoutPage() {
       setOrderNumber(order.numeroOrden);
       setIsSuccess(true);
       clearCart();
-    } catch {
-      setError("No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos.");
+    } catch (err) {
+      setError(apiErrorMessage(err, "No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos."));
     } finally {
       setIsSubmitting(false);
     }
