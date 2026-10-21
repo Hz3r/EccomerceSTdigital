@@ -27,6 +27,19 @@ enum StatusOrden {
   CANCELADO
 }
 
+enum AudienciaNotificacion {
+  ADMIN
+  CLIENTE
+}
+
+// COMPRA: orden nueva · VENTA: orden completada · PEDIDO: avance del pedido del cliente · RESENA: reseñas
+enum TipoNotificacion {
+  COMPRA
+  VENTA
+  PEDIDO
+  RESENA
+}
+
 // ==================== USUARIO ====================
 
 model User {
@@ -42,8 +55,9 @@ model User {
   lastLoginAt  DateTime?
   creadoEn     DateTime       @default(now())
   actualizado  DateTime       @updatedAt
-  orders       Order[]
-  reviews      Review[]
+  orders        Order[]
+  reviews       Review[]
+  notifications Notification[]
 
   @@map("users")
 }
@@ -120,6 +134,7 @@ model Order {
   creadoEn      DateTime      @default(now())
   actualizado   DateTime      @updatedAt
   items         OrderItem[]
+  notifications Notification[]
 
   @@map("orders")
 }
@@ -165,4 +180,25 @@ model SiteSetting {
   actualizado DateTime @updatedAt
 
   @@map("site_settings")
+}
+
+// ==================== NOTIFICACIONES ====================
+
+// Avisos del admin (audiencia ADMIN, compartidos entre administradores) y de cada cliente (audiencia CLIENTE + userId).
+model Notification {
+  id        String                @id @default(uuid())
+  audiencia AudienciaNotificacion
+  tipo      TipoNotificacion
+  titulo    String
+  mensaje   String
+  href      String?
+  leida     Boolean               @default(false)
+  userId    String?
+  user      User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?                @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  creadoEn  DateTime              @default(now())
+
+  @@index([audiencia, userId, creadoEn])
+  @@map("notifications")
 }

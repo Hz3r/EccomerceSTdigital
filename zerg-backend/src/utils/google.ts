@@ -22,8 +22,8 @@ let cache: { keys: Map<string, KeyObject>; expiresAt: number } | null = null;
 async function getKeys(forceRefresh = false): Promise<Map<string, KeyObject>> {
   if (!forceRefresh && cache && cache.expiresAt > Date.now()) return cache.keys;
 
-  const res = await fetch(CERTS_URL);
-  if (!res.ok) throw new AppError("No se pudo contactar con Google, intenta de nuevo", 503);
+  const res = await fetch(CERTS_URL).catch(() => null);
+  if (!res?.ok) throw new AppError("No se pudo contactar con Google, intenta de nuevo", 503);
   const body = (await res.json()) as { keys: (JsonWebKeyInput["key"] & { kid: string })[] };
 
   const keys = new Map(body.keys.map((jwk) => [jwk.kid, createPublicKey({ key: jwk, format: "jwk" })]));

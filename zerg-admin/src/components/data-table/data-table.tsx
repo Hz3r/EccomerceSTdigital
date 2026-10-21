@@ -36,6 +36,10 @@ export interface DataTableProps<T> {
   actions?: DataTableAction<T>[]
   searchPlaceholder?: string
   searchKey?: string
+  /** Campos adicionales donde también se busca (ej. número de orden o correo). */
+  searchKeys?: string[]
+  /** Texto de búsqueda inicial (ej. al llegar desde una notificación). */
+  initialSearch?: string
   pageSize?: number
   emptyMessage?: string
   onSearch?: (term: string) => void
@@ -48,23 +52,28 @@ export function DataTable<T extends Record<string, unknown>>({
   actions,
   searchPlaceholder = "Buscar...",
   searchKey,
+  searchKeys,
+  initialSearch = "",
   pageSize = 10,
   emptyMessage = "No hay datos disponibles",
   onSearch,
   headerActions,
 }: DataTableProps<T>) {
-  const [search, setSearch] = React.useState("")
+  const [search, setSearch] = React.useState(initialSearch)
   const [currentPage, setCurrentPage] = React.useState(1)
   const [mobileView, setMobileView] = React.useState<"table" | "cards">("cards")
 
   const filteredData = React.useMemo(() => {
-    if (!search || !searchKey) return data
+    const keys = [searchKey, ...(searchKeys ?? [])].filter(Boolean) as string[]
+    if (!search || keys.length === 0) return data
     const term = search.toLowerCase()
-    return data.filter((item) => {
-      const value = item[searchKey]
-      return value && String(value).toLowerCase().includes(term)
-    })
-  }, [data, search, searchKey])
+    return data.filter((item) =>
+      keys.some((key) => {
+        const value = item[key]
+        return value && String(value).toLowerCase().includes(term)
+      })
+    )
+  }, [data, search, searchKey, searchKeys])
 
   const totalPages = Math.ceil(filteredData.length / pageSize)
   const paginatedData = filteredData.slice(

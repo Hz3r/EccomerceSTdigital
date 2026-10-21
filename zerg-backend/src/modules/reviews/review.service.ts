@@ -1,5 +1,8 @@
 import { getPrisma } from "../../config/database.js";
-import { NotFoundError, ConflictError, ForbiddenError } from "../../errors/appError.js";
+import { NotFoundError, ConflictError, ForbiddenError, BadRequestError } from "../../errors/appError.js";
+import { notifyAdmins, notifyUser } from "../notifications/notification.service.js";
+
+const MAX_COMMENT = 1000;
 
 export const getAll = async () => {
   return getPrisma().review.findMany({
@@ -81,6 +84,18 @@ export const create = async (data: {
   productId: string;
   userId: string;
 }) => {
+  const puntuacion = Number(data.puntuacion);
+  if (!Number.isInteger(puntuacion) || puntuacion < 1 || puntuacion > 5) {
+    throw new BadRequestError("La puntuación debe ser de 1 a 5 estrellas");
+  }
+  if (data.comentario !== undefined && data.comentario !== null && typeof data.comentario !== "string") {
+    throw new BadRequestError("El comentario debe ser texto");
+  }
+  const comentario = data.comentario?.trim() || undefined;
+  if (comentario && comentario.length > MAX_COMMENT) {
+    throw new BadRequestError(`El comentario no puede superar los ${MAX_COMMENT} caracteres`);
+  }
+
   const productExists = await getPrisma().product.findUnique({
     where: { id: data.productId },
   });
@@ -102,11 +117,30 @@ export const create = async (data: {
     throw new ConflictError("Ya has reseñado este producto");
   }
 
-  return getPrisma().review.create({
-    data,
+  const review = await getPrisma().review.create({
+    data: { puntuacion, comentario, productId: data.productId, userId: data.userId },
     include: {
       product: { select: { id: true, nombre: true } },
+      user: { select: { nombre: true } },
     },
+  });
+
+  await notifyAdmins({
+    tipo: "RESENA",
+    titulo: "Nueva reseña por aprobar",
+    mensaje: `${review.user.nombre} · ${"★".repeat(puntuacion)} · ${review.product.nombre}`,
+    href: "/reviews",
+  });
+
+  return review;
+};
+
+// Reseñas del cliente que inició sesión (también las pendientes de aprobación).
+export const getMine = async (userId: string) => {
+  return getPrisma().review.findMany({
+    where: { userId },
+    select: { id: true, productId: true, puntuacion: true, comentario: true, isApproved: true, creadoEn: true },
+    orderBy: { creadoEn: "desc" },
   });
 };
 
@@ -118,10 +152,22 @@ export const approve = async (id: string, isApproved = true) => {
     throw new NotFoundError("Reseña no encontrada");
   }
 
-  return getPrisma().review.update({
+  const updated = await getPrisma().review.update({
     where: { id },
     data: { isApproved },
+    include: { product: { select: { nombre: true, slug: true } } },
   });
+
+  if (isApproved && !review.isApproved) {
+    await notifyUser(review.userId, {
+      tipo: "RESENA",
+      titulo: "Tu reseña fue publicada",
+      mensaje: `Gracias por opinar sobre ${updated.product.nombre}.`,
+      href: `/product/${updated.product.slug}#resenas`,
+    });
+  }
+
+  return updated;
 };
 
 export const remove = async (id: string, userId?: string) => {

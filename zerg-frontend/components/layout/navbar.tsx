@@ -27,6 +27,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CategoryIcon } from "@/components/product/category-icon";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { DesktopMenu, MobileAccordion, MobileMenuItem, resolveMenu } from "@/components/layout/nav-menu";
 import { useSite } from "@/hooks/useSiteSettings";
 import { useAuth } from "@/hooks/useAuth";
@@ -156,6 +157,7 @@ export function Navbar() {
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
+          {user && <NotificationBell />}
           {!isLoading &&
             (user ? (
               <DropdownMenu>
@@ -174,8 +176,12 @@ export function Navbar() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/account" />}>
-                    <Package className="size-4" />
+                    <User className="size-4" />
                     Mi cuenta
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/account#pedidos" />}>
+                    <Package className="size-4" />
+                    Mis pedidos
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={logout}>

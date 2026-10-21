@@ -1,6 +1,12 @@
 import { vi } from "vitest";
 
 const mockPrisma = {
+  notification: {
+    create: vi.fn().mockResolvedValue({}),
+    findMany: vi.fn(),
+    groupBy: vi.fn(),
+    updateMany: vi.fn(),
+  },
   siteSetting: {
     findUnique: vi.fn(),
     upsert: vi.fn(),

@@ -58,6 +58,11 @@ describe("verifyGoogleIdToken", () => {
     await expect(verifyGoogleIdToken(googleToken({ email_verified: false }))).rejects.toMatchObject({ statusCode: 401 });
   });
 
+  it("responde 503 si no se puede contactar con Google", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("fetch failed"); }));
+    await expect(verifyGoogleIdToken(googleToken({}, { keyid: "otra-clave" }))).rejects.toMatchObject({ statusCode: 503 });
+  });
+
   it("responde 503 si Google no está configurado", async () => {
     process.env.GOOGLE_CLIENT_ID = "";
     await expect(verifyGoogleIdToken(googleToken())).rejects.toMatchObject({ statusCode: 503 });
@@ -78,19 +83,31 @@ describe("authService.google", () => {
     });
     expect(result.user.email).toBe("ana@gmail.com");
     expect(result.token).toEqual(expect.any(String));
+    expect(result.status).toBe("created");
   });
 
   it("vincula Google a una cuenta existente con el mismo correo", async () => {
     mockPrisma.user.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ ...mockUser, email: "ana@gmail.com" });
     mockPrisma.user.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ ...mockUser, ...data }));
 
-    await authService.google(googleToken());
+    const result = await authService.google(googleToken());
 
+    expect(result.status).toBe("linked");
     expect(mockPrisma.user.create).not.toHaveBeenCalled();
     expect(mockPrisma.user.update).toHaveBeenCalledWith({
       where: { id: mockUser.id },
       data: expect.objectContaining({ googleId: "google-123" }),
     });
+  });
+
+  it("indica cuando la cuenta ya existía con Google", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, googleId: "google-123" });
+    mockPrisma.user.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ ...mockUser, ...data }));
+
+    const result = await authService.google(googleToken());
+
+    expect(result.status).toBe("existing");
+    expect(mockPrisma.user.create).not.toHaveBeenCalled();
   });
 
   it("no deja entrar a una cuenta desactivada", async () => {
@@ -101,5 +118,14 @@ describe("authService.google", () => {
   it("el login con contraseña indica usar Google en cuentas creadas con Google", async () => {
     mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, passwordHash: null, googleId: "google-123" });
     await expect(authService.login({ email: "test@test.com", password: "x" })).rejects.toThrow(/Google/);
+  });
+
+  it("el registro con correo existente indica cómo entrar", async () => {
+    const dto = { nombre: "Ana", email: "test@test.com", password: "secreto123" };
+    mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+    await expect(authService.register(dto)).rejects.toMatchObject({ statusCode: 409, message: expect.stringMatching(/Inicia sesión/) });
+
+    mockPrisma.user.findUnique.mockResolvedValue({ ...mockUser, passwordHash: null, googleId: "google-123" });
+    await expect(authService.register(dto)).rejects.toThrow(/Continuar con Google/);
   });
 });

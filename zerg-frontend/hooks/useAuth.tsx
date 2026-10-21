@@ -8,10 +8,17 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (nombre: string, email: string, password: string) => Promise<void>;
-  loginWithGoogle: (credential: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (nombre: string, email: string, password: string) => Promise<User>;
+  loginWithGoogle: (credential: string) => Promise<GoogleAuthResult>;
   logout: () => void;
+}
+
+// Resultado de "Continuar con Google": cuenta nueva, cuenta que ya existía o cuenta con contraseña vinculada a Google.
+export type GoogleAuthStatus = "created" | "existing" | "linked";
+export interface GoogleAuthResult {
+  user: User;
+  status: GoogleAuthStatus;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,6 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string) => {
       const response = await api.post("/auth/login", { email, password });
       startSession(response.data.data.user, response.data.data.token);
+      return response.data.data.user as User;
     },
     [startSession]
   );
@@ -73,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (nombre: string, email: string, password: string) => {
       const response = await api.post("/auth/register", { nombre, email, password });
       startSession(response.data.data.user, response.data.data.token);
+      return response.data.data.user as User;
     },
     [startSession]
   );
@@ -81,7 +90,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(
     async (credential: string) => {
       const response = await api.post("/auth/google", { credential });
-      startSession(response.data.data.user, response.data.data.token);
+      const { user: userData, token: newToken, status } = response.data.data;
+      startSession(userData, newToken);
+      return { user: userData as User, status: (status ?? "existing") as GoogleAuthStatus };
     },
     [startSession]
   );

@@ -41,6 +41,11 @@ export const getById = async (req: AuthRequest, res: Response) => {
   });
 };
 
+export const getMine = async (req: AuthRequest, res: Response) => {
+  const reviews = await reviewService.getMine(req.user!.userId);
+  res.status(200).json({ success: true, data: reviews });
+};
+
 export const create = async (req: AuthRequest, res: Response) => {
   const { puntuacion, comentario, productId } = req.body;
   const userId = req.user?.userId as string;

@@ -3,7 +3,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { loginHref } from "@/lib/auth-redirect";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import { MyOrders } from "@/components/account/my-orders";
 import { Button } from "@/components/ui/button";
 import { Loader2, User } from "lucide-react";
 
@@ -68,6 +69,10 @@ export default function AccountPage() {
           </Button>
         </div>
       </div>
+
+      <Suspense>
+        <MyOrders />
+      </Suspense>
     </div>
   );
 }
