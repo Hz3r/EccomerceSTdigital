@@ -58,6 +58,11 @@ describe("verifyGoogleIdToken", () => {
     await expect(verifyGoogleIdToken(googleToken({ email_verified: false }))).rejects.toMatchObject({ statusCode: 401 });
   });
 
+  it("responde 503 si no se puede contactar con Google", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("fetch failed"); }));
+    await expect(verifyGoogleIdToken(googleToken({}, { keyid: "otra-clave" }))).rejects.toMatchObject({ statusCode: 503 });
+  });
+
   it("responde 503 si Google no está configurado", async () => {
     process.env.GOOGLE_CLIENT_ID = "";
     await expect(verifyGoogleIdToken(googleToken())).rejects.toMatchObject({ statusCode: 503 });

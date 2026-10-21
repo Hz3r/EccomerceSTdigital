@@ -20,6 +20,7 @@ import uploadRoutes from "./modules/upload/upload.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import settingsRoutes from "./modules/settings/settings.routes.js";
 import { AppError } from "./errors/appError.js";
+import { databaseConnectionError } from "./errors/database.js";
 import { emitOnMutation, eventsHandler } from "./realtime/events.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -99,6 +100,12 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       success: false,
       message: err.message,
     });
+    return;
+  }
+
+  const dbError = databaseConnectionError(err);
+  if (dbError) {
+    res.status(dbError.statusCode).json({ success: false, message: dbError.message });
     return;
   }
 
