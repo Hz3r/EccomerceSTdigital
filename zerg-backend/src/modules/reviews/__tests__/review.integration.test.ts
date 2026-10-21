@@ -3,6 +3,10 @@ import request from "supertest";
 import express, { type Request, type Response, type NextFunction } from "express";
 import { mockPrisma } from "../../../test/mocks/prisma.mock.js";
 import { mockReview, mockProduct } from "../../../test/fixtures/index.js";
+
+// Prisma devuelve las relaciones pedidas en `include`.
+const reviewProduct = { id: "test-product-id", nombre: "Netflix Premium", slug: "netflix-premium" };
+const createdReview = { ...mockReview, product: reviewProduct, user: { nombre: "Test User" } };
 import { AppError } from "../../../errors/appError.js";
 
 vi.mock("../../../middlewares/auth.middleware.js", () => ({
@@ -92,7 +96,7 @@ describe("Review Integration Tests", () => {
     it("debería crear una reseña correctamente", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.review.findUnique.mockResolvedValue(null);
-      mockPrisma.review.create.mockResolvedValue(mockReview);
+      mockPrisma.review.create.mockResolvedValue(createdReview);
 
       const response = await request(app)
         .post("/api/reviews")
@@ -121,7 +125,7 @@ describe("Review Integration Tests", () => {
   describe("PATCH /api/reviews/:id/approve", () => {
     it("debería aprobar una reseña", async () => {
       mockPrisma.review.findUnique.mockResolvedValue(mockReview);
-      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: true });
+      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: true, product: reviewProduct });
 
       const response = await request(app).patch("/api/reviews/test-review-id/approve");
 
@@ -131,7 +135,7 @@ describe("Review Integration Tests", () => {
 
     it("debería ocultar una reseña con isApproved=false", async () => {
       mockPrisma.review.findUnique.mockResolvedValue(mockReview);
-      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: false });
+      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: false, product: reviewProduct });
 
       const response = await request(app).patch("/api/reviews/test-review-id/approve").send({ isApproved: false });
 

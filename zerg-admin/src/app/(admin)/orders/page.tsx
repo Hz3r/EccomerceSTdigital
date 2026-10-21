@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useSearchParams } from "next/navigation"
 import { EyeIcon, Loader2, Mail, MessageCircle, TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -45,6 +46,18 @@ function StatusSelect({ order, onChange }: { order: Order; onChange: (status: St
 }
 
 export default function OrdersPage() {
+  return (
+    <React.Suspense>
+      <OrdersContent />
+    </React.Suspense>
+  )
+}
+
+const ORDER_SEARCH_KEYS = ["numeroOrden", "email"]
+
+function OrdersContent() {
+  // ?q=ORD-… llega desde una notificación: la tabla se abre ya filtrada por esa orden
+  const query = useSearchParams().get("q") ?? ""
   const [orders, setOrders] = React.useState<Order[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [filter, setFilter] = React.useState<StatusOrden | "TODAS">("TODAS")
@@ -166,10 +179,13 @@ export default function OrdersPage() {
             </div>
           ) : (
             <DataTable
+              key={query}
+              initialSearch={query}
+              searchKeys={ORDER_SEARCH_KEYS}
               data={visible as unknown as Record<string, unknown>[]}
               columns={columns as unknown as DataTableColumn<Record<string, unknown>>[]}
               actions={actions as unknown as DataTableAction<Record<string, unknown>>[]}
-              searchPlaceholder="Buscar por cliente..."
+              searchPlaceholder="Buscar por cliente, número o correo..."
               searchKey="nombreCliente"
               emptyMessage="No hay órdenes con este estado"
             />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlanSelector } from "@/components/product/plan-selector";
 import { ProductCover } from "@/components/product/product-cover";
+import { ReviewForm } from "@/components/product/review-form";
 import { Rating } from "@/components/product/rating";
 import { ProductCarousel } from "@/components/home/product-carousel";
 import { Newsletter } from "@/components/layout/newsletter";
@@ -58,8 +59,13 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [planId, setPlanId] = useState<string>();
   const [quantity, setQuantity] = useState(1);
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("descripcion");
+  // Con #resenas (desde una notificación o tras iniciar sesión para opinar) se abre esa pestaña.
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(() =>
+    typeof window !== "undefined" && window.location.hash === "#resenas" ? "resenas" : "descripcion"
+  );
   const [favorite, setFavorite] = useState(false);
+
+  const jumpedToReviews = useRef(false);
 
   // Se actualiza en vivo cuando el admin cambia el catálogo
   const liveVersion = useLiveVersion("products", "plans", "reviews");
@@ -82,7 +88,14 @@ export default function ProductDetailPage() {
           );
         }
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setIsLoading(false);
+        // El navegador no puede saltar a #resenas mientras la página carga: se hace al terminar.
+        if (!jumpedToReviews.current && window.location.hash === "#resenas") {
+          jumpedToReviews.current = true;
+          requestAnimationFrame(() => document.getElementById("resenas")?.scrollIntoView({ behavior: "smooth" }));
+        }
+      });
   }, [slug, liveVersion]);
 
   const plans = useMemo(() => (product ? activePlans(product) : []), [product]);
@@ -266,7 +279,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Pestañas */}
-      <section className="mt-14 border-t bg-muted/40">
+      <section id="resenas" className="mt-14 scroll-mt-28 border-t bg-muted/40">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div role="tablist" className="scrollbar-none -mx-4 flex overflow-x-auto px-4 md:mx-0 md:px-0">
             {TABS.map((t) => (
@@ -329,9 +342,11 @@ export default function ProductDetailPage() {
               </ol>
             )}
 
-            {tab === "resenas" &&
-              (reviews.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aún no hay reseñas para este producto.</p>
+            {tab === "resenas" && (
+              <div className="space-y-6">
+                <ReviewForm productId={product.id} slug={product.slug} />
+                {reviews.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aún no hay reseñas publicadas para este producto.</p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-3">
                   {reviews.map((r) => (
@@ -347,7 +362,9 @@ export default function ProductDetailPage() {
                     </figure>
                   ))}
                 </div>
-              ))}
+              )}
+              </div>
+            )}
 
             {tab === "preguntas" && (
               <div className="max-w-3xl divide-y rounded-2xl border">

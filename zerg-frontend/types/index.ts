@@ -93,6 +93,25 @@ export interface Review {
   actualizado: string;
 }
 
+export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA";
+
+export interface AppNotification {
+  id: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  href?: string | null;
+  leida: boolean;
+  orderId?: string | null;
+  creadoEn: string;
+}
+
+export interface NotificationList {
+  items: AppNotification[];
+  unread: number;
+  unreadByTipo: Record<TipoNotificacion, number>;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;

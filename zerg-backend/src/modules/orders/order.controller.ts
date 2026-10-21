@@ -11,9 +11,18 @@ export const getAll = async (_req: AuthRequest, res: Response) => {
   });
 };
 
+export const getMine = async (req: AuthRequest, res: Response) => {
+  const orders = await orderService.getMine(req.user!.userId);
+
+  res.status(200).json({
+    success: true,
+    data: orders,
+  });
+};
+
 export const getById = async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
-  const order = await orderService.getById(id);
+  const order = await orderService.getById(id, req.user);
 
   res.status(200).json({
     success: true,

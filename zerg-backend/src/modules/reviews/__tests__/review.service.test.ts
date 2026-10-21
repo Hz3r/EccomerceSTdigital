@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { mockPrisma } from "../../../test/mocks/prisma.mock.js";
 import { mockReview, mockProduct, mockUser } from "../../../test/fixtures/index.js";
+
+// Prisma devuelve las relaciones pedidas en `include`.
+const reviewProduct = { id: "test-product-id", nombre: "Netflix Premium", slug: "netflix-premium" };
+const createdReview = { ...mockReview, product: reviewProduct, user: { nombre: "Test User" } };
 import * as reviewService from "../review.service.js";
 
 describe("Review Service", () => {
@@ -75,7 +79,7 @@ describe("Review Service", () => {
     it("debería crear una reseña correctamente", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.review.findUnique.mockResolvedValue(null);
-      mockPrisma.review.create.mockResolvedValue(mockReview);
+      mockPrisma.review.create.mockResolvedValue(createdReview);
 
       const result = await reviewService.create({
         puntuacion: 5,
@@ -84,7 +88,17 @@ describe("Review Service", () => {
         userId: "test-user-id",
       });
 
-      expect(result).toEqual(mockReview);
+      expect(result).toEqual(createdReview);
+      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ audiencia: "ADMIN", tipo: "RESENA", titulo: "Nueva reseña por aprobar" }),
+      });
+    });
+
+    it("debería rechazar puntuaciones fuera de 1 a 5", async () => {
+      await expect(
+        reviewService.create({ puntuacion: 6, productId: "test-product-id", userId: "test-user-id" })
+      ).rejects.toThrow("La puntuación debe ser de 1 a 5 estrellas");
+      expect(mockPrisma.review.create).not.toHaveBeenCalled();
     });
 
     it("debería lanzar error si el producto no existe", async () => {
@@ -116,11 +130,14 @@ describe("Review Service", () => {
   describe("approve", () => {
     it("debería aprobar una reseña", async () => {
       mockPrisma.review.findUnique.mockResolvedValue(mockReview);
-      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: true });
+      mockPrisma.review.update.mockResolvedValue({ ...mockReview, isApproved: true, product: reviewProduct });
 
       const result = await reviewService.approve("test-review-id");
 
       expect(result.isApproved).toBe(true);
+      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ audiencia: "CLIENTE", userId: "test-user-id", tipo: "RESENA", titulo: "Tu reseña fue publicada" }),
+      });
     });
 
     it("debería lanzar error si la reseña no existe", async () => {

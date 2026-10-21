@@ -11,6 +11,7 @@ router.get("/product/:productId", reviewController.getByProduct);
 router.use(authMiddleware);
 
 router.get("/", roleMiddleware("ADMIN"), reviewController.getAll);
+router.get("/mine", reviewController.getMine);
 router.get("/:id", reviewController.getById);
 router.post("/", reviewController.create);
 router.patch("/:id/approve", roleMiddleware("ADMIN"), reviewController.approve);
