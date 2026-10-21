@@ -1,6 +1,7 @@
 import { getPrisma } from "../../config/database.js";
 import { hashPassword, comparePassword } from "../../utils/hash.js";
 import { generateToken } from "../../utils/token.js";
+import { verifyGoogleIdToken } from "../../utils/google.js";
 import {
   ConflictError,
   UnauthorizedError,
@@ -50,8 +51,15 @@ export const login = async (dto: LoginDTO) => {
     where: { email: dto.email },
   });
 
-  if (!user || !user.passwordHash) {
+  if (!user) {
     throw new UnauthorizedError("Credenciales inválidas");
+  }
+
+  // Cuenta creada con Google: no tiene contraseña propia.
+  if (!user.passwordHash) {
+    throw new UnauthorizedError(
+      user.googleId ? "Esta cuenta se creó con Google. Usa “Continuar con Google”." : "Credenciales inválidas"
+    );
   }
 
   if (!user.isActive) {
@@ -83,6 +91,59 @@ export const login = async (dto: LoginDTO) => {
       rol: user.rol,
       avatarUrl: user.avatarUrl,
       lastLoginAt: new Date(),
+    },
+    token,
+  };
+};
+
+// Ingreso o registro con Google. Si ya existe una cuenta con ese correo se vincula a Google
+// (Google confirma que el correo es del usuario), si no se crea una cuenta nueva.
+export const google = async (credential: string) => {
+  const profile = await verifyGoogleIdToken(credential);
+  const prisma = getPrisma();
+
+  let user =
+    (await prisma.user.findUnique({ where: { googleId: profile.googleId } })) ??
+    (await prisma.user.findUnique({ where: { email: profile.email } }));
+
+  if (user && !user.isActive) {
+    throw new UnauthorizedError("Cuenta desactivada");
+  }
+
+  const now = new Date();
+  if (user) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        googleId: profile.googleId,
+        avatarUrl: user.avatarUrl ?? profile.avatarUrl,
+        lastLoginAt: now,
+      },
+    });
+  } else {
+    user = await prisma.user.create({
+      data: {
+        nombre: profile.nombre,
+        email: profile.email,
+        googleId: profile.googleId,
+        proveedor: "GOOGLE",
+        avatarUrl: profile.avatarUrl,
+        lastLoginAt: now,
+      },
+    });
+  }
+
+  const token = generateToken({ userId: user.id, email: user.email, rol: user.rol });
+
+  return {
+    user: {
+      id: user.id,
+      nombre: user.nombre,
+      email: user.email,
+      rol: user.rol,
+      avatarUrl: user.avatarUrl,
+      lastLoginAt: user.lastLoginAt,
+      creadoEn: user.creadoEn,
     },
     token,
   };

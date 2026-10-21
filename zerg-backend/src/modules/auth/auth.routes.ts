@@ -6,6 +6,8 @@ const router: RouterType = Router();
 
 router.post("/register", authController.register);
 router.post("/login", authController.login);
+router.post("/google", authController.google);
+router.get("/google/config", authController.googleConfig);
 router.get("/profile", authMiddleware, authController.getProfile);
 
 export default router;

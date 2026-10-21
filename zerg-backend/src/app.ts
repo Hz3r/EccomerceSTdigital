@@ -77,9 +77,11 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use(emitOnMutation);
 
-// El límite estricto es solo para intentos de acceso (login y registro);
+// El límite estricto es solo para intentos de acceso (login, registro y Google);
 // /auth/profile se consulta en cada carga de página y no debe cerrar la sesión.
-app.use(["/api/auth/login", "/api/auth/register"], authLimiter);
+app.use(["/api/auth/login", "/api/auth/register", "/api/auth/google"], (req, res, next) =>
+  req.method === "POST" ? authLimiter(req, res, next) : next()
+);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
