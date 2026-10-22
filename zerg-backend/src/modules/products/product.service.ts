@@ -27,6 +27,8 @@ const productDetailInclude = {
       id: true,
       puntuacion: true,
       comentario: true,
+      respuesta: true,
+      respondidoEn: true,
       isApproved: true,
       creadoEn: true,
       user: { select: { id: true, nombre: true } },

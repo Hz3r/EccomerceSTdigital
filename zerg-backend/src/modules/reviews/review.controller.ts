@@ -76,6 +76,15 @@ export const approve = async (req: AuthRequest, res: Response) => {
   });
 };
 
+export const reply = async (req: AuthRequest, res: Response) => {
+  const review = await reviewService.reply(req.params.id as string, (req.body as { respuesta?: unknown } | undefined)?.respuesta);
+  res.status(200).json({
+    success: true,
+    message: review.respuesta ? "Respuesta publicada" : "Respuesta eliminada",
+    data: review,
+  });
+};
+
 export const remove = async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const userId = req.user?.rol === "ADMIN" ? undefined : req.user?.userId;

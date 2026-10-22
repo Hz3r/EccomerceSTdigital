@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 import { Rating } from "@/components/product/rating";
 import { useAuth } from "@/hooks/useAuth";
+import { useSite } from "@/hooks/useSiteSettings";
 import api from "@/lib/axios";
 import { USE_MOCKS } from "@/lib/api";
 import { useLiveVersion } from "@/lib/live";
@@ -21,7 +22,19 @@ interface MyReview {
   productId: string;
   puntuacion: number;
   comentario?: string | null;
+  respuesta?: string | null;
   isApproved: boolean;
+}
+
+// Respuesta pública de la tienda bajo una reseña.
+export function StoreReply({ text }: { text: string }) {
+  const { settings } = useSite();
+  return (
+    <div className="mt-4 rounded-xl border-l-2 border-brand bg-muted/60 px-3 py-2.5">
+      <p className="text-xs font-semibold">Respuesta de {settings.marca.nombre}</p>
+      <p className="mt-0.5 text-sm whitespace-pre-line text-muted-foreground">{text}</p>
+    </div>
+  );
 }
 
 // Escribir una reseña requiere sesión (una por producto; se publica cuando el admin la aprueba).
@@ -89,6 +102,7 @@ export function ReviewForm({ productId, slug }: { productId: string; slug: strin
         </div>
         <Rating value={mine.puntuacion} className="mt-2" />
         {mine.comentario && <p className="mt-2 text-sm">“{mine.comentario}”</p>}
+        {mine.respuesta && <StoreReply text={mine.respuesta} />}
       </div>
     );
   }
