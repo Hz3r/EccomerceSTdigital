@@ -43,7 +43,7 @@ describe("Order Integration Tests", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual([mockOrder]);
+      expect(response.body.data).toEqual([{ ...mockOrder, payment: null }]);
     });
   });
 

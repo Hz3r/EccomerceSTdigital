@@ -19,7 +19,7 @@ describe("Order Service", () => {
 
       const result = await orderService.getAll();
 
-      expect(result).toEqual([orderFull]);
+      expect(result).toEqual([{ ...orderFull, payment: null }]);
       expect(mockPrisma.order.findMany).toHaveBeenCalled();
     });
   });

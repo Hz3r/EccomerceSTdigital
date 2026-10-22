@@ -19,6 +19,9 @@ const grupoMenu = { titulo: "", enlaces: listOf(enlaceMenu) };
 const itemMenu = { etiqueta: "", categoria: "", url: "", desplegable: false, grupos: listOf(grupoMenu) };
 const categoriaMenu = (categoria: string) => ({ ...itemMenu, categoria, grupos: [] });
 
+// Cuenta bancaria para el pago directo por transferencia.
+const cuentaBancaria = { banco: "", titular: "", numero: "", cci: "" };
+
 // Plataformas de la marquesina: nombre y, si tiene, logo (se muestra la imagen en lugar del texto).
 const plataforma = { nombre: "", logoUrl: "" };
 
@@ -101,6 +104,22 @@ export const defaultSettings = {
       creceConZerg: true,
       boletin: true,
     },
+  },
+  pagos: {
+    // Pago directo: Yape, Plin o transferencia; el cliente sube el comprobante y el admin lo confirma.
+    directo: {
+      activo: true,
+      titular: "",
+      yape: "",
+      plin: "",
+      // Imagen del QR de Yape/Plin (subida desde el admin)
+      qrUrl: "",
+      instrucciones:
+        "Paga el monto exacto y sube la captura del pago con el número de operación. Lo confirmamos en minutos y te enviamos tus accesos.",
+      cuentas: listOf(cuentaBancaria),
+    },
+    // Soles por 1 USDT para cobrar con Binance Pay (los precios de la tienda están en soles).
+    tipoCambioUsdt: 3.75,
   },
   contacto: {
     whatsapp: "",

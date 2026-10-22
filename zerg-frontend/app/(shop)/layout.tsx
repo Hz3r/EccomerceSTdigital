@@ -6,6 +6,7 @@ import { SiteSettingsProvider } from "@/hooks/useSiteSettings";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toast";
+import { SupportWidget } from "@/components/support/support-widget";
 
 export default function ShopLayout({
   children,
@@ -22,6 +23,7 @@ export default function ShopLayout({
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <SupportWidget />
           </CartProvider>
         </AuthProvider>
       </SiteSettingsProvider>

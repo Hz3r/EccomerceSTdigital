@@ -63,6 +63,26 @@ export interface OrderItem {
   creadoEn: string;
 }
 
+export type MetodoPago = "DIRECTO" | "IZIPAY" | "BINANCE_PAY";
+export type EstadoPago = "PENDIENTE" | "EN_REVISION" | "PAGADO" | "RECHAZADO";
+
+export interface Payment {
+  id: string;
+  metodo: MetodoPago;
+  estado: EstadoPago;
+  monto: number | string;
+  referencia?: string | null;
+  motivoRechazo?: string | null;
+  tieneComprobante?: boolean;
+  actualizado?: string;
+}
+
+export interface PaymentMethodOption {
+  metodo: MetodoPago;
+  label: string;
+  disponible: boolean;
+}
+
 export interface Order {
   id: string;
   numeroOrden: string;
@@ -76,6 +96,8 @@ export interface Order {
   userId?: string;
   user?: User;
   items?: OrderItem[];
+  metodoPago?: MetodoPago | null;
+  payment?: Payment | null;
   creadoEn: string;
   actualizado: string;
 }
@@ -95,7 +117,7 @@ export interface Review {
   actualizado: string;
 }
 
-export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA";
+export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA" | "PAGO" | "MENSAJE";
 
 export interface AppNotification {
   id: string;

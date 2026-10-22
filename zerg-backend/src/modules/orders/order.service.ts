@@ -2,6 +2,24 @@ import { getPrisma } from "../../config/database.js";
 import { NotFoundError, BadRequestError } from "../../errors/appError.js";
 import { notifyAdmins, notifyUser } from "../notifications/notification.service.js";
 import type { TokenPayload } from "../../utils/token.js";
+import type { MetodoPago } from "@prisma/client";
+import { assertAvailable, createPending } from "../payments/payment.service.js";
+
+// Último intento de pago de cada orden (estado, método y referencia; nunca el archivo del comprobante).
+const latestPayment = {
+  select: { id: true, metodo: true, estado: true, monto: true, referencia: true, motivoRechazo: true, comprobante: true, actualizado: true },
+  orderBy: { creadoEn: "desc" as const },
+  take: 1,
+};
+
+// Hacia fuera solo se indica si hay comprobante (el archivo es privado y se pide por /payments/:id/proof).
+function withPublicPayment<T extends { payments?: { comprobante: string | null }[] }>(order: T) {
+  const { payments, ...rest } = order;
+  const last = payments?.[0];
+  if (!last) return { ...rest, payment: null };
+  const { comprobante, ...payment } = last;
+  return { ...rest, payment: { ...payment, tieneComprobante: Boolean(comprobante) } };
+}
 
 const money = (value: unknown) => `S/ ${Number(value).toFixed(2)}`;
 
@@ -29,7 +47,7 @@ const STATUS_COPY: Record<string, { titulo: string; mensaje: (numero: string) =>
 };
 
 export const getAll = async () => {
-  return getPrisma().order.findMany({
+  const orders = await getPrisma().order.findMany({
     include: {
       items: {
         include: {
@@ -41,18 +59,21 @@ export const getAll = async () => {
       user: {
         select: { id: true, nombre: true, email: true },
       },
+      payments: latestPayment,
     },
     orderBy: { creadoEn: "desc" },
   });
+  return orders.map(withPublicPayment);
 };
 
 // Pedidos del cliente que inició sesión (más recientes primero).
 export const getMine = async (userId: string) => {
-  return getPrisma().order.findMany({
+  const orders = await getPrisma().order.findMany({
     where: { userId },
-    include: { items: itemsWithProduct },
+    include: { items: itemsWithProduct, payments: latestPayment },
     orderBy: { creadoEn: "desc" },
   });
+  return orders.map(withPublicPayment);
 };
 
 // Un admin ve cualquier orden; un cliente solo las suyas (las ajenas responden "no encontrada").
@@ -81,11 +102,14 @@ export const create = async (data: {
   whatsappLink?: string;
   notas?: string;
   userId?: string;
+  metodoPago?: MetodoPago;
   items: { planId: string; cantidad: number }[];
 }) => {
   if (!data.items || data.items.length === 0) {
     throw new BadRequestError("La orden debe tener al menos un item");
   }
+  const metodoPago = data.metodoPago ?? "DIRECTO";
+  await assertAvailable(metodoPago);
 
   let total = 0;
   const orderItems = [];
@@ -124,6 +148,7 @@ export const create = async (data: {
       whatsappLink: data.whatsappLink,
       notas: data.notas,
       userId: data.userId,
+      metodoPago,
       total,
       items: {
         create: orderItems,
@@ -137,6 +162,8 @@ export const create = async (data: {
       },
     },
   });
+
+  await createPending(order.id, metodoPago, order.total);
 
   await notifyAdmins({
     tipo: "COMPRA",

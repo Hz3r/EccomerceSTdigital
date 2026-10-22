@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { BadgeDollarSign, BellIcon, CheckCheck, MessageSquareQuote, ShoppingCartIcon } from "lucide-react"
+import { BadgeDollarSign, BellIcon, CheckCheck, CreditCard, MessageSquareQuote, MessagesSquare, ShoppingCartIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover"
 import api from "@/lib/axios"
@@ -12,13 +12,15 @@ import { timeAgo } from "@/lib/time"
 import { cn } from "@/lib/utils"
 import type { AdminStats, AppNotification, NotificationList, TipoNotificacion } from "@/types"
 
-type Tab = "TODAS" | Extract<TipoNotificacion, "COMPRA" | "VENTA" | "RESENA">
+type Tab = "TODAS" | Extract<TipoNotificacion, "COMPRA" | "PAGO" | "VENTA" | "RESENA" | "MENSAJE">
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "TODAS", label: "Todas" },
   { id: "COMPRA", label: "Compras" },
+  { id: "PAGO", label: "Pagos" },
   { id: "VENTA", label: "Ventas" },
   { id: "RESENA", label: "Reseñas" },
+  { id: "MENSAJE", label: "Mensajes" },
 ]
 
 const ICONS: Record<TipoNotificacion, typeof BellIcon> = {
@@ -26,13 +28,17 @@ const ICONS: Record<TipoNotificacion, typeof BellIcon> = {
   VENTA: BadgeDollarSign,
   PEDIDO: ShoppingCartIcon,
   RESENA: MessageSquareQuote,
+  PAGO: CreditCard,
+  MENSAJE: MessagesSquare,
 }
 
 const EMPTY: Record<Tab, string> = {
-  TODAS: "Aquí aparecerán las nuevas compras, ventas y reseñas.",
+  TODAS: "Aquí aparecerán las compras, pagos, ventas, reseñas y mensajes.",
   COMPRA: "Cuando un cliente compre, verás aquí la orden.",
   VENTA: "Las órdenes que marques como completadas aparecerán aquí.",
   RESENA: "Las reseñas nuevas por aprobar aparecerán aquí.",
+  PAGO: "Comprobantes por revisar y pagos confirmados aparecerán aquí.",
+  MENSAJE: "Los chats nuevos de la tienda aparecerán aquí.",
 }
 
 // Campana del panel: órdenes de compra nuevas, ventas completadas y reseñas, con leídas/no leídas y en vivo.
@@ -124,7 +130,7 @@ export function NotificationBell() {
           )}
         </div>
 
-        <div role="tablist" aria-label="Tipo de notificación" className="flex gap-1 border-b px-3 pb-2">
+        <div role="tablist" aria-label="Tipo de notificación" className="scrollbar-none flex gap-1 overflow-x-auto border-b px-3 pb-2">
           {TABS.map((t) => (
             <button
               key={t.id}
@@ -133,7 +139,7 @@ export function NotificationBell() {
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
+                "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors",
                 tab === t.id ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground"
               )}
             >

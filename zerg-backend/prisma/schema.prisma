@@ -33,11 +33,44 @@ enum AudienciaNotificacion {
 }
 
 // COMPRA: orden nueva · VENTA: orden completada · PEDIDO: avance del pedido del cliente · RESENA: reseñas
+// PAGO: comprobantes y confirmaciones de pago · MENSAJE: chat de soporte
 enum TipoNotificacion {
   COMPRA
   VENTA
   PEDIDO
   RESENA
+  PAGO
+  MENSAJE
+}
+
+// DIRECTO: Yape, Plin o transferencia con comprobante (lo revisa el admin)
+enum MetodoPago {
+  DIRECTO
+  IZIPAY
+  BINANCE_PAY
+}
+
+enum EstadoPago {
+  PENDIENTE
+  EN_REVISION
+  PAGADO
+  RECHAZADO
+}
+
+enum EstadoConversacion {
+  ABIERTA
+  CERRADA
+}
+
+// WEB: chat de la tienda · WHATSAPP: reservado para conectar la API de WhatsApp más adelante
+enum CanalConversacion {
+  WEB
+  WHATSAPP
+}
+
+enum AutorMensaje {
+  CLIENTE
+  ADMIN
 }
 
 // ==================== USUARIO ====================
@@ -58,6 +91,7 @@ model User {
   orders        Order[]
   reviews       Review[]
   notifications Notification[]
+  conversations Conversation[]
 
   @@map("users")
 }
@@ -133,8 +167,10 @@ model Order {
   user          User?         @relation(fields: [userId], references: [id])
   creadoEn      DateTime      @default(now())
   actualizado   DateTime      @updatedAt
+  metodoPago    MetodoPago?
   items         OrderItem[]
   notifications Notification[]
+  payments      Payment[]
 
   @@map("orders")
 }
@@ -204,4 +240,66 @@ model Notification {
 
   @@index([audiencia, userId, creadoEn])
   @@map("notifications")
+}
+
+// ==================== PAGOS ====================
+
+// Un intento de pago de una orden. El pago directo lo confirma el admin; Izipay y Binance Pay, su webhook.
+model Payment {
+  id             String     @id @default(uuid())
+  orderId        String
+  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  metodo         MetodoPago
+  estado         EstadoPago @default(PENDIENTE)
+  monto          Decimal    @db.Decimal(10, 2)
+  moneda         String     @default("PEN")
+  // N.º de operación (Yape/Plin/transferencia) o id de transacción del proveedor
+  referencia     String?
+  // Archivo privado del comprobante (no se sirve en /api/uploads)
+  comprobante    String?
+  motivoRechazo  String?
+  // Respuesta del proveedor (sin datos de tarjeta), para auditoría
+  detalle        Json?
+  creadoEn       DateTime   @default(now())
+  actualizado    DateTime   @updatedAt
+
+  @@index([orderId])
+  @@map("payments")
+}
+
+// ==================== CHAT DE SOPORTE ====================
+
+// Conversación iniciada desde la tienda (con o sin cuenta). `tema` es la "entrada" elegida por el cliente.
+model Conversation {
+  id              String             @id @default(uuid())
+  tema            String
+  nombre          String
+  email           String?
+  telefono        String?
+  canal           CanalConversacion  @default(WEB)
+  estado          EstadoConversacion @default(ABIERTA)
+  userId          String?
+  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // Hash del token que guarda el navegador del visitante para volver a su chat
+  tokenHash       String             @unique
+  noLeidasAdmin   Int                @default(0)
+  noLeidasCliente Int                @default(0)
+  ultimoMensajeEn DateTime           @default(now())
+  messages        Message[]
+  creadoEn        DateTime           @default(now())
+
+  @@index([estado, ultimoMensajeEn])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  autor          AutorMensaje
+  texto          String
+  creadoEn       DateTime     @default(now())
+
+  @@index([conversationId, creadoEn])
+  @@map("messages")
 }

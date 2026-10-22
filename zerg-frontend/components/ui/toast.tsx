@@ -19,7 +19,7 @@ export function Toaster({ children }: { children: React.ReactNode }) {
     <Toast.Provider toastManager={toastManager} timeout={6000}>
       {children}
       <Toast.Portal>
-        <Toast.Viewport className="fixed right-4 bottom-4 z-[100] flex w-[calc(100vw-2rem)] flex-col gap-2 outline-none sm:right-6 sm:bottom-6 sm:w-[24rem]">
+        <Toast.Viewport className="fixed right-4 bottom-24 z-[100] flex w-[calc(100vw-2rem)] flex-col gap-2 outline-none sm:right-6 sm:bottom-26 sm:w-[24rem]">
           <ToastList />
         </Toast.Viewport>
       </Toast.Portal>

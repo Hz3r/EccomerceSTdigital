@@ -66,14 +66,29 @@ export default function ProductDetailPage() {
   const [favorite, setFavorite] = useState(false);
 
   const jumpedToReviews = useRef(false);
+  // Error al cargar (servidor caído o desactualizado) ≠ producto inexistente (404)
+  const [loadError, setLoadError] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   // Se actualiza en vivo cuando el admin cambia el catálogo
   const liveVersion = useLiveVersion("products", "plans", "reviews");
 
   useEffect(() => {
     if (!slug) return;
-    Promise.all([getProductBySlug(slug).catch(() => null), getProducts().catch(() => [])])
-      .then(([prod, all]) => {
+    Promise.all([
+      getProductBySlug(slug).then(
+        (prod) => ({ prod, error: "" }),
+        (err: { response?: { status?: number; data?: { message?: string } } }) => ({
+          prod: null,
+          error: err.response?.status === 404 ? "" : err.response?.data?.message ?? "No hay conexión con la tienda.",
+        })
+      ),
+      getProducts().catch(() => []),
+    ])
+      .then(([{ prod, error }, all]) => {
+        setLoadError(error);
+        // Si falla una actualización en vivo se mantiene lo que ya se mostraba
+        if (error) return;
         setProduct(prod);
         if (prod) {
           // Conserva el plan elegido si sigue disponible tras una actualización en vivo
@@ -96,7 +111,7 @@ export default function ProductDetailPage() {
           requestAnimationFrame(() => document.getElementById("resenas")?.scrollIntoView({ behavior: "smooth" }));
         }
       });
-  }, [slug, liveVersion]);
+  }, [slug, liveVersion, attempt]);
 
   const plans = useMemo(() => (product ? activePlans(product) : []), [product]);
   const reviews = useMemo(() => (product?.reviews ?? []).filter((r) => r.isApproved), [product]);
@@ -120,6 +135,29 @@ export default function ProductDetailPage() {
             <div className="h-4 w-1/2 rounded bg-muted" />
             <div className="h-64 rounded-3xl bg-muted" />
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product && loadError) {
+    return (
+      <div className="mx-auto flex max-w-7xl flex-col items-center px-4 py-24 text-center md:px-6">
+        <p className="text-2xl font-extrabold">No pudimos cargar el producto</p>
+        <p className="mt-2 text-sm text-muted-foreground">{loadError}</p>
+        <div className="mt-6 flex gap-2">
+          <Button
+            className="rounded-lg"
+            onClick={() => {
+              setIsLoading(true);
+              setAttempt((a) => a + 1);
+            }}
+          >
+            Reintentar
+          </Button>
+          <Button variant="outline" className="rounded-lg" render={<Link href="/products" />} nativeButton={false}>
+            Ver catálogo
+          </Button>
         </div>
       </div>
     );

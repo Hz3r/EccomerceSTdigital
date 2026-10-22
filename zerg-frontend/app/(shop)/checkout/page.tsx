@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { createOrder } from "@/lib/api";
+import { USE_MOCKS, createOrder, getPaymentMethods } from "@/lib/api";
+import { MethodPicker } from "@/components/payments/method-picker";
 import { apiErrorMessage, loginHref } from "@/lib/auth-redirect";
 import { formatPrice } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
@@ -14,14 +15,8 @@ import { Label } from "@/components/ui/label";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { ArrowLeft, Check, CheckCircle2, Loader2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { User } from "@/types";
+import type { MetodoPago, PaymentMethodOption, User } from "@/types";
 
-const PAYMENT_METHODS = [
-  { id: "yape", label: "Yape" },
-  { id: "plin", label: "Plin" },
-  { id: "tarjeta", label: "Tarjeta" },
-  { id: "paypal", label: "PayPal" },
-];
 
 const STEPS = ["Carrito", "Datos y pago", "Confirmación"];
 
@@ -74,7 +69,18 @@ function Checkout({ user }: { user: User }) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
-  const [payment, setPayment] = useState(PAYMENT_METHODS[0].id);
+  const router = useRouter();
+  const [methods, setMethods] = useState<PaymentMethodOption[] | null>(null);
+  const [payment, setPayment] = useState<MetodoPago | null>(null);
+
+  useEffect(() => {
+    getPaymentMethods()
+      .then((list) => {
+        setMethods(list);
+        setPayment((current) => current ?? list.find((m) => m.disponible)?.metodo ?? null);
+      })
+      .catch(() => setMethods([]));
+  }, []);
   const [form, setForm] = useState({
     nombreCliente: user.nombre,
     email: user.email,
@@ -85,22 +91,30 @@ function Checkout({ user }: { user: User }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+    if (!payment) {
+      setError("Elige un método de pago.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
     try {
-      const paymentLabel = PAYMENT_METHODS.find((m) => m.id === payment)?.label;
       const order = await createOrder({
         ...form,
-        notas: [`Método de pago: ${paymentLabel}`, form.notas].filter(Boolean).join(" · "),
+        metodoPago: payment,
         items: items.map((i) => ({
           planId: i.planId,
           cantidad: i.cantidad,
         })),
       });
-      setOrderNumber(order.numeroOrden);
-      setIsSuccess(true);
       clearCart();
+      // Con el pedido creado se pasa a pagarlo (instrucciones, comprobante, tarjeta o Binance)
+      if (USE_MOCKS) {
+        setOrderNumber(order.numeroOrden);
+        setIsSuccess(true);
+      } else {
+        router.push(`/pago/${order.numeroOrden}`);
+      }
     } catch (err) {
       setError(apiErrorMessage(err, "No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos."));
     } finally {
@@ -199,24 +213,16 @@ function Checkout({ user }: { user: User }) {
 
           <section className="rounded-3xl border bg-card p-6">
             <h2 className="font-bold">Método de pago</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">Te enviaremos las instrucciones al confirmar.</p>
-            <div role="radiogroup" aria-label="Método de pago" className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {PAYMENT_METHODS.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={payment === m.id}
-                  onClick={() => setPayment(m.id)}
-                  className={cn(
-                    "flex h-14 items-center justify-center rounded-xl border text-sm font-bold transition-all",
-                    payment === m.id ? "border-brand-strong bg-brand-mint ring-3 ring-brand/20" : "hover:border-foreground/25"
-                  )}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">En el siguiente paso verás cómo pagar.</p>
+            {methods === null ? (
+              <div className="mt-5 space-y-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
+                ))}
+              </div>
+            ) : (
+              <MethodPicker methods={methods} value={payment} onChange={setPayment} className="mt-5" />
+            )}
           </section>
 
           {error && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
