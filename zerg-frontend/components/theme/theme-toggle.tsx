@@ -74,6 +74,8 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       type="button"
+      // Evita que un doble clic rápido seleccione texto de la página
+      onMouseDown={(e) => e.detail > 1 && e.preventDefault()}
       onClick={(e) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setTheme(next, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
@@ -81,7 +83,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={theme === "dark" ? "Cambiar a tema claro" : "Cambiar a tema oscuro"}
       title={theme === "dark" ? "Tema claro" : "Tema oscuro"}
       className={cn(
-        "inline-flex size-10 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-muted",
+        "inline-flex size-10 items-center justify-center rounded-lg text-foreground transition-colors select-none hover:bg-muted",
         className
       )}
     >
