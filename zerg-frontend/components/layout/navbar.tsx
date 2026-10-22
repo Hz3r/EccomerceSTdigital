@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
   LogOut,
   Menu,
   Package,
-  Search,
   ShoppingCart,
   Tag,
   User,
@@ -27,46 +26,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CategoryIcon } from "@/components/product/category-icon";
+import { SearchBox } from "@/components/layout/search-box";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { DesktopMenu, MobileAccordion, MobileMenuItem, resolveMenu } from "@/components/layout/nav-menu";
 import { useSite } from "@/hooks/useSiteSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { cn } from "@/lib/utils";
-
-function SearchBar({ className, inputRef }: { className?: string; inputRef?: React.Ref<HTMLInputElement> }) {
-  const router = useRouter();
-  const { header } = useSite().settings;
-  const [query, setQuery] = useState("");
-
-  return (
-    <form
-      role="search"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const q = query.trim();
-        router.push(q ? `/products?q=${encodeURIComponent(q)}` : "/products");
-      }}
-      className={cn(
-        "group flex h-11 items-center gap-2 rounded-xl border border-transparent bg-muted px-3.5 transition-colors focus-within:border-brand/50 focus-within:bg-background focus-within:ring-3 focus-within:ring-brand/15",
-        className
-      )}
-    >
-      <Search className="size-4 shrink-0 text-muted-foreground" />
-      <input
-        ref={inputRef}
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={header.buscadorPlaceholder}
-        className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-      />
-      <kbd className="hidden items-center gap-0.5 rounded-md border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground lg:inline-flex">
-        Ctrl K
-      </kbd>
-    </form>
-  );
-}
 
 export function Navbar() {
   const { user, isLoading, logout } = useAuth();
@@ -153,7 +119,7 @@ export function Navbar() {
 
         <Logo className="h-8 md:h-10" priority />
 
-        <SearchBar className="hidden max-w-xl flex-1 md:flex" inputRef={searchRef} />
+        <SearchBox className="hidden max-w-xl flex-1 md:block" inputRef={searchRef} />
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
@@ -235,7 +201,7 @@ export function Navbar() {
       </div>
 
       <div className="px-4 pb-3 md:hidden">
-        <SearchBar />
+        <SearchBox />
       </div>
 
       <nav className="hidden border-t md:block" aria-label="Categorías">
