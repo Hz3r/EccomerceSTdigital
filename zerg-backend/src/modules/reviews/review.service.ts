@@ -139,7 +139,16 @@ export const create = async (data: {
 export const getMine = async (userId: string) => {
   return getPrisma().review.findMany({
     where: { userId },
-    select: { id: true, productId: true, puntuacion: true, comentario: true, isApproved: true, creadoEn: true },
+    select: {
+      id: true,
+      productId: true,
+      puntuacion: true,
+      comentario: true,
+      respuesta: true,
+      respondidoEn: true,
+      isApproved: true,
+      creadoEn: true,
+    },
     orderBy: { creadoEn: "desc" },
   });
 };
@@ -163,6 +172,43 @@ export const approve = async (id: string, isApproved = true) => {
       tipo: "RESENA",
       titulo: "Tu reseña fue publicada",
       mensaje: `Gracias por opinar sobre ${updated.product.nombre}.`,
+      href: `/product/${updated.product.slug}#resenas`,
+    });
+  }
+
+  return updated;
+};
+
+// Respuesta pública de la tienda a una reseña. Texto vacío = quitar la respuesta.
+export const reply = async (id: string, respuesta: unknown) => {
+  if (respuesta !== null && respuesta !== undefined && typeof respuesta !== "string") {
+    throw new BadRequestError("La respuesta debe ser texto");
+  }
+  const texto = respuesta?.trim() || null;
+  if (texto && texto.length > MAX_COMMENT) {
+    throw new BadRequestError(`La respuesta no puede superar los ${MAX_COMMENT} caracteres`);
+  }
+
+  const review = await getPrisma().review.findUnique({ where: { id } });
+  if (!review) {
+    throw new NotFoundError("Reseña no encontrada");
+  }
+
+  const updated = await getPrisma().review.update({
+    where: { id },
+    data: { respuesta: texto, respondidoEn: texto ? new Date() : null },
+    include: {
+      product: { select: { id: true, nombre: true, slug: true } },
+      user: { select: { id: true, nombre: true } },
+    },
+  });
+
+  // Solo se avisa la primera vez que se responde (editar la respuesta no vuelve a notificar).
+  if (texto && !review.respuesta) {
+    await notifyUser(review.userId, {
+      tipo: "RESENA",
+      titulo: "Respondimos tu reseña",
+      mensaje: `La tienda respondió tu opinión sobre ${updated.product.nombre}.`,
       href: `/product/${updated.product.slug}#resenas`,
     });
   }

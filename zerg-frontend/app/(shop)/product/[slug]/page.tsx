@@ -17,11 +17,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlanSelector } from "@/components/product/plan-selector";
 import { ProductCover } from "@/components/product/product-cover";
-import { ReviewForm } from "@/components/product/review-form";
+import { ReviewForm, StoreReply } from "@/components/product/review-form";
 import { Rating } from "@/components/product/rating";
 import { ProductCarousel } from "@/components/home/product-carousel";
 import { Newsletter } from "@/components/layout/newsletter";
-import { useCart } from "@/hooks/useCart";
+import { MAX_QUANTITY, clampQuantity, useCart } from "@/hooks/useCart";
 import { useLiveVersion } from "@/lib/live";
 import { getProductBySlug, getProducts } from "@/lib/api";
 import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice } from "@/lib/catalog";
@@ -233,8 +233,9 @@ export default function ProductDetailPage() {
                     <button
                       type="button"
                       aria-label="Disminuir cantidad"
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground"
+                      disabled={quantity <= 1}
+                      onClick={() => setQuantity((q) => clampQuantity(q - 1))}
+                      className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-muted-foreground"
                     >
                       <Minus className="size-3.5" />
                     </button>
@@ -244,8 +245,9 @@ export default function ProductDetailPage() {
                     <button
                       type="button"
                       aria-label="Aumentar cantidad"
-                      onClick={() => setQuantity((q) => q + 1)}
-                      className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground"
+                      disabled={quantity >= MAX_QUANTITY}
+                      onClick={() => setQuantity((q) => clampQuantity(q + 1))}
+                      className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-muted-foreground"
                     >
                       <Plus className="size-3.5" />
                     </button>
@@ -359,6 +361,7 @@ export default function ProductDetailPage() {
                         </span>
                         {r.user?.nombre ?? "Cliente"}
                       </figcaption>
+                      {r.respuesta && <StoreReply text={r.respuesta} />}
                     </figure>
                   ))}
                 </div>

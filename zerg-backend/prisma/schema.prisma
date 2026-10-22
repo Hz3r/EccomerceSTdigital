@@ -160,6 +160,9 @@ model Review {
   id          String   @id @default(uuid())
   puntuacion  Int
   comentario  String?
+  // Respuesta pública de la tienda (la escribe un admin)
+  respuesta    String?
+  respondidoEn DateTime?
   isApproved  Boolean  @default(false)
   productId   String
   product     Product  @relation(fields: [productId], references: [id])

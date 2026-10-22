@@ -149,6 +149,52 @@ describe("Review Service", () => {
     });
   });
 
+  describe("reply", () => {
+    const replied = (respuesta: string | null) => ({
+      ...mockReview,
+      respuesta,
+      respondidoEn: respuesta ? new Date() : null,
+      product: reviewProduct,
+      user: { id: "test-user-id", nombre: "Test User" },
+    });
+
+    it("guarda la respuesta y avisa al cliente la primera vez", async () => {
+      mockPrisma.review.findUnique.mockResolvedValue({ ...mockReview, respuesta: null });
+      mockPrisma.review.update.mockResolvedValue(replied("¡Gracias por tu compra!"));
+
+      await reviewService.reply("test-review-id", "  ¡Gracias por tu compra!  ");
+
+      expect(mockPrisma.review.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { respuesta: "¡Gracias por tu compra!", respondidoEn: expect.any(Date) } })
+      );
+      expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ audiencia: "CLIENTE", userId: "test-user-id", titulo: "Respondimos tu reseña" }),
+      });
+    });
+
+    it("editar una respuesta existente no vuelve a notificar", async () => {
+      mockPrisma.review.findUnique.mockResolvedValue({ ...mockReview, respuesta: "Hola" });
+      mockPrisma.review.update.mockResolvedValue(replied("Hola de nuevo"));
+
+      await reviewService.reply("test-review-id", "Hola de nuevo");
+
+      expect(mockPrisma.notification.create).not.toHaveBeenCalled();
+    });
+
+    it("un texto vacío quita la respuesta", async () => {
+      mockPrisma.review.findUnique.mockResolvedValue({ ...mockReview, respuesta: "Hola" });
+      mockPrisma.review.update.mockResolvedValue(replied(null));
+
+      await reviewService.reply("test-review-id", "   ");
+
+      expect(mockPrisma.review.update).toHaveBeenCalledWith(expect.objectContaining({ data: { respuesta: null, respondidoEn: null } }));
+    });
+
+    it("rechaza respuestas demasiado largas", async () => {
+      await expect(reviewService.reply("test-review-id", "x".repeat(1001))).rejects.toThrow("no puede superar");
+    });
+  });
+
   describe("remove", () => {
     it("debería eliminar una reseña (admin)", async () => {
       mockPrisma.review.findUnique.mockResolvedValue(mockReview);

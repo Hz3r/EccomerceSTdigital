@@ -14,6 +14,12 @@ type CartAction =
   | { type: "CLEAR_CART" }
   | { type: "LOAD_CART"; items: CartItem[] };
 
+export const MAX_QUANTITY = 99;
+
+export function clampQuantity(cantidad: number) {
+  return Math.min(MAX_QUANTITY, Math.max(1, Math.floor(cantidad) || 1));
+}
+
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "ADD_ITEM": {
@@ -43,23 +49,22 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return {
         items: state.items.filter((i) => i.planId !== action.planId),
       };
-    case "UPDATE_QUANTITY":
-      if (action.cantidad <= 0) {
-        return {
-          items: state.items.filter((i) => i.planId !== action.planId),
-        };
-      }
+    case "UPDATE_QUANTITY": {
+      // La cantidad va de 1 a MAX_QUANTITY: para quitar un producto se usa REMOVE_ITEM (botón eliminar).
+      const cantidad = clampQuantity(action.cantidad);
       return {
         items: state.items.map((i) =>
           i.planId === action.planId
-            ? { ...i, cantidad: action.cantidad }
+            ? { ...i, cantidad }
             : i
         ),
       };
+    }
     case "CLEAR_CART":
       return { items: [] };
     case "LOAD_CART":
-      return { items: action.items };
+      // Un carrito guardado antes podría traer cantidades fuera de rango
+      return { items: action.items.map((i) => ({ ...i, cantidad: clampQuantity(i.cantidad) })) };
     default:
       return state;
   }

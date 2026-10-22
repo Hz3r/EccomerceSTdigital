@@ -84,6 +84,8 @@ export interface Review {
   id: string;
   puntuacion: number;
   comentario?: string;
+  respuesta?: string | null;
+  respondidoEn?: string | null;
   isApproved: boolean;
   productId: string;
   product?: Product;

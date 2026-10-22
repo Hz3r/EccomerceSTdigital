@@ -15,6 +15,7 @@ router.get("/mine", reviewController.getMine);
 router.get("/:id", reviewController.getById);
 router.post("/", reviewController.create);
 router.patch("/:id/approve", roleMiddleware("ADMIN"), reviewController.approve);
+router.patch("/:id/reply", roleMiddleware("ADMIN"), reviewController.reply);
 router.delete("/:id", reviewController.remove);
 
 export default router;
