@@ -35,7 +35,7 @@ function scope(user: TokenPayload) {
   return user.rol === "ADMIN" ? { audiencia: "ADMIN" as const } : { audiencia: "CLIENTE" as const, userId: user.userId };
 }
 
-const TIPOS: TipoNotificacion[] = ["COMPRA", "VENTA", "PEDIDO", "RESENA"];
+const TIPOS: TipoNotificacion[] = ["COMPRA", "VENTA", "PEDIDO", "RESENA", "PAGO", "MENSAJE"];
 
 export const parseTipo = (value: unknown): TipoNotificacion | undefined =>
   typeof value === "string" && (TIPOS as string[]).includes(value.toUpperCase()) ? (value.toUpperCase() as TipoNotificacion) : undefined;

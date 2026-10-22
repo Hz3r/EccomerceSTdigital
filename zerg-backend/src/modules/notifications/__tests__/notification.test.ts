@@ -40,7 +40,7 @@ describe("Notifications API", () => {
     expect(mockPrisma.notification.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { audiencia: "ADMIN", tipo: "COMPRA" } })
     );
-    expect(res.body.data).toMatchObject({ unread: 3, unreadByTipo: { COMPRA: 2, VENTA: 1, PEDIDO: 0, RESENA: 0 } });
+    expect(res.body.data).toMatchObject({ unread: 3, unreadByTipo: { COMPRA: 2, VENTA: 1, PEDIDO: 0, RESENA: 0, PAGO: 0, MENSAJE: 0 } });
   });
 
   it("un cliente solo ve sus propios avisos", async () => {
