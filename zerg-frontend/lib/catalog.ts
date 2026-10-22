@@ -51,3 +51,16 @@ export function coverFor(slug: string) {
   for (const ch of slug) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   return COVERS[hash % COVERS.length];
 }
+
+// Texto sin tildes ni mayúsculas: "musica" encuentra "Música".
+export function normalizeText(text: string) {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+
+/** El producto coincide con todas las palabras de la búsqueda (nombre, descripción o categoría). */
+export function matchesQuery(product: Product, query: string) {
+  const words = normalizeText(query).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const haystack = normalizeText(`${product.nombre} ${product.descripcion ?? ""} ${product.category?.nombre ?? ""}`);
+  return words.every((w) => haystack.includes(w));
+}
