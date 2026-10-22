@@ -87,9 +87,11 @@ async function resolve(viewer: TokenPayload | undefined, token: string | undefin
   return null;
 }
 
-export async function current(viewer: TokenPayload | undefined, token: string | undefined) {
+/** Chat actual del visitante. Con `peek` solo consulta (para el contador del botón) sin marcar como leído. */
+export async function current(viewer: TokenPayload | undefined, token: string | undefined, { peek = false } = {}) {
   const conversation = await resolve(viewer, token);
   if (!conversation) return null;
+  if (peek) return { conversation: publicConversation(conversation), messages: [], noLeidas: conversation.noLeidasCliente };
   if (conversation.noLeidasCliente > 0) {
     await getPrisma().conversation.update({ where: { id: conversation.id }, data: { noLeidasCliente: 0 } });
   }

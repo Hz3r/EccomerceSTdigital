@@ -17,7 +17,7 @@ export const start = async (req: AuthRequest, res: Response) => {
 };
 
 export const current = async (req: AuthRequest, res: Response) => {
-  res.status(200).json({ success: true, data: await supportService.current(req.user, chatToken(req)) });
+  res.status(200).json({ success: true, data: await supportService.current(req.user, chatToken(req), { peek: req.query.peek === "1" }) });
 };
 
 export const send = async (req: AuthRequest, res: Response) => {

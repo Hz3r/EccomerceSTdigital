@@ -9,7 +9,14 @@ import api from "@/lib/axios";
 import { formatPrice } from "@/lib/catalog";
 import { useLiveVersion } from "@/lib/live";
 import { cn } from "@/lib/utils";
-import type { Order, StatusOrden } from "@/types";
+import type { EstadoPago, Order, StatusOrden } from "@/types";
+
+const PAYMENT: Record<EstadoPago, { label: string; className: string }> = {
+  PENDIENTE: { label: "Pago pendiente", className: "bg-brand-yellow/20 text-foreground" },
+  EN_REVISION: { label: "Pago en revisión", className: "bg-sky-500/15 text-sky-700 dark:text-sky-300" },
+  PAGADO: { label: "Pagado", className: "bg-brand/15 text-brand-strong" },
+  RECHAZADO: { label: "Pago rechazado", className: "bg-destructive/10 text-destructive" },
+};
 
 const STATUS: Record<StatusOrden, { label: string; icon: typeof Clock; className: string; hint: string }> = {
   PENDIENTE: { label: "En revisión", icon: Clock, className: "bg-brand-yellow/20 text-foreground", hint: "Estamos confirmando tu pago." },
@@ -92,9 +99,16 @@ export function MyOrders() {
                     <p className="font-mono text-sm font-semibold">{order.numeroOrden}</p>
                     <p className="text-xs text-muted-foreground">{dateFormat.format(new Date(order.creadoEn))}</p>
                   </div>
-                  <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", status.className)}>
-                    <status.icon className="size-3.5" />
-                    {status.label}
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {order.payment && order.status !== "CANCELADO" && (
+                      <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", PAYMENT[order.payment.estado].className)}>
+                        {PAYMENT[order.payment.estado].label}
+                      </span>
+                    )}
+                    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold", status.className)}>
+                      <status.icon className="size-3.5" />
+                      {status.label}
+                    </span>
                   </span>
                 </div>
                 <ul className="mt-4 space-y-2 border-t pt-4 text-sm">
@@ -119,9 +133,16 @@ export function MyOrders() {
                 </ul>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t pt-4">
                   <p className="text-xs text-muted-foreground">{status.hint}</p>
-                  <p className="text-sm">
-                    Total <span className="text-lg font-black tracking-tight">{formatPrice(Number(order.total))}</span>
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm">
+                      Total <span className="text-lg font-black tracking-tight">{formatPrice(Number(order.total))}</span>
+                    </p>
+                    {order.status !== "CANCELADO" && order.payment && order.payment.estado !== "PAGADO" && (
+                      <Button size="sm" className="rounded-lg" render={<Link href={`/pago/${order.numeroOrden}`} />} nativeButton={false}>
+                        {order.payment.estado === "EN_REVISION" ? "Ver pago" : "Pagar"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </li>
             );

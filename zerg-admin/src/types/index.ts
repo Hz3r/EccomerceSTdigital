@@ -63,6 +63,48 @@ export interface OrderItem {
   creadoEn: string;
 }
 
+export type MetodoPago = "DIRECTO" | "IZIPAY" | "BINANCE_PAY";
+export type EstadoPago = "PENDIENTE" | "EN_REVISION" | "PAGADO" | "RECHAZADO";
+
+export interface Payment {
+  id: string;
+  metodo: MetodoPago;
+  estado: EstadoPago;
+  monto: number | string;
+  referencia?: string | null;
+  motivoRechazo?: string | null;
+  tieneComprobante?: boolean;
+  actualizado?: string;
+}
+
+export interface PaymentMethodOption {
+  metodo: MetodoPago;
+  label: string;
+  disponible: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  autor: "CLIENTE" | "ADMIN";
+  texto: string;
+  creadoEn: string;
+}
+
+export interface Conversation {
+  id: string;
+  tema: string;
+  nombre: string;
+  email?: string | null;
+  telefono?: string | null;
+  canal: "WEB" | "WHATSAPP";
+  estado: "ABIERTA" | "CERRADA";
+  noLeidasAdmin?: number;
+  ultimoMensajeEn?: string;
+  creadoEn: string;
+  user?: { id: string; nombre: string; email: string } | null;
+  ultimoMensaje?: { autor: "CLIENTE" | "ADMIN"; texto: string; creadoEn: string } | null;
+}
+
 export interface Order {
   id: string;
   numeroOrden: string;
@@ -76,6 +118,8 @@ export interface Order {
   userId?: string;
   user?: User;
   items?: OrderItem[];
+  metodoPago?: MetodoPago | null;
+  payment?: Payment | null;
   creadoEn: string;
   actualizado: string;
 }
@@ -190,11 +234,30 @@ export interface SiteSettings {
       boolean
     >;
   };
+  pagos: {
+    directo: {
+      activo: boolean;
+      titular: string;
+      yape: string;
+      plin: string;
+      qrUrl: string;
+      instrucciones: string;
+      cuentas: CuentaBancaria[];
+    };
+    tipoCambioUsdt: number;
+  };
   contacto: { whatsapp: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
 }
 
-export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA";
+export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA" | "PAGO" | "MENSAJE";
+
+export interface CuentaBancaria {
+  banco: string;
+  titular: string;
+  numero: string;
+  cci: string;
+}
 
 export interface AppNotification {
   id: string;

@@ -29,6 +29,13 @@ export interface Plataforma {
   logoUrl: string;
 }
 
+export interface CuentaBancaria {
+  banco: string;
+  titular: string;
+  numero: string;
+  cci: string;
+}
+
 export interface SiteSettings {
   marca: { nombre: string; logoUrl: string; iconoUrl: string };
   header: { anuncio: string; buscadorPlaceholder: string; mostrarOfertas: boolean; menu: MenuItem[] };
@@ -61,6 +68,18 @@ export interface SiteSettings {
       | "boletin",
       boolean
     >;
+  };
+  pagos: {
+    directo: {
+      activo: boolean;
+      titular: string;
+      yape: string;
+      plin: string;
+      qrUrl: string;
+      instrucciones: string;
+      cuentas: CuentaBancaria[];
+    };
+    tipoCambioUsdt: number;
   };
   contacto: { whatsapp: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
@@ -142,6 +161,19 @@ export const defaultSettings: SiteSettings = {
       boletin: true,
     },
   },
+  pagos: {
+    directo: {
+      activo: true,
+      titular: "",
+      yape: "",
+      plin: "",
+      qrUrl: "",
+      instrucciones:
+        "Paga el monto exacto y sube la captura del pago con el número de operación. Lo confirmamos en minutos y te enviamos tus accesos.",
+      cuentas: [],
+    },
+    tipoCambioUsdt: 3.75,
+  },
   contacto: {
     whatsapp: "",
     email: "soporte@zerg.store",
@@ -162,6 +194,7 @@ function normalize(s: SiteSettings): SiteSettings {
   );
   return {
     ...s,
+    pagos: s.pagos ?? defaultSettings.pagos,
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
     portada: { ...s.portada, plataformas },
   };

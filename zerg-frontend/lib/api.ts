@@ -1,6 +1,6 @@
 import api from "./axios";
 import { mockCategories, mockProducts, mockTestimonials } from "./mock-data";
-import type { Product, Category, Review, Order, User, ApiResponse } from "@/types";
+import type { Product, Category, Review, Order, User, ApiResponse, MetodoPago, PaymentMethodOption } from "@/types";
 
 // Modo diseño: sin NEXT_PUBLIC_API_URL (o con NEXT_PUBLIC_USE_MOCKS=true) el catálogo
 // se sirve desde lib/mock-data.ts para poder trabajar el frontend sin backend.
@@ -90,6 +90,7 @@ export async function createOrder(order: {
   telefono?: string;
   notas?: string;
   userId?: string;
+  metodoPago?: MetodoPago;
   items: { planId: string; cantidad: number }[];
 }): Promise<Order> {
   if (USE_MOCKS) {
@@ -123,5 +124,19 @@ export async function createReview(data: {
   productId: string;
 }): Promise<Review> {
   const res = await api.post<ApiResponse<Review>>("/reviews", data);
+  return res.data.data;
+}
+
+// ==================== Pagos ====================
+
+const MOCK_METHODS: PaymentMethodOption[] = [
+  { metodo: "DIRECTO", label: "Yape, Plin o transferencia", disponible: true },
+  { metodo: "IZIPAY", label: "Tarjeta (Izipay)", disponible: false },
+  { metodo: "BINANCE_PAY", label: "Binance Pay", disponible: false },
+];
+
+export async function getPaymentMethods(): Promise<PaymentMethodOption[]> {
+  if (USE_MOCKS) return MOCK_METHODS;
+  const res = await api.get<ApiResponse<PaymentMethodOption[]>>("/payments/methods");
   return res.data.data;
 }

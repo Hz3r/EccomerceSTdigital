@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { STATUS_META } from "@/components/charts/status-breakdown"
+import { PaymentBadge, PaymentReview } from "@/components/orders/payment-review"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
@@ -61,7 +62,9 @@ function OrdersContent() {
   const [orders, setOrders] = React.useState<Order[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [filter, setFilter] = React.useState<StatusOrden | "TODAS">("TODAS")
-  const [detail, setDetail] = React.useState<Order | null>(null)
+  // Se guarda el id: el detalle se actualiza en vivo (por ejemplo cuando llega un comprobante)
+  const [detailId, setDetailId] = React.useState<string | null>(null)
+  const detail = orders.find((o) => o.id === detailId) ?? null
 
   // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
   const liveVersion = useLiveVersion("orders")
@@ -77,7 +80,6 @@ function OrdersContent() {
   const updateStatus = async (order: Order, status: StatusOrden) => {
     const previous = order.status
     setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)))
-    setDetail((d) => (d?.id === order.id ? { ...d, status } : d))
     try {
       await api.patch(`/orders/${order.id}/status`, { status })
     } catch {
@@ -134,11 +136,12 @@ function OrdersContent() {
       ),
     },
     { key: "total", label: "Total", render: (o) => <span className="font-semibold tabular-nums">{formatPrice(o.total)}</span> },
+    { key: "payment", label: "Pago", render: (o) => <PaymentBadge payment={o.payment} /> },
     { key: "status", label: "Estado", render: (o) => <StatusSelect order={o} onChange={(s) => updateStatus(o, s)} /> },
   ]
 
   const actions: DataTableAction<Order>[] = [
-    { label: "Ver", icon: <EyeIcon className="size-3.5" />, onClick: (o) => setDetail(o) },
+    { label: "Ver", icon: <EyeIcon className="size-3.5" />, onClick: (o) => setDetailId(o.id) },
     { label: "Eliminar", icon: <TrashIcon className="size-3.5" />, variant: "destructive", onClick: (o) => remove(o) },
   ]
 
@@ -146,7 +149,7 @@ function OrdersContent() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Órdenes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Cambia el estado a medida que entregas los accesos.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Revisa los pagos y cambia el estado a medida que entregas los accesos.</p>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
@@ -193,8 +196,8 @@ function OrdersContent() {
         </CardContent>
       </Card>
 
-      <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetail(null)}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetailId(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           {detail && (
             <>
               <DialogHeader>
@@ -227,6 +230,7 @@ function OrdersContent() {
                     <span className="tabular-nums">{formatPrice(detail.total)}</span>
                   </li>
                 </ul>
+                <PaymentReview payment={detail.payment} total={detail.total} />
                 {detail.notas && <p className="rounded-xl bg-muted p-3 text-sm">{detail.notas}</p>}
                 <div className="flex flex-wrap gap-2">
                   {detail.telefono && (

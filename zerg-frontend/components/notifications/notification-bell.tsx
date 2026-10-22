@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, CheckCheck, MessageSquareText, Package } from "lucide-react";
+import { Bell, CheckCheck, CreditCard, MessageCircle, MessageSquareText, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -11,7 +11,7 @@ import { timeAgo } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { AppNotification } from "@/types";
 
-const ICONS = { RESENA: MessageSquareText } as Partial<Record<AppNotification["tipo"], typeof Package>>;
+const ICONS = { RESENA: MessageSquareText, PAGO: CreditCard, MENSAJE: MessageCircle } as Partial<Record<AppNotification["tipo"], typeof Package>>;
 
 // Campana del cliente: avance de sus pedidos y de sus reseñas.
 export function NotificationBell() {
