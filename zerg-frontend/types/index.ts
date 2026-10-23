@@ -27,6 +27,10 @@ export interface Product {
   slug: string;
   descripcion?: string;
   imagenUrl?: string;
+  // Contenido propio de la página (vacío = textos generales de la tienda)
+  incluye?: string[] | null;
+  pasos?: { titulo: string; texto: string }[] | null;
+  faqs?: { pregunta: string; respuesta: string }[] | null;
   isActivo: boolean;
   categoryId: string;
   category?: Category;

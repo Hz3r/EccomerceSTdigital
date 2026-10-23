@@ -22,6 +22,7 @@ export const changeMethod = async (req: AuthRequest, res: Response) => {
 export const submitProof = async (req: AuthRequest, res: Response) => {
   const data = await paymentService.submitProof(req.user!, req.params.id as string, {
     referencia: (req.body as { referencia?: unknown } | undefined)?.referencia,
+    medio: (req.body as { medio?: unknown } | undefined)?.medio,
     file: req.file,
   });
   res.status(200).json({ success: true, message: "Comprobante enviado", data });

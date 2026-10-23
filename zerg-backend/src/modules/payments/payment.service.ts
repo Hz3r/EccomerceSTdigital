@@ -104,7 +104,14 @@ export async function changeMethod(viewer: TokenPayload, numeroOrden: string, me
 
 // ==================== PAGO DIRECTO (Yape / Plin / transferencia) ====================
 
-export async function submitProof(viewer: TokenPayload, paymentId: string, input: { referencia?: unknown; file?: Express.Multer.File }) {
+// Por dónde pagó el cliente (lo elige en la tienda); ayuda al admin a buscar el abono.
+const MEDIOS = ["Yape", "Plin", "Transferencia"] as const;
+
+export async function submitProof(
+  viewer: TokenPayload,
+  paymentId: string,
+  input: { referencia?: unknown; medio?: unknown; file?: Express.Multer.File }
+) {
   const discard = () => input.file && unlink(input.file.path).catch(() => {});
   try {
     const payment = await findOwnedPayment(viewer, paymentId);
@@ -113,20 +120,27 @@ export async function submitProof(viewer: TokenPayload, paymentId: string, input
       throw new ConflictError(payment.estado === "PAGADO" ? "Este pedido ya está pagado" : "Tu comprobante ya está en revisión");
     }
     const referencia = typeof input.referencia === "string" ? input.referencia.trim().slice(0, 60) : "";
+    // La captura basta: en el celular copiar el n.º de operación es engorroso y la captura ya lo muestra.
     if (!input.file) throw new BadRequestError("Sube la captura de tu pago");
-    if (!referencia) throw new BadRequestError("Escribe el número de operación");
+    const medio = MEDIOS.find((m) => m === input.medio);
 
     if (payment.comprobante) await unlink(proofPath(payment.comprobante)).catch(() => {});
     const updated = await getPrisma().payment.update({
       where: { id: payment.id },
-      data: { estado: "EN_REVISION", referencia, comprobante: input.file.filename, motivoRechazo: null },
+      data: {
+        estado: "EN_REVISION",
+        referencia: referencia || null,
+        comprobante: input.file.filename,
+        motivoRechazo: null,
+        ...(medio && { detalle: { medio } }),
+      },
       select: paymentSelect,
     });
 
     await notifyAdmins({
       tipo: "PAGO",
       titulo: "Comprobante por revisar",
-      mensaje: `${payment.order.numeroOrden} · ${payment.order.nombreCliente} · ${money(payment.monto)} · Op. ${referencia}`,
+      mensaje: [payment.order.numeroOrden, payment.order.nombreCliente, money(payment.monto), medio, referencia && `Op. ${referencia}`].filter(Boolean).join(" · "),
       href: `/orders?q=${payment.order.numeroOrden}`,
       orderId: payment.orderId,
     });

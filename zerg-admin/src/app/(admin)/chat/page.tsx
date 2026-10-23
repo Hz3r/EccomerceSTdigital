@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ArrowLeft, CheckCheck, Inbox, Loader2, Mail, MessageCircle, RotateCcw, Send, User } from "lucide-react"
+import { AlertTriangle, ArrowLeft, CheckCheck, Inbox, Loader2, Mail, MessageCircle, RotateCcw, Send, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useSiteSettings } from "@/hooks/useSiteSettings"
 import api from "@/lib/axios"
@@ -21,6 +21,39 @@ const QUICK_REPLIES = [
 const clock = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit" })
 
 type Estado = "ABIERTA" | "CERRADA" | "TODAS"
+
+interface WhatsappStatus {
+  conectado: boolean
+  numeroId: string | null
+  plantillaRespuesta: string | null
+  webhook: string | null
+}
+
+const WINDOW_MS = 24 * 60 * 60 * 1000
+
+// Estado de la conexión con WhatsApp Business (se configura con las variables WHATSAPP_* del backend).
+function WhatsappBadge() {
+  const [status, setStatus] = React.useState<WhatsappStatus | null>(null)
+  React.useEffect(() => {
+    api
+      .get<{ data: WhatsappStatus }>("/whatsapp/status")
+      .then((res) => setStatus(res.data.data))
+      .catch(() => {})
+  }, [])
+  if (!status) return null
+  return (
+    <span
+      title={status.conectado ? `Número ${status.numeroId}${status.webhook ? ` · Webhook: ${status.webhook}` : ""}` : "Completa WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_VERIFY_TOKEN y WHATSAPP_APP_SECRET en el backend"}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+        status.conectado ? "bg-brand/15 text-brand-strong dark:text-brand-bright" : "bg-muted text-muted-foreground"
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", status.conectado ? "bg-brand" : "bg-muted-foreground/50")} />
+      {status.conectado ? "WhatsApp Business conectado" : "WhatsApp Business sin conectar"}
+    </span>
+  )
+}
 
 export default function ChatPage() {
   return (
@@ -56,9 +89,12 @@ function ChatInbox() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Mensajes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Chats que inician tus clientes desde el botón de ayuda de la tienda.</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight">Mensajes</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Chats del botón de ayuda de la tienda y de tu WhatsApp Business, en un solo lugar.</p>
+        </div>
+        <WhatsappBadge />
       </div>
 
       <div className="grid h-[calc(100dvh-13rem)] min-h-[28rem] overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
@@ -130,7 +166,10 @@ function ChatInbox() {
                         <span className={cn("truncate text-sm", c.noLeidasAdmin ? "font-bold" : "font-medium")}>{c.nombre}</span>
                         <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">{c.ultimoMensajeEn && timeAgo(c.ultimoMensajeEn)}</span>
                       </span>
-                      <span className="block truncate text-[11px] font-semibold text-muted-foreground">{c.tema}</span>
+                      <span className="flex items-center gap-1 truncate text-[11px] font-semibold text-muted-foreground">
+                        {c.canal === "WHATSAPP" && <MessageCircle className="size-3 shrink-0 text-[#25D366]" aria-label="WhatsApp" />}
+                        {c.tema}
+                      </span>
                       <span className="flex items-center gap-2">
                         <span className="truncate text-xs text-muted-foreground">
                           {c.ultimoMensaje?.autor === "ADMIN" && "Tú: "}
@@ -171,6 +210,7 @@ function Thread({ id, version, onBack }: { id: string; version: number; onBack: 
   const [error, setError] = React.useState("")
   const [texto, setTexto] = React.useState("")
   const [sending, setSending] = React.useState(false)
+  const [sendError, setSendError] = React.useState("")
   const endRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
@@ -199,18 +239,21 @@ function Thread({ id, version, onBack }: { id: string; version: number; onBack: 
 
   const { conversation, messages } = data
   const phone = conversation.telefono?.replace(/\D/g, "")
+  const isWhatsapp = conversation.canal === "WHATSAPP"
+  const windowEnds = conversation.ultimoEntranteEn ? new Date(conversation.ultimoEntranteEn).getTime() + WINDOW_MS : 0
   const brand = draft?.marca.nombre ?? "la tienda"
 
   const send = async (value: string) => {
     const text = value.trim()
     if (!text) return
     setSending(true)
+    setSendError("")
     try {
       const res = await api.post<{ data: ChatMessage }>(`/support/admin/conversations/${id}/messages`, { texto: text })
       setData((d) => d && { conversation: { ...d.conversation, estado: "ABIERTA" }, messages: [...d.messages, res.data.data] })
       setTexto("")
-    } catch {
-      setError("No se pudo enviar el mensaje.")
+    } catch (err) {
+      setSendError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? "No se pudo enviar el mensaje.")
     } finally {
       setSending(false)
     }
@@ -247,7 +290,7 @@ function Thread({ id, version, onBack }: { id: string; version: number; onBack: 
           </p>
         </div>
         <div className="flex gap-2">
-          {phone && (
+          {phone && !isWhatsapp && (
             <Button
               size="sm"
               variant="outline"
@@ -293,6 +336,8 @@ function Thread({ id, version, onBack }: { id: string; version: number; onBack: 
       </div>
 
       <div className="space-y-2 border-t p-3">
+        {isWhatsapp && <WindowNotice endsAt={windowEnds} />}
+        {sendError && <p className="text-xs text-destructive">{sendError}</p>}
         <div className="scrollbar-none flex gap-1.5 overflow-x-auto">
           {QUICK_REPLIES.map((q) => (
             <button
@@ -334,5 +379,24 @@ function Thread({ id, version, onBack }: { id: string; version: number; onBack: 
         </form>
       </div>
     </div>
+  )
+}
+
+// En WhatsApp solo se responde con texto libre hasta 24 h después del último mensaje del cliente.
+function WindowNotice({ endsAt }: { endsAt: number }) {
+  const [now] = React.useState(() => Date.now())
+  const open = endsAt > now
+  return (
+    <p
+      className={cn(
+        "flex items-start gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px]",
+        open ? "bg-[#25D366]/10 text-foreground" : "bg-viz-warning/15 text-foreground"
+      )}
+    >
+      {open ? <MessageCircle className="mt-px size-3.5 shrink-0 text-[#25D366]" /> : <AlertTriangle className="mt-px size-3.5 shrink-0" />}
+      {open
+        ? `Tu respuesta llega a su WhatsApp. Puedes escribir libremente hasta las ${clock.format(new Date(endsAt))}${new Date(endsAt).toDateString() !== new Date(now).toDateString() ? " de mañana" : ""}.`
+        : "Pasaron más de 24 h desde su último mensaje: WhatsApp solo deja enviarle la plantilla aprobada (WHATSAPP_TEMPLATE_REPLY)."}
+    </p>
   )
 }

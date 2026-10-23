@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { STATUS_META } from "@/components/charts/status-breakdown"
 import { PaymentBadge, PaymentReview } from "@/components/orders/payment-review"
+import { CredentialDelivery } from "@/components/orders/credential-delivery"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
@@ -149,7 +150,7 @@ function OrdersContent() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Órdenes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Revisa los pagos y cambia el estado a medida que entregas los accesos.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Revisa los pagos y entrega los accesos desde el detalle de cada orden (web, correo o WhatsApp).</p>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
@@ -197,7 +198,7 @@ function OrdersContent() {
       </Card>
 
       <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetailId(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           {detail && (
             <>
               <DialogHeader>
@@ -231,6 +232,7 @@ function OrdersContent() {
                   </li>
                 </ul>
                 <PaymentReview payment={detail.payment} total={detail.total} />
+                <CredentialDelivery orderId={detail.id} />
                 {detail.notas && <p className="rounded-xl bg-muted p-3 text-sm">{detail.notas}</p>}
                 <div className="flex flex-wrap gap-2">
                   {detail.telefono && (

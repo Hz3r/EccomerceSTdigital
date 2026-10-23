@@ -76,22 +76,23 @@ enum AutorMensaje {
 // ==================== USUARIO ====================
 
 model User {
-  id           String         @id @default(uuid())
-  nombre       String
-  email        String         @unique
-  passwordHash String?
-  googleId     String?        @unique
-  proveedor    ProveedorAuth  @default(LOCAL)
-  rol          RolUsuario     @default(CLIENTE)
-  avatarUrl    String?
-  isActive     Boolean        @default(true)
-  lastLoginAt  DateTime?
-  creadoEn     DateTime       @default(now())
-  actualizado  DateTime       @updatedAt
+  id            String         @id @default(uuid())
+  nombre        String
+  email         String         @unique
+  passwordHash  String?
+  googleId      String?        @unique
+  proveedor     ProveedorAuth  @default(LOCAL)
+  rol           RolUsuario     @default(CLIENTE)
+  avatarUrl     String?
+  isActive      Boolean        @default(true)
+  lastLoginAt   DateTime?
+  creadoEn      DateTime       @default(now())
+  actualizado   DateTime       @updatedAt
   orders        Order[]
   reviews       Review[]
   notifications Notification[]
   conversations Conversation[]
+  favorites     Favorite[]
 
   @@map("users")
 }
@@ -115,18 +116,23 @@ model Category {
 // ==================== PRODUCTOS ====================
 
 model Product {
-  id          String      @id @default(uuid())
+  id          String     @id @default(uuid())
   nombre      String
-  slug        String      @unique
+  slug        String     @unique
   descripcion String?
   imagenUrl   String?
-  isActivo    Boolean     @default(true)
+  // Contenido de la página del producto (vacío = se usan los textos generales de la tienda)
+  incluye     Json?
+  pasos       Json?
+  faqs        Json?
+  isActivo    Boolean    @default(true)
   categoryId  String
-  category    Category    @relation(fields: [categoryId], references: [id])
-  creadoEn    DateTime    @default(now())
-  actualizado DateTime    @updatedAt
+  category    Category   @relation(fields: [categoryId], references: [id])
+  creadoEn    DateTime   @default(now())
+  actualizado DateTime   @updatedAt
   plans       Plan[]
   reviews     Review[]
+  favorites   Favorite[]
 
   @@map("products")
 }
@@ -154,19 +160,19 @@ model Plan {
 // ==================== ORDENES ====================
 
 model Order {
-  id            String        @id @default(uuid())
-  numeroOrden   String        @unique
+  id            String         @id @default(uuid())
+  numeroOrden   String         @unique
   nombreCliente String
   email         String
   telefono      String?
   whatsappLink  String?
-  status        StatusOrden   @default(PENDIENTE)
+  status        StatusOrden    @default(PENDIENTE)
   notas         String?
-  total         Decimal       @db.Decimal(10, 2)
+  total         Decimal        @db.Decimal(10, 2)
   userId        String?
-  user          User?         @relation(fields: [userId], references: [id])
-  creadoEn      DateTime      @default(now())
-  actualizado   DateTime      @updatedAt
+  user          User?          @relation(fields: [userId], references: [id])
+  creadoEn      DateTime       @default(now())
+  actualizado   DateTime       @updatedAt
   metodoPago    MetodoPago?
   items         OrderItem[]
   notifications Notification[]
@@ -178,14 +184,15 @@ model Order {
 // ==================== ITEMS DE ORDEN ====================
 
 model OrderItem {
-  id             String   @id @default(uuid())
-  cantidad       Int      @default(1)
-  precioUnitario Decimal  @db.Decimal(10, 2)
+  id             String      @id @default(uuid())
+  cantidad       Int         @default(1)
+  precioUnitario Decimal     @db.Decimal(10, 2)
   orderId        String
-  order          Order    @relation(fields: [orderId], references: [id])
+  order          Order       @relation(fields: [orderId], references: [id])
   planId         String
-  plan           Plan     @relation(fields: [planId], references: [id])
-  creadoEn       DateTime @default(now())
+  plan           Plan        @relation(fields: [planId], references: [id])
+  creadoEn       DateTime    @default(now())
+  credential     Credential?
 
   @@map("order_items")
 }
@@ -193,23 +200,24 @@ model OrderItem {
 // ==================== RESEÑAS ====================
 
 model Review {
-  id          String   @id @default(uuid())
-  puntuacion  Int
-  comentario  String?
+  id           String    @id @default(uuid())
+  puntuacion   Int
+  comentario   String?
   // Respuesta pública de la tienda (la escribe un admin)
   respuesta    String?
   respondidoEn DateTime?
-  isApproved  Boolean  @default(false)
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  creadoEn    DateTime @default(now())
-  actualizado DateTime @updatedAt
+  isApproved   Boolean   @default(false)
+  productId    String
+  product      Product   @relation(fields: [productId], references: [id])
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  creadoEn     DateTime  @default(now())
+  actualizado  DateTime  @updatedAt
 
   @@unique([productId, userId])
   @@map("reviews")
-} 
+}
+
 // ==================== CONFIGURACIÓN DEL SITIO (CMS) ====================
 
 // Contenido editable desde el panel admin: marca, header, portada, contacto y pie.
@@ -246,22 +254,22 @@ model Notification {
 
 // Un intento de pago de una orden. El pago directo lo confirma el admin; Izipay y Binance Pay, su webhook.
 model Payment {
-  id             String     @id @default(uuid())
-  orderId        String
-  order          Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  metodo         MetodoPago
-  estado         EstadoPago @default(PENDIENTE)
-  monto          Decimal    @db.Decimal(10, 2)
-  moneda         String     @default("PEN")
+  id            String     @id @default(uuid())
+  orderId       String
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  metodo        MetodoPago
+  estado        EstadoPago @default(PENDIENTE)
+  monto         Decimal    @db.Decimal(10, 2)
+  moneda        String     @default("PEN")
   // N.º de operación (Yape/Plin/transferencia) o id de transacción del proveedor
-  referencia     String?
+  referencia    String?
   // Archivo privado del comprobante (no se sirve en /api/uploads)
-  comprobante    String?
-  motivoRechazo  String?
+  comprobante   String?
+  motivoRechazo String?
   // Respuesta del proveedor (sin datos de tarjeta), para auditoría
-  detalle        Json?
-  creadoEn       DateTime   @default(now())
-  actualizado    DateTime   @updatedAt
+  detalle       Json?
+  creadoEn      DateTime   @default(now())
+  actualizado   DateTime   @updatedAt
 
   @@index([orderId])
   @@map("payments")
@@ -271,22 +279,26 @@ model Payment {
 
 // Conversación iniciada desde la tienda (con o sin cuenta). `tema` es la "entrada" elegida por el cliente.
 model Conversation {
-  id              String             @id @default(uuid())
-  tema            String
-  nombre          String
-  email           String?
-  telefono        String?
-  canal           CanalConversacion  @default(WEB)
-  estado          EstadoConversacion @default(ABIERTA)
-  userId          String?
-  user            User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id               String             @id @default(uuid())
+  tema             String
+  nombre           String
+  email            String?
+  telefono         String?
+  canal            CanalConversacion  @default(WEB)
+  estado           EstadoConversacion @default(ABIERTA)
+  userId           String?
+  user             User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
   // Hash del token que guarda el navegador del visitante para volver a su chat
-  tokenHash       String             @unique
-  noLeidasAdmin   Int                @default(0)
-  noLeidasCliente Int                @default(0)
-  ultimoMensajeEn DateTime           @default(now())
-  messages        Message[]
-  creadoEn        DateTime           @default(now())
+  tokenHash        String             @unique
+  // Número de WhatsApp del cliente (solo dígitos) en chats que llegan por WhatsApp Business
+  waId             String?            @unique
+  // Último mensaje del cliente: WhatsApp solo deja responder con texto libre durante 24 h
+  ultimoEntranteEn DateTime?
+  noLeidasAdmin    Int                @default(0)
+  noLeidasCliente  Int                @default(0)
+  ultimoMensajeEn  DateTime           @default(now())
+  messages         Message[]
+  creadoEn         DateTime           @default(now())
 
   @@index([estado, ultimoMensajeEn])
   @@map("conversations")
@@ -298,8 +310,44 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   autor          AutorMensaje
   texto          String
+  // Id del mensaje en WhatsApp (evita duplicados si Meta reenvía el webhook)
+  waMessageId    String?      @unique
   creadoEn       DateTime     @default(now())
 
   @@index([conversationId, creadoEn])
   @@map("messages")
+}
+
+// ==================== FAVORITOS ====================
+
+model Favorite {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  creadoEn  DateTime @default(now())
+
+  @@id([userId, productId])
+  @@map("favorites")
+}
+
+// ==================== CREDENCIALES (ENTREGA DEL SERVICIO) ====================
+
+// Accesos entregados por cada ítem de una orden. `datos` va cifrado (AES-256-GCM con CREDENTIALS_KEY).
+model Credential {
+  id                String    @id @default(uuid())
+  orderItemId       String    @unique
+  orderItem         OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  datos             String
+  venceEn           DateTime?
+  // Visible en "Mis accesos" de la tienda desde que el admin la publica
+  publicadoEn       DateTime?
+  // Canales por los que ya se envió
+  enviadoCorreoEn   DateTime?
+  enviadoWhatsappEn DateTime?
+  vistoEn           DateTime?
+  creadoEn          DateTime  @default(now())
+  actualizado       DateTime  @updatedAt
+
+  @@map("credentials")
 }

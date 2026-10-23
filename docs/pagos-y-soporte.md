@@ -36,12 +36,29 @@ Alternativas si Izipay no conviene: **Culqi**, **Niubiz** o **Mercado Pago** (mi
   - **Escribir por WhatsApp**: abre `wa.me` con un mensaje listo (número en *Contenido del sitio → Contacto y pie*).
 - Desde el admin, si el cliente dejó su teléfono, **Continuar por WhatsApp** abre la conversación en WhatsApp.
 
-### Conectar el chat con WhatsApp (siguiente fase, recomendado)
-Para que lo que escribes en el panel llegue al WhatsApp del cliente (y al revés) hace falta la **WhatsApp Business
-Cloud API** de Meta (número dedicado, verificación del negocio y plantillas para escribir después de 24 h).
-Opciones:
-- **Directo con Meta** (sin costo de plataforma, solo las tarifas por conversación de Meta).
-- **Proveedor (BSP)**: 360dialog, Twilio u otros, que simplifican el alta a cambio de una tarifa mensual.
+### WhatsApp Business (Cloud API de Meta)
+Con las variables `WHATSAPP_*` del backend, el panel **Mensajes** recibe y responde los chats de tu número de WhatsApp Business.
 
-El modelo de datos ya lo contempla (`Conversation.canal = WHATSAPP`): el webhook de WhatsApp crearía o continuaría la
-conversación y la respuesta del admin se enviaría por la API en lugar de quedar solo en la web.
+1. En [developers.facebook.com](https://developers.facebook.com) crea una app de tipo *Empresa* y agrega el producto **WhatsApp**.
+2. Copia el **Phone Number ID** y genera un **token permanente** (Configuración del negocio → Usuarios del sistema).
+   Ponlos en `WHATSAPP_PHONE_NUMBER_ID` y `WHATSAPP_TOKEN`.
+3. En *Configuración de la app → Básica* copia la **clave secreta** → `WHATSAPP_APP_SECRET`.
+4. Inventa un texto para `WHATSAPP_VERIFY_TOKEN` y registra el webhook en WhatsApp → Configuración:
+   URL `<BACKEND_PUBLIC_URL>/api/whatsapp/webhook`, el mismo verify token, y suscribe el campo **messages**.
+5. Reinicia el backend. En Mensajes verás "WhatsApp Business conectado".
+
+**Regla de 24 h de Meta:** puedes responder con texto libre hasta 24 h después del último mensaje del cliente. Fuera de esa
+ventana solo se envían **plantillas aprobadas**:
+- `WHATSAPP_TEMPLATE_REPLY`: plantilla con `{{1}}` = texto de tu respuesta.
+- `WHATSAPP_TEMPLATE_CREDENTIALS`: plantilla (categoría *Utilidad*) con `{{1}}` nombre, `{{2}}` n.º de pedido y `{{3}}` accesos.
+  Ejemplo: *"Hola {{1}}, tus accesos del pedido {{2}} están listos: {{3}}. También los ves en Mi cuenta → Mis accesos."*
+
+## Entrega de credenciales
+En **Órdenes → Ver** está la sección **Accesos del cliente**: por cada producto llenas usuario/correo, contraseña, perfil,
+PIN, enlace, vencimiento e indicaciones, y eliges por dónde enviarlos:
+- **Mis accesos (web)**: el cliente los ve en *Mi cuenta → Mis accesos* (con botón copiar y contraseña oculta) y recibe un aviso.
+- **Correo**: vía [Resend](https://resend.com) (`RESEND_API_KEY` y `EMAIL_FROM` de un dominio verificado).
+- **WhatsApp Business**: texto completo si el cliente te escribió en las últimas 24 h; si no, la plantilla de credenciales.
+
+Cada canal es independiente (si uno falla los otros se envían) y el pedido pasa a **Enviado**. Las credenciales se guardan
+cifradas (AES-256-GCM) con `CREDENTIALS_KEY`; si cambias esa clave, las ya guardadas dejan de poder leerse.

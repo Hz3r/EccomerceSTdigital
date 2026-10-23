@@ -115,6 +115,7 @@ export function PaymentReview({ payment, total }: { payment?: Payment | null; to
           <p className="font-semibold">{METODO_LABEL[payment.metodo]}</p>
           <p className="text-xs text-muted-foreground">
             {formatPrice(Number(payment.monto ?? total))}
+            {payment.medio && <> · {payment.medio}</>}
             {payment.referencia && <> · Op. <span className="font-mono">{payment.referencia}</span></>}
           </p>
         </div>

@@ -20,7 +20,7 @@ const PAYMENT: Record<EstadoPago, { label: string; className: string }> = {
 
 const STATUS: Record<StatusOrden, { label: string; icon: typeof Clock; className: string; hint: string }> = {
   PENDIENTE: { label: "En revisión", icon: Clock, className: "bg-brand-yellow/20 text-foreground", hint: "Estamos confirmando tu pago." },
-  ENVIADO: { label: "Enviado", icon: Send, className: "bg-sky-500/15 text-sky-700 dark:text-sky-300", hint: "Revisa tu correo y WhatsApp: ya te enviamos tus accesos." },
+  ENVIADO: { label: "Enviado", icon: Send, className: "bg-sky-500/15 text-sky-700 dark:text-sky-300", hint: "Tus accesos ya están en la pestaña Mis accesos (y en tu correo y WhatsApp)." },
   COMPLETADO: { label: "Completado", icon: CheckCircle2, className: "bg-brand/15 text-brand-strong", hint: "¡Listo! Disfruta tu servicio." },
   CANCELADO: { label: "Cancelado", icon: XCircle, className: "bg-destructive/10 text-destructive", hint: "Este pedido fue cancelado." },
 };

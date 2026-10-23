@@ -5,6 +5,7 @@ import { BadRequestError, NotFoundError } from "../../errors/appError.js";
 import { emit } from "../../realtime/events.js";
 import type { TokenPayload } from "../../utils/token.js";
 import { notifyAdmins, notifyUser } from "../notifications/notification.service.js";
+import { replyToChat } from "../whatsapp/whatsapp.service.js";
 
 // "Entradas" del chat: el cliente elige de qué quiere hablar y el admin puede filtrar por tema.
 export const TEMAS = ["Quiero comprar", "Mi pedido", "Pagos", "Problemas con mi acceso", "Otro"] as const;
@@ -137,6 +138,7 @@ export async function list(filters: { estado?: unknown; tema?: unknown }) {
       canal: true,
       estado: true,
       noLeidasAdmin: true,
+      ultimoEntranteEn: true,
       ultimoMensajeEn: true,
       creadoEn: true,
       user: { select: { id: true, nombre: true, email: true } },
@@ -159,6 +161,8 @@ async function findForAdmin(id: string) {
       estado: true,
       noLeidasAdmin: true,
       creadoEn: true,
+      waId: true,
+      ultimoEntranteEn: true,
       userId: true,
       user: { select: { id: true, nombre: true, email: true } },
     },
@@ -180,9 +184,11 @@ export async function getForAdmin(id: string) {
 export async function reply(id: string, input: Record<string, unknown>) {
   const conversation = await findForAdmin(id);
   const texto = cleanText(input.texto, "La respuesta");
+  // En chats de WhatsApp la respuesta sale primero por WhatsApp: si Meta la rechaza no se guarda.
+  const waMessageId = conversation.canal === "WHATSAPP" ? await replyToChat(conversation, texto) : undefined;
 
   const [message] = await getPrisma().$transaction([
-    getPrisma().message.create({ data: { conversationId: id, autor: "ADMIN", texto }, select: { id: true, autor: true, texto: true, creadoEn: true } }),
+    getPrisma().message.create({ data: { conversationId: id, autor: "ADMIN", texto, waMessageId }, select: { id: true, autor: true, texto: true, creadoEn: true } }),
     getPrisma().conversation.update({
       where: { id },
       data: { estado: "ABIERTA", noLeidasAdmin: 0, noLeidasCliente: { increment: 1 }, ultimoMensajeEn: new Date() },

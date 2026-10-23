@@ -22,6 +22,9 @@ import settingsRoutes from "./modules/settings/settings.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
 import supportRoutes from "./modules/support/support.routes.js";
+import favoriteRoutes from "./modules/favorites/favorite.routes.js";
+import credentialRoutes from "./modules/credentials/credential.routes.js";
+import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js";
 import { AppError } from "./errors/appError.js";
 import { databaseConnectionError } from "./errors/database.js";
 import { emitOnMutation, eventsHandler } from "./realtime/events.js";
@@ -66,6 +69,10 @@ app.use(
 // Tiempo real: la tienda y el admin escuchan aquí los cambios (fuera del límite general).
 app.get("/api/events", eventsHandler);
 
+// WhatsApp Business (webhook de Meta y estado de la conexión). Va antes de express.json y del límite general:
+// el webhook necesita el cuerpo sin procesar para verificar la firma y Meta puede enviar ráfagas.
+app.use("/api/whatsapp", whatsappRoutes);
+
 app.use(generalLimiter);
 
 // Webhooks de pago: cuerpo sin procesar para verificar la firma (express.json ya no lo toca).
@@ -101,6 +108,8 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/support", supportRoutes);
+app.use("/api/favorites", favoriteRoutes);
+app.use("/api/credentials", credentialRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {

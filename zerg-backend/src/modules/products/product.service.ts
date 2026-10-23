@@ -1,5 +1,13 @@
 import { getPrisma } from "../../config/database.js";
 import { NotFoundError, ConflictError } from "../../errors/appError.js";
+import type { Prisma } from "@prisma/client";
+
+type ContentField = Prisma.InputJsonValue | Prisma.NullTypes.JsonNull | undefined;
+interface ProductContent {
+  incluye?: ContentField;
+  pasos?: ContentField;
+  faqs?: ContentField;
+}
 
 export const getAll = async () => {
   return getPrisma().product.findMany({
@@ -61,7 +69,7 @@ export const create = async (data: {
   descripcion?: string;
   imagenUrl?: string;
   categoryId: string;
-}) => {
+} & ProductContent) => {
   const slugExists = await getPrisma().product.findUnique({
     where: { slug: data.slug },
   });
@@ -95,7 +103,7 @@ export const update = async (
     imagenUrl?: string;
     categoryId?: string;
     isActivo?: boolean;
-  }
+  } & ProductContent
 ) => {
   const product = await getPrisma().product.findUnique({ where: { id } });
 

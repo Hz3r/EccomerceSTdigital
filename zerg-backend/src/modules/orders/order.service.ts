@@ -7,18 +7,20 @@ import { assertAvailable, createPending } from "../payments/payment.service.js";
 
 // Último intento de pago de cada orden (estado, método y referencia; nunca el archivo del comprobante).
 const latestPayment = {
-  select: { id: true, metodo: true, estado: true, monto: true, referencia: true, motivoRechazo: true, comprobante: true, actualizado: true },
+  select: { id: true, metodo: true, estado: true, monto: true, referencia: true, motivoRechazo: true, comprobante: true, detalle: true, actualizado: true },
   orderBy: { creadoEn: "desc" as const },
   take: 1,
 };
 
 // Hacia fuera solo se indica si hay comprobante (el archivo es privado y se pide por /payments/:id/proof).
-function withPublicPayment<T extends { payments?: { comprobante: string | null }[] }>(order: T) {
+// Del detalle del proveedor solo sale el medio que eligió el cliente en el pago directo (Yape, Plin…).
+function withPublicPayment<T extends { payments?: { comprobante: string | null; detalle: unknown }[] }>(order: T) {
   const { payments, ...rest } = order;
   const last = payments?.[0];
   if (!last) return { ...rest, payment: null };
-  const { comprobante, ...payment } = last;
-  return { ...rest, payment: { ...payment, tieneComprobante: Boolean(comprobante) } };
+  const { comprobante, detalle, ...payment } = last;
+  const medio = (detalle as { medio?: unknown } | null)?.medio;
+  return { ...rest, payment: { ...payment, medio: typeof medio === "string" ? medio : null, tieneComprobante: Boolean(comprobante) } };
 }
 
 const money = (value: unknown) => `S/ ${Number(value).toFixed(2)}`;
@@ -41,7 +43,7 @@ const itemsWithProduct = {
 // Lo que ve el cliente sobre el avance de su pedido.
 const STATUS_COPY: Record<string, { titulo: string; mensaje: (numero: string) => string }> = {
   PENDIENTE: { titulo: "Pedido en revisión", mensaje: (n) => `Tu pedido ${n} volvió a estado pendiente.` },
-  ENVIADO: { titulo: "Pedido enviado", mensaje: (n) => `Enviamos los accesos de tu pedido ${n}. Revisa tu correo y WhatsApp.` },
+  ENVIADO: { titulo: "Pedido enviado", mensaje: (n) => `Enviamos los accesos de tu pedido ${n}. Míralos en "Mis accesos".` },
   COMPLETADO: { titulo: "Pedido completado", mensaje: (n) => `Tu pedido ${n} está completado. ¡Gracias por tu compra!` },
   CANCELADO: { titulo: "Pedido cancelado", mensaje: (n) => `Tu pedido ${n} fue cancelado. Escríbenos si tienes dudas.` },
 };
