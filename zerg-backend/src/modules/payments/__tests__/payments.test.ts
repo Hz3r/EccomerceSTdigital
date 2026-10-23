@@ -73,10 +73,16 @@ describe("pago directo", () => {
     await expect(paymentService.submitProof(client, payment().id, { referencia: "1", file })).rejects.toThrow("Pago no encontrado");
   });
 
-  it("exige número de operación y captura", async () => {
+  it("exige la captura; el número de operación es opcional y se guarda el medio usado", async () => {
     mockPrisma.payment.findUnique.mockResolvedValue(payment());
-    await expect(paymentService.submitProof(client, payment().id, { referencia: "", file })).rejects.toThrow("número de operación");
     await expect(paymentService.submitProof(client, payment().id, { referencia: "1" })).rejects.toThrow("captura");
+
+    await paymentService.submitProof(client, payment().id, { referencia: "", medio: "Yape", file });
+    expect(mockPrisma.payment.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { estado: "EN_REVISION", referencia: null, comprobante: "abc.png", motivoRechazo: null, detalle: { medio: "Yape" } } })
+    );
+    expect(notified().at(-1)?.mensaje).toContain("Yape");
+    expect(notified().at(-1)?.mensaje).not.toContain("Op.");
   });
 
   it("el admin confirma el pago y el cliente recibe el aviso", async () => {

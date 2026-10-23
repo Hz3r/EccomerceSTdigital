@@ -22,6 +22,9 @@ export interface Category {
 }
 
 export interface Product {
+  incluye?: string[] | null;
+  pasos?: { titulo: string; texto: string }[] | null;
+  faqs?: { pregunta: string; respuesta: string }[] | null;
   id: string;
   nombre: string;
   slug: string;
@@ -72,6 +75,8 @@ export interface Payment {
   estado: EstadoPago;
   monto: number | string;
   referencia?: string | null;
+  // Yape, Plin o Transferencia (pago directo)
+  medio?: string | null;
   motivoRechazo?: string | null;
   tieneComprobante?: boolean;
   actualizado?: string;
@@ -99,6 +104,8 @@ export interface Conversation {
   canal: "WEB" | "WHATSAPP";
   estado: "ABIERTA" | "CERRADA";
   noLeidasAdmin?: number;
+  // Último mensaje del cliente por WhatsApp: con más de 24 h solo se le puede escribir con plantilla
+  ultimoEntranteEn?: string | null;
   ultimoMensajeEn?: string;
   creadoEn: string;
   user?: { id: string; nombre: string; email: string } | null;

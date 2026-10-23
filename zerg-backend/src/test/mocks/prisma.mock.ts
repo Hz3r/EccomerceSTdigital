@@ -1,6 +1,19 @@
 import { vi } from "vitest";
 
 const mockPrisma = {
+  favorite: {
+    findMany: vi.fn(),
+    upsert: vi.fn(),
+    deleteMany: vi.fn(),
+  },
+  credential: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    upsert: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+  },
   conversation: {
     create: vi.fn(),
     findUnique: vi.fn(),
@@ -11,6 +24,7 @@ const mockPrisma = {
   },
   message: {
     create: vi.fn(),
+    findUnique: vi.fn(),
     findMany: vi.fn().mockResolvedValue([]),
   },
   payment: {

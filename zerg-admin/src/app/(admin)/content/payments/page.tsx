@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle2, CircleDashed, Plus } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleDashed, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageField } from "@/components/image-field";
@@ -76,6 +76,15 @@ export default function PaymentsContentPage() {
             checked={directo.activo}
             onChange={(activo) => setDirecto({ activo })}
           />
+          {directo.activo && !directo.yape && !directo.plin && !directo.qrUrl && !cuentas.some((c) => c.numero || c.cci) && (
+            <p role="alert" className="flex gap-2 rounded-xl border border-viz-warning/40 bg-viz-warning/10 p-3 text-sm">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+              <span>
+                <b>Falta un dato para cobrar.</b> Agrega tu número de Yape o Plin, el QR o una cuenta bancaria: es lo que el cliente ve en el paso
+                &quot;Pago&quot; para pagar sin tener que escribirte.
+              </span>
+            </p>
+          )}
           <TextField id="pago-titular" label="Titular" hint="Nombre que verá el cliente al pagar." value={directo.titular} onChange={(titular) => setDirecto({ titular })} />
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField id="pago-yape" label="Número de Yape" placeholder="999 999 999" value={directo.yape} onChange={(yape) => setDirecto({ yape })} />

@@ -1,6 +1,7 @@
 import type { Response } from "express";
 import type { AuthRequest } from "../../types/index.js";
 import * as productService from "./product.service.js";
+import { parseProductContent } from "./product.content.js";
 
 export const getAll = async (_req: AuthRequest, res: Response) => {
   const products = await productService.getAll();
@@ -30,6 +31,7 @@ export const create = async (req: AuthRequest, res: Response) => {
     descripcion,
     imagenUrl,
     categoryId,
+    ...parseProductContent(req.body ?? {}),
   });
 
   res.status(201).json({
@@ -51,6 +53,7 @@ export const update = async (req: AuthRequest, res: Response) => {
     imagenUrl,
     categoryId,
     isActivo,
+    ...parseProductContent(req.body ?? {}),
   });
 
   res.status(200).json({

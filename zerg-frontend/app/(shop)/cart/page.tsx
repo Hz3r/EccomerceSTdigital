@@ -8,6 +8,7 @@ import { loginHref } from "@/lib/auth-redirect";
 import { CartItem } from "@/components/cart/cart-item";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { Button } from "@/components/ui/button";
+import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 
 export default function CartPage() {
   const { items, totalItems, totalPrice, clearCart } = useCart();
@@ -16,9 +17,12 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
-      <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-        Carrito <span className="text-brand-strong">({totalItems})</span>
-      </h1>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+          Carrito <span className="text-brand-strong">({totalItems})</span>
+        </h1>
+        {items.length > 0 && <CheckoutSteps current={0} className="md:w-auto" />}
+      </div>
 
       {items.length === 0 ? (
         <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed py-20 text-center">

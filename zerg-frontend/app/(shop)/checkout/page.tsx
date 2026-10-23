@@ -13,35 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderSummary } from "@/components/cart/order-summary";
-import { ArrowLeft, Check, CheckCircle2, Loader2, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowLeft, CheckCircle2, Loader2, Lock, MessageCircle } from "lucide-react";
+import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 import type { MetodoPago, PaymentMethodOption, User } from "@/types";
 
-
-const STEPS = ["Carrito", "Datos y pago", "Confirmación"];
-
-function Steps({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-xs font-semibold md:gap-3">
-      {STEPS.map((s, i) => (
-        <li key={s} className="flex items-center gap-2 md:gap-3">
-          <span
-            className={cn(
-              "flex size-6 items-center justify-center rounded-full text-[11px]",
-              i < current && "bg-brand text-brand-ink",
-              i === current && "bg-surface-ink text-white",
-              i > current && "bg-muted text-muted-foreground"
-            )}
-          >
-            {i < current ? <Check className="size-3.5" /> : i + 1}
-          </span>
-          <span className={cn("hidden sm:inline", i > current && "text-muted-foreground")}>{s}</span>
-          {i < STEPS.length - 1 && <span className="h-px w-6 bg-border md:w-10" />}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 // Comprar requiere cuenta: sin sesión se envía al login y, al ingresar, se vuelve aquí con el carrito intacto.
 export default function CheckoutPage() {
@@ -81,12 +56,13 @@ function Checkout({ user }: { user: User }) {
       })
       .catch(() => setMethods([]));
   }, []);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     nombreCliente: user.nombre,
     email: user.email,
-    telefono: "",
+    // El último WhatsApp usado se recuerda en este navegador para no escribirlo en cada compra
+    telefono: readSavedPhone(),
     notas: "",
-  });
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +83,7 @@ function Checkout({ user }: { user: User }) {
           cantidad: i.cantidad,
         })),
       });
+      savePhone(form.telefono);
       clearCart();
       // Con el pedido creado se pasa a pagarlo (instrucciones, comprobante, tarjeta o Binance)
       if (USE_MOCKS) {
@@ -126,7 +103,7 @@ function Checkout({ user }: { user: User }) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center md:px-6">
         <div className="flex justify-center">
-          <Steps current={2} />
+          <CheckoutSteps current={3} className="max-w-xs" />
         </div>
         <span className="mx-auto mt-10 flex size-20 items-center justify-center rounded-full bg-brand/15">
           <CheckCircle2 className="size-10 text-brand-strong" />
@@ -162,14 +139,14 @@ function Checkout({ user }: { user: User }) {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Finalizar compra</h1>
-        <Steps current={1} />
+        <CheckoutSteps current={1} className="md:w-auto" />
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
         <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
           <section className="rounded-3xl border bg-card p-6">
             <h2 className="font-bold">Tus datos</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">Aquí te enviaremos tus accesos.</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">A este correo y WhatsApp te enviaremos tus accesos.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Field id="nombreCliente" label="Nombre completo">
                 <Input
@@ -190,15 +167,20 @@ function Checkout({ user }: { user: User }) {
                   required
                 />
               </Field>
-              <Field id="telefono" label="WhatsApp (opcional)">
+              <Field id="telefono" label="WhatsApp (recomendado)">
                 <Input
                   id="telefono"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="h-11 rounded-xl"
-                  placeholder="+51 999 999 999"
+                  placeholder="999 999 999"
                   value={form.telefono}
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                 />
+                <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <MessageCircle className="size-3.5 text-[#25D366]" /> Te llegan tus accesos al instante por WhatsApp.
+                </p>
               </Field>
               <Field id="notas" label="Notas (opcional)">
                 <Input
@@ -251,6 +233,24 @@ function Checkout({ user }: { user: User }) {
       </div>
     </div>
   );
+}
+
+const PHONE_KEY = "zerg:telefono";
+
+function readSavedPhone() {
+  try {
+    return typeof window === "undefined" ? "" : (localStorage.getItem(PHONE_KEY) ?? "");
+  } catch {
+    return "";
+  }
+}
+
+function savePhone(value: string) {
+  try {
+    if (value.trim()) localStorage.setItem(PHONE_KEY, value.trim());
+  } catch {
+    // Sin almacenamiento (modo privado): no pasa nada
+  }
 }
 
 function Field({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {

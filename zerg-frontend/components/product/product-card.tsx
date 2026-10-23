@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductCover } from "./product-cover";
 import { useCart } from "@/hooks/useCart";
+import { useFavorites } from "@/hooks/useFavorites";
 import { activePlans, bestDiscount, cheapestPlan, discountPercent, formatPrice } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
@@ -20,7 +21,8 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const { addItem, items } = useCart();
   const plans = activePlans(product);
   const [planId, setPlanId] = useState(() => cheapestPlan(product)?.id ?? "");
-  const [favorite, setFavorite] = useState(false);
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
+  const favorite = isFavorite(product.id);
   const plan = plans.find((p) => p.id === planId) ?? plans[0];
   const discount = plan ? discountPercent(plan) : bestDiscount(product);
   const inCart = plan ? items.some((i) => i.planId === plan.id) : false;
@@ -126,7 +128,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
               type="button"
               aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
               aria-pressed={favorite}
-              onClick={() => setFavorite((f) => !f)}
+              onClick={() => toggleFavorite(product.id, product.nombre)}
               className="rounded-md p-1 transition-colors hover:bg-muted hover:text-foreground"
             >
               <Heart className={cn("size-4", favorite && "fill-destructive text-destructive")} />

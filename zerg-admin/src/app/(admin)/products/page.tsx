@@ -16,6 +16,9 @@ import api from "@/lib/axios"
 import { assetUrl, formatPrice, slugify, STORE_URL } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import type { Category, Product } from "@/types"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ProductContentEditor, type ProductContent } from "@/components/products/product-content-editor"
+import { ProductReviews } from "@/components/products/product-reviews"
 
 interface PlanDraft {
   id?: string // sin id = plan nuevo
@@ -26,7 +29,7 @@ interface PlanDraft {
   isActivo: boolean
 }
 
-interface ProductDraft {
+interface ProductDraft extends ProductContent {
   nombre: string
   slug: string
   descripcion: string
@@ -46,6 +49,9 @@ function toDraft(product?: Product): ProductDraft {
     categoryId: product?.categoryId ?? "",
     imagenUrl: product?.imagenUrl ?? "",
     isActivo: product?.isActivo ?? true,
+    incluye: product?.incluye ?? [],
+    pasos: product?.pasos ?? [],
+    faqs: product?.faqs ?? [],
     plans: product?.plans?.length
       ? product.plans.map((p) => ({
           id: p.id,
@@ -293,6 +299,10 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         categoryId: draft.categoryId,
         imagenUrl: draft.imagenUrl,
         isActivo: draft.isActivo,
+        // Lista vacía = la tienda usa los textos generales
+        incluye: draft.incluye.map((x) => x.trim()).filter(Boolean),
+        pasos: draft.pasos.filter((p) => p.titulo.trim() || p.texto.trim()),
+        faqs: draft.faqs.filter((f) => f.pregunta.trim() && f.respuesta.trim()),
       }
       const saved: Product = product
         ? (await api.put(`/products/${product.id}`, body)).data.data
@@ -355,6 +365,14 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         </DialogDescription>
       </DialogHeader>
 
+      <Tabs defaultValue="general" className="gap-4">
+        <TabsList>
+          <TabsTrigger value="general">General y planes</TabsTrigger>
+          <TabsTrigger value="pagina">Página del producto</TabsTrigger>
+          {product && <TabsTrigger value="resenas">Reseñas</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-6">
       <div className="grid gap-6 md:grid-cols-[1fr_260px]">
         <div className="space-y-4">
           <div className="space-y-2">
@@ -407,7 +425,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
             <textarea
               id="descripcion"
               rows={3}
-              placeholder="Qué incluye, calidad, dispositivos..."
+              placeholder="Resumen que aparece bajo el nombre y en la pestaña Descripción"
               value={draft.descripcion}
               onChange={(e) => set("descripcion", e.target.value)}
               className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -491,6 +509,22 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
           ))}
         </ul>
       </div>
+
+        </TabsContent>
+
+        <TabsContent value="pagina">
+          <ProductContentEditor
+            value={{ incluye: draft.incluye, pasos: draft.pasos, faqs: draft.faqs }}
+            onChange={(c) => setDraft((d) => ({ ...d, ...c }))}
+          />
+        </TabsContent>
+
+        {product && (
+          <TabsContent value="resenas">
+            <ProductReviews productId={product.id} />
+          </TabsContent>
+        )}
+      </Tabs>
 
       {error && <p role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 

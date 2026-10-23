@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ChevronDown, Loader2, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 import { MethodPicker, METHOD_INFO } from "@/components/payments/method-picker";
 import { BinancePayment, DirectPayment, IzipayPayment, PaymentStatus } from "@/components/payments/payment-steps";
 import { toast } from "@/components/ui/toast";
@@ -72,7 +73,7 @@ export default function PayOrderPage() {
       <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-24 text-center">
         <p className="text-2xl font-extrabold">No pudimos abrir el pago</p>
         <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-        <Button className="mt-6 rounded-lg" render={<Link href="/account#pedidos" />} nativeButton={false}>
+        <Button className="mt-6 rounded-lg" render={<Link href="/account" />} nativeButton={false}>
           Ver mis pedidos
         </Button>
       </div>
@@ -93,17 +94,18 @@ export default function PayOrderPage() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-12">
-      <Link href="/account#pedidos" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <Link href="/account" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Mis pedidos
       </Link>
-      <div className="mt-3 flex flex-col gap-1">
-        <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-          {payment?.estado === "PAGADO" ? "Pedido pagado" : "Paga tu pedido"}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Pedido <span className="font-mono font-semibold text-foreground">{data.numeroOrden}</span>
-          {payment && <> · {METHOD_INFO[payment.metodo].title}</>}
-        </p>
+      <div className="mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{settled ? "¡Listo!" : "Paga tu pedido"}</h1>
+          <p className="text-sm text-muted-foreground">
+            Pedido <span className="font-mono font-semibold text-foreground">{data.numeroOrden}</span>
+            {payment && <> · {METHOD_INFO[payment.metodo].title}</>}
+          </p>
+        </div>
+        {data.status !== "CANCELADO" && <CheckoutSteps current={settled ? 3 : 2} className="md:w-auto" />}
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
@@ -113,9 +115,9 @@ export default function PayOrderPage() {
           ) : !payment ? (
             <p className="rounded-3xl border border-dashed p-8 text-center text-muted-foreground">Elige un método de pago para continuar.</p>
           ) : settled ? (
-            <PaymentStatus payment={payment} />
+            <PaymentStatus payment={payment} orderStatus={data.status} />
           ) : payment.metodo === "DIRECTO" ? (
-            <DirectPayment payment={payment} onUpdated={reload} />
+            <DirectPayment payment={payment} numeroOrden={data.numeroOrden} onUpdated={reload} />
           ) : payment.metodo === "IZIPAY" ? (
             <IzipayPayment payment={payment} onUpdated={reload} />
           ) : (

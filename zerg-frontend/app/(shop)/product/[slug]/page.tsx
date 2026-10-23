@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { PlanSelector } from "@/components/product/plan-selector";
 import { ProductCover } from "@/components/product/product-cover";
 import { ReviewForm, StoreReply } from "@/components/product/review-form";
+import { useFavorites } from "@/hooks/useFavorites";
+import { productFaqs, productIncluye, productPasos } from "@/lib/product-content";
 import { Rating } from "@/components/product/rating";
 import { ProductCarousel } from "@/components/home/product-carousel";
 import { Newsletter } from "@/components/layout/newsletter";
@@ -35,20 +37,6 @@ const TABS = [
   { id: "preguntas", label: "Preguntas frecuentes" },
 ] as const;
 
-const STEPS = [
-  { title: "Elige tu plan", text: "Selecciona la duración que prefieras y agrégala al carrito." },
-  { title: "Realiza el pago", text: "Paga con Yape, Plin, tarjeta o PayPal de forma segura." },
-  { title: "Recibe tu acceso", text: "Te enviamos los datos de acceso a tu correo y WhatsApp en minutos." },
-  { title: "Disfruta", text: "Ingresa desde tu TV, celular o computadora. Si algo falla, lo reemplazamos." },
-];
-
-const FAQ = [
-  { q: "¿Cuánto demora la entrega?", a: "La mayoría de pedidos se entregan en menos de 10 minutos. En horas de alta demanda puede tardar hasta 1 hora." },
-  { q: "¿Qué pasa si la cuenta deja de funcionar?", a: "Tienes garantía durante todo el plan: te damos un reemplazo sin costo adicional." },
-  { q: "¿Puedo usarla en varios dispositivos?", a: "Sí, puedes ingresar desde TV, celular, tablet o computadora, respetando las pantallas de tu plan." },
-  { q: "¿Puedo renovar mi plan?", a: "Claro. Te avisaremos antes del vencimiento para que renueves y conserves tu perfil." },
-];
-
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -63,7 +51,7 @@ export default function ProductDetailPage() {
   const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(() =>
     typeof window !== "undefined" && window.location.hash === "#resenas" ? "resenas" : "descripcion"
   );
-  const [favorite, setFavorite] = useState(false);
+  const { isFavorite, toggle: toggleFavorite } = useFavorites();
 
   const jumpedToReviews = useRef(false);
   // Error al cargar (servidor caído o desactualizado) ≠ producto inexistente (404)
@@ -216,12 +204,12 @@ export default function ProductDetailPage() {
                 <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{product.nombre}</h1>
                 <button
                   type="button"
-                  aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
-                  aria-pressed={favorite}
-                  onClick={() => setFavorite((f) => !f)}
+                  aria-label={isFavorite(product.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
+                  aria-pressed={isFavorite(product.id)}
+                  onClick={() => toggleFavorite(product.id, product.nombre)}
                   className="flex size-10 shrink-0 items-center justify-center rounded-full border transition-colors hover:bg-muted"
                 >
-                  <Heart className={cn("size-4", favorite && "fill-destructive text-destructive")} />
+                  <Heart className={cn("size-4 transition-transform active:scale-125", isFavorite(product.id) && "fill-destructive text-destructive")} />
                 </button>
               </div>
               {rating && (
@@ -353,11 +341,7 @@ export default function ProductDetailPage() {
                 <div>
                   <h3 className="font-bold">¿Qué incluye?</h3>
                   <ul className="mt-2 space-y-1.5 text-muted-foreground">
-                    {[
-                      "Acceso completo durante el tiempo del plan elegido.",
-                      "Datos de acceso enviados a tu correo y WhatsApp.",
-                      "Soporte y garantía de reemplazo sin costo.",
-                    ].map((li) => (
+                    {productIncluye(product).map((li) => (
                       <li key={li} className="flex gap-2">
                         <span className="mt-1.5 size-1.5 shrink-0 rotate-45 bg-brand" />
                         {li}
@@ -370,13 +354,13 @@ export default function ProductDetailPage() {
 
             {tab === "como-funciona" && (
               <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {STEPS.map((s, i) => (
-                  <li key={s.title} className="rounded-2xl border p-5">
+                {productPasos(product).map((s, i) => (
+                  <li key={`${i}-${s.titulo}`} className="rounded-2xl border p-5">
                     <span className="flex size-9 items-center justify-center rounded-lg bg-surface-ink text-sm font-black text-brand">
                       {i + 1}
                     </span>
-                    <p className="mt-4 font-semibold">{s.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{s.text}</p>
+                    <p className="mt-4 font-semibold">{s.titulo}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{s.texto}</p>
                   </li>
                 ))}
               </ol>
@@ -409,13 +393,13 @@ export default function ProductDetailPage() {
 
             {tab === "preguntas" && (
               <div className="max-w-3xl divide-y rounded-2xl border">
-                {FAQ.map((f) => (
-                  <details key={f.q} className="group px-5">
+                {productFaqs(product).map((f) => (
+                  <details key={f.pregunta} className="group px-5">
                     <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-sm font-semibold [&::-webkit-details-marker]:hidden">
-                      {f.q}
+                      {f.pregunta}
                       <Plus className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-45" />
                     </summary>
-                    <p className="pb-4 text-sm text-muted-foreground">{f.a}</p>
+                    <p className="pb-4 text-sm whitespace-pre-line text-muted-foreground">{f.respuesta}</p>
                   </details>
                 ))}
               </div>

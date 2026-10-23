@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Heart,
+  KeyRound,
   LayoutGrid,
   LogOut,
   Menu,
@@ -142,12 +144,16 @@ export function Navbar() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/account" />}>
-                    <User className="size-4" />
-                    Mi cuenta
-                  </DropdownMenuItem>
-                  <DropdownMenuItem render={<Link href="/account#pedidos" />}>
                     <Package className="size-4" />
                     Mis pedidos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/account?tab=accesos" />}>
+                    <KeyRound className="size-4" />
+                    Mis accesos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/account?tab=favoritos" />}>
+                    <Heart className="size-4" />
+                    Favoritos
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={logout}>

@@ -7,6 +7,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toast";
 import { SupportWidget } from "@/components/support/support-widget";
+import { FavoritesProvider } from "@/hooks/useFavorites";
 
 export default function ShopLayout({
   children,
@@ -18,12 +19,14 @@ export default function ShopLayout({
       <SiteSettingsProvider>
         <AuthProvider>
           <CartProvider>
+          <FavoritesProvider>
             <div className="flex min-h-screen flex-col">
               <Navbar />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
             <SupportWidget />
+          </FavoritesProvider>
           </CartProvider>
         </AuthProvider>
       </SiteSettingsProvider>
