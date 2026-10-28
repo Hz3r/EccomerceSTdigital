@@ -115,6 +115,6 @@ describe("WhatsApp Business", () => {
   it("sin configuración no intenta enviar", async () => {
     delete process.env.WHATSAPP_TOKEN;
     await expect(whatsappService.replyToChat({ waId: "1", ultimoEntranteEn: new Date() }, "x")).rejects.toMatchObject({ statusCode: 503 });
-    expect(whatsappService.status().conectado).toBe(false);
+    expect((await whatsappService.status()).conectado).toBe(false);
   });
 });

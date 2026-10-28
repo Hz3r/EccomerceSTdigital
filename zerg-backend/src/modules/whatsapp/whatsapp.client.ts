@@ -1,9 +1,11 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { AppError } from "../../errors/appError.js";
+import { effective, panelWhatsapp } from "./whatsapp.settings.js";
 
 // WhatsApp Business (Cloud API de Meta). Se configura en developers.facebook.com → tu app → WhatsApp:
 // token permanente (usuario del sistema), Phone Number ID, App Secret y un "verify token" inventado por ti.
 // Webhook a registrar en Meta: <BACKEND_PUBLIC_URL>/api/whatsapp/webhook (campo "messages").
+// Los datos se cargan en el panel (Contenido del sitio → WhatsApp) o, como respaldo, en las variables WHATSAPP_* del .env.
 
 export interface WhatsappConfig {
   token: string;
@@ -17,22 +19,23 @@ export interface WhatsappConfig {
 }
 
 export function whatsappConfig(): WhatsappConfig | null {
-  const token = process.env.WHATSAPP_TOKEN?.trim();
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
-  const appSecret = process.env.WHATSAPP_APP_SECRET?.trim();
+  if (!panelWhatsapp().activo) return null;
+  const token = effective("token");
+  const phoneNumberId = effective("phoneNumberId");
+  const verifyToken = effective("verifyToken");
+  const appSecret = effective("appSecret");
   if (!token || !phoneNumberId || !verifyToken || !appSecret) return null;
   return {
     token,
     phoneNumberId,
     verifyToken,
     appSecret,
-    version: process.env.WHATSAPP_API_VERSION?.trim() || "v21.0",
-    countryCode: (process.env.WHATSAPP_COUNTRY_CODE?.trim() || "51").replace(/\D/g, ""),
-    language: process.env.WHATSAPP_TEMPLATE_LANGUAGE?.trim() || "es",
+    version: effective("version") || "v21.0",
+    countryCode: (effective("countryCode") || "51").replace(/\D/g, ""),
+    language: effective("language") || "es",
     templates: {
-      reply: process.env.WHATSAPP_TEMPLATE_REPLY?.trim() || undefined,
-      credentials: process.env.WHATSAPP_TEMPLATE_CREDENTIALS?.trim() || undefined,
+      reply: effective("templateReply") || undefined,
+      credentials: effective("templateCredentials") || undefined,
     },
   };
 }
@@ -75,7 +78,7 @@ async function post(config: WhatsappConfig, payload: Record<string, unknown>): P
   if (body?.error?.code === 131047) {
     throw new AppError("Pasaron más de 24 h desde el último mensaje del cliente: WhatsApp solo permite enviarle una plantilla aprobada.", 409);
   }
-  if (body?.error?.code === 190) throw new AppError("El token de WhatsApp venció o no es válido. Revisa WHATSAPP_TOKEN.", 502);
+  if (body?.error?.code === 190) throw new AppError("El token de WhatsApp venció o no es válido. Actualízalo en Contenido del sitio → WhatsApp.", 502);
   throw new AppError(`WhatsApp no aceptó el mensaje${body?.error?.message ? `: ${body.error.message}` : ""}.`, 502);
 }
 
@@ -94,3 +97,22 @@ export const sendTemplate = (config: WhatsappConfig, to: string, name: string, p
       }),
     },
   });
+
+/** Comprueba el token y el Phone Number ID consultando el número en Meta (no envía mensajes). */
+export async function checkConnection(config: Pick<WhatsappConfig, "token" | "phoneNumberId" | "version">) {
+  const url = `https://graph.facebook.com/${config.version}/${config.phoneNumberId}?fields=display_phone_number,verified_name,quality_rating`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${config.token}` } }).catch(() => null);
+  if (!res) throw new AppError("No se pudo conectar con Meta. Revisa la conexión a internet del servidor.", 502);
+  const body = (await res.json().catch(() => null)) as {
+    display_phone_number?: string;
+    verified_name?: string;
+    quality_rating?: string;
+    error?: { code?: number; message?: string };
+  } | null;
+  if (res.ok && body?.display_phone_number) {
+    return { numero: body.display_phone_number, nombre: body.verified_name ?? null, calidad: body.quality_rating ?? null };
+  }
+  if (body?.error?.code === 190) throw new AppError("Meta rechazó el token: venció o no es válido.", 502);
+  if (body?.error?.code === 100) throw new AppError("Meta no encontró ese Phone Number ID o el token no tiene acceso a él.", 502);
+  throw new AppError(`Meta respondió con un error${body?.error?.message ? `: ${body.error.message}` : ""}.`, 502);
+}
