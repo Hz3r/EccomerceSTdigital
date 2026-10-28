@@ -26,6 +26,7 @@ import { useSite } from "@/hooks/useSiteSettings";
 import { useLiveVersion } from "@/lib/live";
 import { getCategories, getLatestReviews, getProducts } from "@/lib/api";
 import { bestDiscount, cheapestPlan, formatPrice } from "@/lib/catalog";
+import { assetUrl } from "@/lib/site-settings";
 import { cn } from "@/lib/utils";
 import type { Category, Product, Review } from "@/types";
 
@@ -275,13 +276,27 @@ export default function Home() {
         </div>
         <div className="mt-6 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
           <div className="animate-marquee flex w-max gap-14">
-            {[...portada.plataformas, ...portada.plataformas].map((name, i) => (
+            {[...portada.plataformas, ...portada.plataformas].map((p, i) => (
               <span
                 key={i}
                 aria-hidden={i >= portada.plataformas.length}
-                className="text-2xl font-black tracking-tight whitespace-nowrap text-foreground/25 transition-colors hover:text-brand-strong md:text-3xl"
+                title={p.nombre}
+                className="flex h-10 shrink-0 items-center md:h-12"
               >
-                {name}
+                {p.logoUrl ? (
+                  // Logo subido desde el admin: en gris y a color al pasar el mouse
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={assetUrl(p.logoUrl)}
+                    alt={i >= portada.plataformas.length ? "" : p.nombre}
+                    loading="lazy"
+                    className="h-full w-auto max-w-40 object-contain opacity-40 grayscale transition hover:opacity-100 hover:grayscale-0"
+                  />
+                ) : (
+                  <span className="text-2xl font-black tracking-tight whitespace-nowrap text-foreground/25 transition-colors hover:text-brand-strong md:text-3xl">
+                    {p.nombre}
+                  </span>
+                )}
               </span>
             ))}
           </div>

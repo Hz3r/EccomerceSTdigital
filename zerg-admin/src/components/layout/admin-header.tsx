@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -15,12 +14,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BellIcon, ExternalLink, LogOutIcon, MenuIcon, MessageSquareQuote, PanelLeftClose, PanelLeftOpen, ShoppingCartIcon } from "lucide-react";
+import { ExternalLink, LogOutIcon, MenuIcon, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useLiveStatus, useLiveVersion } from "@/lib/live";
-import api from "@/lib/axios";
+import { useLiveStatus } from "@/lib/live";
 import { STORE_URL } from "@/lib/format";
-import type { AdminStats } from "@/types";
 import { useSidebar } from "./admin-sidebar";
 import { findNavItem, navigation } from "./navigation";
 
@@ -29,35 +26,9 @@ export function AdminHeader() {
   const { setOpen, collapsed, toggleCollapsed } = useSidebar();
   const live = useLiveStatus();
   const pathname = usePathname();
-  const [pending, setPending] = useState({ orders: 0, reviews: 0 });
 
   const current = findNavItem(pathname);
   const group = navigation.find((g) => g.items.some((i) => i.href === current?.href));
-
-  // Avisos reales: pedidos pendientes y reseñas por aprobar.
-  // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
-  const liveVersion = useLiveVersion("orders", "reviews");
-  useEffect(() => {
-    api
-      .get<{ data: AdminStats }>("/admin/stats")
-      .then((res) => setPending({ orders: res.data.data.pendingOrders, reviews: res.data.data.pendingReviews ?? 0 }))
-      .catch(() => {});
-  }, [pathname, liveVersion]);
-
-  const notifications = [
-    pending.orders > 0 && {
-      href: "/orders",
-      icon: ShoppingCartIcon,
-      title: `${pending.orders} ${pending.orders === 1 ? "pedido pendiente" : "pedidos pendientes"}`,
-      text: "Revisa y entrega los accesos",
-    },
-    pending.reviews > 0 && {
-      href: "/reviews",
-      icon: MessageSquareQuote,
-      title: `${pending.reviews} ${pending.reviews === 1 ? "reseña por aprobar" : "reseñas por aprobar"}`,
-      text: "Apruébalas para mostrarlas en la tienda",
-    },
-  ].filter(Boolean) as { href: string; icon: typeof BellIcon; title: string; text: string }[];
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b bg-background/85 px-4 backdrop-blur md:px-6">
@@ -105,40 +76,7 @@ export function AdminHeader() {
         </a>
         <ThemeToggle />
 
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="relative size-10" />}>
-            <BellIcon className="size-5" />
-            {notifications.length > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-brand-yellow text-[10px] font-bold text-brand-ink">
-                {notifications.length}
-              </span>
-            )}
-            <span className="sr-only">Notificaciones</span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8} className="w-80">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            {notifications.length === 0 ? (
-              <p className="px-3 py-6 text-center text-sm text-muted-foreground">Todo al día. No hay pendientes.</p>
-            ) : (
-              <DropdownMenuGroup>
-                {notifications.map((n) => (
-                  <DropdownMenuItem key={n.href} render={<Link href={n.href} />} className="flex items-start gap-3 py-3">
-                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-brand/15 text-brand-strong dark:text-brand-bright">
-                      <n.icon className="size-4" />
-                    </span>
-                    <span>
-                      <span className="block text-sm font-medium">{n.title}</span>
-                      <span className="block text-xs text-muted-foreground">{n.text}</span>
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <NotificationBell />
 
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-10 rounded-full" />}>

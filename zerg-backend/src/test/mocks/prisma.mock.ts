@@ -1,6 +1,45 @@
 import { vi } from "vitest";
 
 const mockPrisma = {
+  favorite: {
+    findMany: vi.fn(),
+    upsert: vi.fn(),
+    deleteMany: vi.fn(),
+  },
+  credential: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    upsert: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+  },
+  conversation: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn().mockResolvedValue({}),
+    count: vi.fn(),
+  },
+  message: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn().mockResolvedValue([]),
+  },
+  payment: {
+    create: vi.fn().mockResolvedValue({}),
+    findUnique: vi.fn(),
+    findUniqueOrThrow: vi.fn(),
+    update: vi.fn(),
+  },
+  $transaction: vi.fn(async (ops: unknown[]) => Promise.all(ops)),
+  notification: {
+    create: vi.fn().mockResolvedValue({}),
+    findMany: vi.fn(),
+    groupBy: vi.fn(),
+    updateMany: vi.fn(),
+  },
   siteSetting: {
     findUnique: vi.fn(),
     upsert: vi.fn(),

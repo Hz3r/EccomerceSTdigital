@@ -41,6 +41,11 @@ export const getById = async (req: AuthRequest, res: Response) => {
   });
 };
 
+export const getMine = async (req: AuthRequest, res: Response) => {
+  const reviews = await reviewService.getMine(req.user!.userId);
+  res.status(200).json({ success: true, data: reviews });
+};
+
 export const create = async (req: AuthRequest, res: Response) => {
   const { puntuacion, comentario, productId } = req.body;
   const userId = req.user?.userId as string;
@@ -67,6 +72,15 @@ export const approve = async (req: AuthRequest, res: Response) => {
   res.status(200).json({
     success: true,
     message: isApproved ? "Reseña aprobada" : "Reseña ocultada",
+    data: review,
+  });
+};
+
+export const reply = async (req: AuthRequest, res: Response) => {
+  const review = await reviewService.reply(req.params.id as string, (req.body as { respuesta?: unknown } | undefined)?.respuesta);
+  res.status(200).json({
+    success: true,
+    message: review.respuesta ? "Respuesta publicada" : "Respuesta eliminada",
     data: review,
   });
 };

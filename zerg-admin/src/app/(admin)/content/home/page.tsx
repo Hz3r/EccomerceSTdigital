@@ -1,6 +1,8 @@
 "use client";
 
-import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TagsInput, TextField, Toggle } from "@/components/cms/form";
+import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
+import { PlatformsEditor } from "@/components/cms/platforms-editor";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCatalogOptions } from "@/hooks/useCatalogOptions";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import type { SiteSettings } from "@/types";
@@ -12,7 +14,7 @@ const SECTION_LABELS: { key: keyof Secciones; label: string; hint: string }[] = 
   { key: "masBuscado", label: "Lo más buscado", hint: "Tarjetas de colores por categoría" },
   { key: "tendencias", label: "Tendencias de la semana", hint: "Grilla con el producto destacado" },
   { key: "carruseles", label: "Carruseles por categoría", hint: "Filas deslizables de productos" },
-  { key: "plataformas", label: "Plataformas", hint: "Marquesina con nombres de servicios" },
+  { key: "plataformas", label: "Plataformas", hint: "Marquesina con nombres o logos de servicios" },
   { key: "categorias", label: "Explora por categoría", hint: "Tarjetas con accesos a cada categoría" },
   { key: "opiniones", label: "Opiniones de clientes", hint: "Reseñas aprobadas" },
   { key: "recienLlegados", label: "Recién llegados", hint: "Listas de los últimos servicios" },
@@ -54,21 +56,31 @@ export default function HomeContentPage() {
 
         <Section title="Producto destacado" description="La tarjeta verde a la derecha del banner.">
           <Field label="Producto" htmlFor="destacado-producto">
-            <select
-              id="destacado-producto"
-              value={destacado.productoSlug}
-              onChange={(e) => set("destacado", { ...destacado, productoSlug: e.target.value })}
-              className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
+            <Select
+              value={destacado.productoSlug || null}
+              onValueChange={(v) => v && set("destacado", { ...destacado, productoSlug: v as string })}
+              items={[
+                ...(destacado.productoSlug && !products.some((p) => p.value === destacado.productoSlug)
+                  ? [{ value: destacado.productoSlug, label: destacado.productoSlug }]
+                  : []),
+                ...products.map((p) => ({ value: p.value, label: p.label })),
+              ]}
             >
-              {!products.some((p) => p.value === destacado.productoSlug) && (
-                <option value={destacado.productoSlug}>{destacado.productoSlug || "Elegir producto"}</option>
-              )}
-              {products.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger id="destacado-producto" className="w-full">
+                <SelectValue placeholder="Elegir producto" />
+              </SelectTrigger>
+              <SelectContent>
+                {destacado.productoSlug && !products.some((p) => p.value === destacado.productoSlug) && (
+                  <SelectItem value={destacado.productoSlug}>{destacado.productoSlug}</SelectItem>
+                )}
+                {products.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    <span className="truncate">{p.label}</span>
+                    {p.hint && <span className="ml-auto shrink-0 text-xs text-muted-foreground">{p.hint}</span>}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
           <TextField id="destacado-etiqueta" label="Etiqueta" value={destacado.etiqueta} onChange={(v) => set("destacado", { ...destacado, etiqueta: v })} />
           <TextField id="destacado-descripcion" label="Descripción corta" multiline value={destacado.descripcion} onChange={(v) => set("destacado", { ...destacado, descripcion: v })} />
@@ -92,8 +104,8 @@ export default function HomeContentPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Section title="Plataformas" description="Nombres que se desplazan en la marquesina.">
-          <TagsInput value={portada.plataformas} onChange={(v) => set("plataformas", v)} placeholder="Ej. Netflix" />
+        <Section title="Plataformas" description="Se desplazan en la marquesina. Sube un logo (PNG transparente) para mostrar la imagen en lugar del nombre.">
+          <PlatformsEditor value={portada.plataformas} onChange={(v) => set("plataformas", v)} />
         </Section>
         <Section title="Secciones visibles" description="Oculta las secciones que no quieras mostrar por ahora.">
           <div className="grid gap-2 sm:grid-cols-2">

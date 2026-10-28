@@ -3,6 +3,8 @@ import {
   Home,
   LayoutDashboard,
   MessageSquareQuote,
+  MessagesSquare,
+  Wallet,
   Package,
   PanelTop,
   PanelBottom,
@@ -17,6 +19,8 @@ export interface NavItem {
   label: string;
   icon: LucideIcon;
   description?: string;
+  /** Contador en vivo junto al nombre (por ahora: chats sin leer). */
+  badge?: "chat";
 }
 
 export interface NavGroup {
@@ -41,7 +45,8 @@ export const navigation: NavGroup[] = [
   {
     title: "Ventas y clientes",
     items: [
-      { href: "/orders", label: "Órdenes", icon: ShoppingCart, description: "Pedidos y estados" },
+      { href: "/orders", label: "Órdenes", icon: ShoppingCart, description: "Pedidos, pagos y estados" },
+      { href: "/chat", label: "Mensajes", icon: MessagesSquare, description: "Chat de soporte con clientes", badge: "chat" },
       { href: "/users", label: "Clientes", icon: Users, description: "Usuarios registrados" },
       { href: "/reviews", label: "Reseñas", icon: MessageSquareQuote, description: "Moderación de opiniones" },
     ],
@@ -52,6 +57,7 @@ export const navigation: NavGroup[] = [
       { href: "/content/brand", label: "Marca y header", icon: PanelTop, description: "Logo, anuncio y menú" },
       { href: "/content/home", label: "Portada", icon: Home, description: "Hero, tendencias y secciones" },
       { href: "/content/footer", label: "Contacto y pie", icon: PanelBottom, description: "Datos de contacto y pie de página" },
+      { href: "/content/payments", label: "Pagos", icon: Wallet, description: "Yape, Plin, cuentas, Izipay y Binance" },
     ],
   },
 ];

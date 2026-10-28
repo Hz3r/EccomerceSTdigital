@@ -22,6 +22,9 @@ export interface Category {
 }
 
 export interface Product {
+  incluye?: string[] | null;
+  pasos?: { titulo: string; texto: string }[] | null;
+  faqs?: { pregunta: string; respuesta: string }[] | null;
   id: string;
   nombre: string;
   slug: string;
@@ -63,6 +66,52 @@ export interface OrderItem {
   creadoEn: string;
 }
 
+export type MetodoPago = "DIRECTO" | "IZIPAY" | "BINANCE_PAY";
+export type EstadoPago = "PENDIENTE" | "EN_REVISION" | "PAGADO" | "RECHAZADO";
+
+export interface Payment {
+  id: string;
+  metodo: MetodoPago;
+  estado: EstadoPago;
+  monto: number | string;
+  referencia?: string | null;
+  // Yape, Plin o Transferencia (pago directo)
+  medio?: string | null;
+  motivoRechazo?: string | null;
+  tieneComprobante?: boolean;
+  actualizado?: string;
+}
+
+export interface PaymentMethodOption {
+  metodo: MetodoPago;
+  label: string;
+  disponible: boolean;
+}
+
+export interface ChatMessage {
+  id: string;
+  autor: "CLIENTE" | "ADMIN";
+  texto: string;
+  creadoEn: string;
+}
+
+export interface Conversation {
+  id: string;
+  tema: string;
+  nombre: string;
+  email?: string | null;
+  telefono?: string | null;
+  canal: "WEB" | "WHATSAPP";
+  estado: "ABIERTA" | "CERRADA";
+  noLeidasAdmin?: number;
+  // Último mensaje del cliente por WhatsApp: con más de 24 h solo se le puede escribir con plantilla
+  ultimoEntranteEn?: string | null;
+  ultimoMensajeEn?: string;
+  creadoEn: string;
+  user?: { id: string; nombre: string; email: string } | null;
+  ultimoMensaje?: { autor: "CLIENTE" | "ADMIN"; texto: string; creadoEn: string } | null;
+}
+
 export interface Order {
   id: string;
   numeroOrden: string;
@@ -76,6 +125,8 @@ export interface Order {
   userId?: string;
   user?: User;
   items?: OrderItem[];
+  metodoPago?: MetodoPago | null;
+  payment?: Payment | null;
   creadoEn: string;
   actualizado: string;
 }
@@ -84,6 +135,8 @@ export interface Review {
   id: string;
   puntuacion: number;
   comentario?: string;
+  respuesta?: string | null;
+  respondidoEn?: string | null;
   isApproved: boolean;
   productId: string;
   product?: Product;
@@ -122,6 +175,33 @@ export interface AdminStats {
   topProducts: Product[];
 }
 
+// Enlace dentro de un menú desplegable del header.
+export interface MenuLink {
+  etiqueta: string;
+  url: string;
+  imagenUrl: string;
+}
+
+// Columna de un menú desplegable.
+export interface MenuGroup {
+  titulo: string;
+  enlaces: MenuLink[];
+}
+
+// Elemento de la barra de categorías. Con `categoria` enlaza a esa categoría; si no, a `url`.
+export interface MenuItem {
+  etiqueta: string;
+  categoria: string;
+  url: string;
+  desplegable: boolean;
+  grupos: MenuGroup[];
+}
+
+export interface Plataforma {
+  nombre: string;
+  logoUrl: string;
+}
+
 // Contenido editable de la tienda (GET/PUT /api/settings).
 export interface SiteSettings {
   marca: { nombre: string; logoUrl: string; iconoUrl: string };
@@ -129,7 +209,7 @@ export interface SiteSettings {
     anuncio: string;
     buscadorPlaceholder: string;
     mostrarOfertas: boolean;
-    categoriasMenu: string[];
+    menu: MenuItem[];
   };
   portada: {
     hero: {
@@ -146,7 +226,7 @@ export interface SiteSettings {
     tendencias: string[];
     spotlight: string[];
     carruseles: string[];
-    plataformas: string[];
+    plataformas: Plataforma[];
     secciones: Record<
       | "beneficios"
       | "masBuscado"
@@ -161,8 +241,46 @@ export interface SiteSettings {
       boolean
     >;
   };
+  pagos: {
+    directo: {
+      activo: boolean;
+      titular: string;
+      yape: string;
+      plin: string;
+      qrUrl: string;
+      instrucciones: string;
+      cuentas: CuentaBancaria[];
+    };
+    tipoCambioUsdt: number;
+  };
   contacto: { whatsapp: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
+}
+
+export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA" | "PAGO" | "MENSAJE";
+
+export interface CuentaBancaria {
+  banco: string;
+  titular: string;
+  numero: string;
+  cci: string;
+}
+
+export interface AppNotification {
+  id: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  href?: string | null;
+  leida: boolean;
+  orderId?: string | null;
+  creadoEn: string;
+}
+
+export interface NotificationList {
+  items: AppNotification[];
+  unread: number;
+  unreadByTipo: Record<TipoNotificacion, number>;
 }
 
 export interface ApiResponse<T> {

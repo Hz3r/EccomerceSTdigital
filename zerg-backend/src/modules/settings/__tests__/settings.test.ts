@@ -3,7 +3,7 @@ import request from "supertest";
 import express, { type Request, type Response, type NextFunction } from "express";
 import { mockPrisma } from "../../../test/mocks/prisma.mock.js";
 import { AppError } from "../../../errors/appError.js";
-import { sanitize } from "../settings.service.js";
+import { migrate, sanitize } from "../settings.service.js";
 import { defaultSettings } from "../settings.defaults.js";
 
 vi.mock("../../../middlewares/auth.middleware.js", () => ({
@@ -34,7 +34,8 @@ describe("sanitize", () => {
   it("descarta claves desconocidas y tipos incorrectos", () => {
     const result = sanitize(defaultSettings as never, {
       marca: { nombre: "Mi Tienda", logoUrl: 123, hack: "x" },
-      header: { mostrarOfertas: "no", categoriasMenu: ["ia", 5, "  diseno  "] },
+      header: { mostrarOfertas: "no" },
+      footer: { metodosPago: ["Yape", 5, "  Plin  "] },
       extra: { a: 1 },
     }) as typeof defaultSettings;
 
@@ -43,7 +44,58 @@ describe("sanitize", () => {
     expect(result).not.toHaveProperty("extra");
     expect(result.marca).not.toHaveProperty("hack");
     expect(result.header.mostrarOfertas).toBe(true);
-    expect(result.header.categoriasMenu).toEqual(["ia", "diseno"]);
+    expect(result.footer.metodosPago).toEqual(["Yape", "Plin"]);
+  });
+
+  it("valida las listas de objetos campo por campo, también anidadas", () => {
+    const result = sanitize(defaultSettings as never, {
+      header: {
+        menu: [
+          "texto suelto",
+          5,
+          {
+            etiqueta: " Tarjetas ",
+            desplegable: true,
+            hack: "x",
+            grupos: [{ titulo: "Gift cards", enlaces: [{ etiqueta: "Steam", url: "/product/steam-wallet", imagenUrl: 3 }, null] }],
+          },
+        ],
+      },
+    }) as typeof defaultSettings;
+
+    expect(result.header.menu).toHaveLength(2);
+    expect(result.header.menu[0]).toEqual({ etiqueta: "texto suelto", categoria: "", url: "", desplegable: false, grupos: [] });
+    expect(result.header.menu[1]).toEqual({
+      etiqueta: "Tarjetas",
+      categoria: "",
+      url: "",
+      desplegable: true,
+      grupos: [{ titulo: "Gift cards", enlaces: [{ etiqueta: "Steam", url: "/product/steam-wallet", imagenUrl: "" }] }],
+    });
+  });
+
+  it("convierte las plataformas guardadas solo como texto", () => {
+    const result = sanitize(defaultSettings as never, {
+      portada: { plataformas: ["Netflix", { nombre: "Max", logoUrl: "/api/uploads/branding/max.png" }] },
+    }) as typeof defaultSettings;
+    expect(result.portada.plataformas).toEqual([
+      { nombre: "Netflix", logoUrl: "" },
+      { nombre: "Max", logoUrl: "/api/uploads/branding/max.png" },
+    ]);
+  });
+});
+
+describe("migrate", () => {
+  it("pasa el antiguo categoriasMenu al nuevo menú", () => {
+    const migrated = migrate({ header: { categoriasMenu: ["ia", "gaming"] } });
+    const result = sanitize(defaultSettings as never, migrated) as typeof defaultSettings;
+    expect(result.header.menu.map((m) => m.categoria)).toEqual(["ia", "gaming"]);
+    expect(result.header).not.toHaveProperty("categoriasMenu");
+  });
+
+  it("no toca un menú ya guardado", () => {
+    const value = { header: { categoriasMenu: ["ia"], menu: [] } };
+    expect(migrate(value)).toBe(value);
   });
 });
 

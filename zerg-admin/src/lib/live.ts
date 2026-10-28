@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 // Escucha los cambios de la tienda y de otras pestañas del admin (GET /api/events, SSE).
-export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users";
+export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users" | "notifications" | "support";
 export type Action = "created" | "updated" | "deleted";
 export interface LiveEvent {
   topic: Topic;

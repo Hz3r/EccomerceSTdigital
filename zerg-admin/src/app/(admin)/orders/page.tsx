@@ -1,12 +1,16 @@
 "use client"
 
 import * as React from "react"
+import { useSearchParams } from "next/navigation"
 import { EyeIcon, Loader2, Mail, MessageCircle, TrashIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { STATUS_META } from "@/components/charts/status-breakdown"
+import { PaymentBadge, PaymentReview } from "@/components/orders/payment-review"
+import { CredentialDelivery } from "@/components/orders/credential-delivery"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
@@ -19,29 +23,49 @@ const dateTime = new Intl.DateTimeFormat("es-PE", { dateStyle: "medium", timeSty
 function StatusSelect({ order, onChange }: { order: Order; onChange: (status: StatusOrden) => void }) {
   const meta = STATUS_META[order.status]
   return (
-    <label className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-      <meta.icon className="pointer-events-none absolute left-2 size-3.5" style={{ color: meta.color }} />
-      <span className="sr-only">Estado de la orden</span>
-      <select
-        value={order.status}
-        onChange={(e) => onChange(e.target.value as StatusOrden)}
-        className="h-8 cursor-pointer appearance-none rounded-lg border bg-background pr-3 pl-7 text-xs font-semibold"
-      >
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {STATUS_META[s].label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="inline-flex" onClick={(e) => e.stopPropagation()}>
+      <Select value={order.status} onValueChange={(v) => v && onChange(v as StatusOrden)}>
+        <SelectTrigger size="sm" aria-label="Estado de la orden" className="min-w-32 text-xs font-semibold">
+          <SelectValue>
+            <meta.icon className="size-3.5" style={{ color: meta.color }} />
+            {meta.label}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent align="start">
+          {STATUSES.map((s) => {
+            const m = STATUS_META[s]
+            return (
+              <SelectItem key={s} value={s} className="text-xs font-medium">
+                <m.icon className="size-3.5" style={{ color: m.color }} />
+                {m.label}
+              </SelectItem>
+            )
+          })}
+        </SelectContent>
+      </Select>
+    </div>
   )
 }
 
 export default function OrdersPage() {
+  return (
+    <React.Suspense>
+      <OrdersContent />
+    </React.Suspense>
+  )
+}
+
+const ORDER_SEARCH_KEYS = ["numeroOrden", "email"]
+
+function OrdersContent() {
+  // ?q=ORD-… llega desde una notificación: la tabla se abre ya filtrada por esa orden
+  const query = useSearchParams().get("q") ?? ""
   const [orders, setOrders] = React.useState<Order[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [filter, setFilter] = React.useState<StatusOrden | "TODAS">("TODAS")
-  const [detail, setDetail] = React.useState<Order | null>(null)
+  // Se guarda el id: el detalle se actualiza en vivo (por ejemplo cuando llega un comprobante)
+  const [detailId, setDetailId] = React.useState<string | null>(null)
+  const detail = orders.find((o) => o.id === detailId) ?? null
 
   // Se actualiza en vivo con los cambios de la tienda y de otras pestañas
   const liveVersion = useLiveVersion("orders")
@@ -57,7 +81,6 @@ export default function OrdersPage() {
   const updateStatus = async (order: Order, status: StatusOrden) => {
     const previous = order.status
     setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status } : o)))
-    setDetail((d) => (d?.id === order.id ? { ...d, status } : d))
     try {
       await api.patch(`/orders/${order.id}/status`, { status })
     } catch {
@@ -114,11 +137,12 @@ export default function OrdersPage() {
       ),
     },
     { key: "total", label: "Total", render: (o) => <span className="font-semibold tabular-nums">{formatPrice(o.total)}</span> },
+    { key: "payment", label: "Pago", render: (o) => <PaymentBadge payment={o.payment} /> },
     { key: "status", label: "Estado", render: (o) => <StatusSelect order={o} onChange={(s) => updateStatus(o, s)} /> },
   ]
 
   const actions: DataTableAction<Order>[] = [
-    { label: "Ver", icon: <EyeIcon className="size-3.5" />, onClick: (o) => setDetail(o) },
+    { label: "Ver", icon: <EyeIcon className="size-3.5" />, onClick: (o) => setDetailId(o.id) },
     { label: "Eliminar", icon: <TrashIcon className="size-3.5" />, variant: "destructive", onClick: (o) => remove(o) },
   ]
 
@@ -126,7 +150,7 @@ export default function OrdersPage() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight">Órdenes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Cambia el estado a medida que entregas los accesos.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Revisa los pagos y entrega los accesos desde el detalle de cada orden (web, correo o WhatsApp).</p>
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
@@ -159,10 +183,13 @@ export default function OrdersPage() {
             </div>
           ) : (
             <DataTable
+              key={query}
+              initialSearch={query}
+              searchKeys={ORDER_SEARCH_KEYS}
               data={visible as unknown as Record<string, unknown>[]}
               columns={columns as unknown as DataTableColumn<Record<string, unknown>>[]}
               actions={actions as unknown as DataTableAction<Record<string, unknown>>[]}
-              searchPlaceholder="Buscar por cliente..."
+              searchPlaceholder="Buscar por cliente, número o correo..."
               searchKey="nombreCliente"
               emptyMessage="No hay órdenes con este estado"
             />
@@ -170,8 +197,8 @@ export default function OrdersPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetail(null)}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={detail !== null} onOpenChange={(open) => !open && setDetailId(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           {detail && (
             <>
               <DialogHeader>
@@ -204,6 +231,8 @@ export default function OrdersPage() {
                     <span className="tabular-nums">{formatPrice(detail.total)}</span>
                   </li>
                 </ul>
+                <PaymentReview payment={detail.payment} total={detail.total} />
+                <CredentialDelivery orderId={detail.id} />
                 {detail.notas && <p className="rounded-xl bg-muted p-3 text-sm">{detail.notas}</p>}
                 <div className="flex flex-wrap gap-2">
                   {detail.telefono && (

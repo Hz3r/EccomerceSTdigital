@@ -1,10 +1,68 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { loginHref } from "@/lib/auth-redirect";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { MyAccesses } from "@/components/account/my-accesses";
+import { MyFavorites } from "@/components/account/my-favorites";
+import { MyOrders } from "@/components/account/my-orders";
 import { Button } from "@/components/ui/button";
-import { Loader2, User } from "lucide-react";
+import { Heart, KeyRound, Loader2, Package, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const TABS = [
+  { id: "pedidos", label: "Pedidos", icon: Package },
+  { id: "accesos", label: "Mis accesos", icon: KeyRound },
+  { id: "favoritos", label: "Favoritos", icon: Heart },
+] as const;
+
+// Secciones de la cuenta. La pestaña va en la URL (?tab=accesos) para poder enlazarla desde avisos y correos.
+function AccountTabs() {
+  const params = useSearchParams();
+  const requested = params.get("tab");
+  const tab = TABS.find((t) => t.id === requested)?.id ?? "pedidos";
+
+  return (
+    <div className="mt-8">
+      <nav aria-label="Secciones de tu cuenta" className="grid grid-cols-3 gap-1 rounded-2xl bg-muted p-1">
+        {TABS.map(({ id, label, icon: Icon }) => (
+          <Link
+            key={id}
+            href={id === "pedidos" ? "/account" : `/account?tab=${id}`}
+            scroll={false}
+            aria-current={tab === id ? "page" : undefined}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-sm font-semibold transition-colors",
+              tab === id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Icon className="size-4 shrink-0" />
+            <span className="truncate">{label}</span>
+          </Link>
+        ))}
+      </nav>
+      {tab === "pedidos" && <MyOrders />}
+      {tab === "accesos" && (
+        <section className="mt-8">
+          <h2 className="text-xl font-extrabold tracking-tight">Mis accesos</h2>
+          <p className="text-sm text-muted-foreground">Usuarios, contraseñas y perfiles de tus servicios. No los compartas con nadie.</p>
+          <MyAccesses />
+        </section>
+      )}
+      {tab === "favoritos" && (
+        <section className="mt-8 space-y-4">
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight">Favoritos</h2>
+            <p className="text-sm text-muted-foreground">Los productos que guardaste con el corazón.</p>
+          </div>
+          <MyFavorites />
+        </section>
+      )}
+    </div>
+  );
+}
 
 export default function AccountPage() {
   const { user, isLoading, logout } = useAuth();
@@ -12,7 +70,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login");
+      router.replace(loginHref("/account"));
     }
   }, [user, isLoading, router]);
 
@@ -67,6 +125,10 @@ export default function AccountPage() {
           </Button>
         </div>
       </div>
+
+      <Suspense>
+        <AccountTabs />
+      </Suspense>
     </div>
   );
 }

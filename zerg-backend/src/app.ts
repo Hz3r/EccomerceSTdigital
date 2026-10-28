@@ -19,7 +19,14 @@ import reviewRoutes from "./modules/reviews/review.routes.js";
 import uploadRoutes from "./modules/upload/upload.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import settingsRoutes from "./modules/settings/settings.routes.js";
+import notificationRoutes from "./modules/notifications/notification.routes.js";
+import paymentRoutes from "./modules/payments/payment.routes.js";
+import supportRoutes from "./modules/support/support.routes.js";
+import favoriteRoutes from "./modules/favorites/favorite.routes.js";
+import credentialRoutes from "./modules/credentials/credential.routes.js";
+import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js";
 import { AppError } from "./errors/appError.js";
+import { databaseConnectionError } from "./errors/database.js";
 import { emitOnMutation, eventsHandler } from "./realtime/events.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -62,8 +69,14 @@ app.use(
 // Tiempo real: la tienda y el admin escuchan aquí los cambios (fuera del límite general).
 app.get("/api/events", eventsHandler);
 
+// WhatsApp Business (webhook de Meta y estado de la conexión). Va antes de express.json y del límite general:
+// el webhook necesita el cuerpo sin procesar para verificar la firma y Meta puede enviar ráfagas.
+app.use("/api/whatsapp", whatsappRoutes);
+
 app.use(generalLimiter);
 
+// Webhooks de pago: cuerpo sin procesar para verificar la firma (express.json ya no lo toca).
+app.use("/api/payments/webhooks", express.raw({ type: "*/*", limit: "1mb" }));
 app.use(express.json({ limit: "1mb" }));
 
 app.use(
@@ -77,9 +90,11 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use(emitOnMutation);
 
-// El límite estricto es solo para intentos de acceso (login y registro);
+// El límite estricto es solo para intentos de acceso (login, registro y Google);
 // /auth/profile se consulta en cada carga de página y no debe cerrar la sesión.
-app.use(["/api/auth/login", "/api/auth/register"], authLimiter);
+app.use(["/api/auth/login", "/api/auth/register", "/api/auth/google"], (req, res, next) =>
+  req.method === "POST" ? authLimiter(req, res, next) : next()
+);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -90,6 +105,11 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/support", supportRoutes);
+app.use("/api/favorites", favoriteRoutes);
+app.use("/api/credentials", credentialRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
@@ -97,6 +117,12 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       success: false,
       message: err.message,
     });
+    return;
+  }
+
+  const dbError = databaseConnectionError(err);
+  if (dbError) {
+    res.status(dbError.statusCode).json({ success: false, message: dbError.message });
     return;
   }
 

@@ -5,7 +5,7 @@ import { USE_MOCKS } from "./api";
 
 // Escucha en tiempo real los cambios que se hacen desde el admin (GET /api/events, SSE).
 // Una sola conexión por pestaña; cada tema lleva un contador que sube con cada cambio.
-export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users";
+export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users" | "notifications" | "support";
 
 const versions = new Map<Topic, number>();
 const listeners = new Set<() => void>();

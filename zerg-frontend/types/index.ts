@@ -27,6 +27,10 @@ export interface Product {
   slug: string;
   descripcion?: string;
   imagenUrl?: string;
+  // Contenido propio de la página (vacío = textos generales de la tienda)
+  incluye?: string[] | null;
+  pasos?: { titulo: string; texto: string }[] | null;
+  faqs?: { pregunta: string; respuesta: string }[] | null;
   isActivo: boolean;
   categoryId: string;
   category?: Category;
@@ -63,6 +67,26 @@ export interface OrderItem {
   creadoEn: string;
 }
 
+export type MetodoPago = "DIRECTO" | "IZIPAY" | "BINANCE_PAY";
+export type EstadoPago = "PENDIENTE" | "EN_REVISION" | "PAGADO" | "RECHAZADO";
+
+export interface Payment {
+  id: string;
+  metodo: MetodoPago;
+  estado: EstadoPago;
+  monto: number | string;
+  referencia?: string | null;
+  motivoRechazo?: string | null;
+  tieneComprobante?: boolean;
+  actualizado?: string;
+}
+
+export interface PaymentMethodOption {
+  metodo: MetodoPago;
+  label: string;
+  disponible: boolean;
+}
+
 export interface Order {
   id: string;
   numeroOrden: string;
@@ -76,6 +100,8 @@ export interface Order {
   userId?: string;
   user?: User;
   items?: OrderItem[];
+  metodoPago?: MetodoPago | null;
+  payment?: Payment | null;
   creadoEn: string;
   actualizado: string;
 }
@@ -84,6 +110,8 @@ export interface Review {
   id: string;
   puntuacion: number;
   comentario?: string;
+  respuesta?: string | null;
+  respondidoEn?: string | null;
   isApproved: boolean;
   productId: string;
   product?: Product;
@@ -91,6 +119,25 @@ export interface Review {
   user?: User;
   creadoEn: string;
   actualizado: string;
+}
+
+export type TipoNotificacion = "COMPRA" | "VENTA" | "PEDIDO" | "RESENA" | "PAGO" | "MENSAJE";
+
+export interface AppNotification {
+  id: string;
+  tipo: TipoNotificacion;
+  titulo: string;
+  mensaje: string;
+  href?: string | null;
+  leida: boolean;
+  orderId?: string | null;
+  creadoEn: string;
+}
+
+export interface NotificationList {
+  items: AppNotification[];
+  unread: number;
+  unreadByTipo: Record<TipoNotificacion, number>;
 }
 
 export interface ApiResponse<T> {

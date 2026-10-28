@@ -1,51 +1,81 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { GoogleButton } from "@/components/auth/google-button";
+import { announceGoogle, announceLogin } from "@/components/auth/auth-toasts";
+import { apiErrorMessage } from "@/lib/auth-redirect";
 import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const router = useRouter();
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
+  const { login, loginWithGoogle } = useAuth();
+  const { redirect, isCheckout, done } = useAuthRedirect();
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [pending, setPending] = useState<"email" | "google" | null>(null);
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const run = async (kind: "email" | "google", action: () => Promise<void>) => {
     setError("");
-    setIsLoading(true);
+    setPending(kind);
     try {
-      await login(form.email, form.password);
-      router.push("/");
+      await action();
+      done();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
-    } finally {
-      setIsLoading(false);
+      setError(apiErrorMessage(err, "No pudimos iniciar sesión. Inténtalo de nuevo."));
+      setPending(null);
     }
   };
 
+  const registerHref = redirect === "/" ? "/register" : `/register?redirect=${encodeURIComponent(redirect)}`;
+
   return (
     <AuthShell
-      title="Bienvenido de vuelta"
-      subtitle="Ingresa a tu cuenta para ver tus pedidos y comprar más rápido."
+      title={isCheckout ? "Ingresa para finalizar tu compra" : "Bienvenido de vuelta"}
+      subtitle={
+        isCheckout
+          ? "Tu carrito se mantiene. Ingresa o crea tu cuenta en segundos para confirmar el pedido."
+          : "Ingresa a tu cuenta para ver tus pedidos y comprar más rápido."
+      }
       footer={
         <>
           ¿No tienes cuenta?{" "}
-          <Link href="/register" className="font-semibold text-brand-strong hover:underline">
+          <Link href={registerHref} className="font-semibold text-brand-strong hover:underline">
             Regístrate gratis
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <GoogleButton
+        className="mb-6"
+        busy={pending === "google"}
+        onCredential={(credential) => run("google", async () => announceGoogle(await loginWithGoogle(credential), "login"))}
+      />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          run("email", async () => announceLogin(await login(form.email, form.password)));
+        }}
+        className="space-y-4"
+      >
+        {error && (
+          <div role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="email">Correo electrónico</Label>
           <Input
@@ -70,8 +100,8 @@ export default function LoginPage() {
             required
           />
         </div>
-        <Button type="submit" className="h-11 w-full rounded-xl font-semibold" disabled={isLoading}>
-          {isLoading ? (
+        <Button type="submit" className="h-11 w-full rounded-xl font-semibold" disabled={pending !== null}>
+          {pending === "email" ? (
             <>
               <Loader2 className="size-4 animate-spin" />
               Ingresando...

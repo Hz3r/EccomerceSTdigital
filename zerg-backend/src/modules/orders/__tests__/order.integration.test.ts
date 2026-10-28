@@ -43,7 +43,7 @@ describe("Order Integration Tests", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual([mockOrder]);
+      expect(response.body.data).toEqual([{ ...mockOrder, payment: null }]);
     });
   });
 
@@ -83,22 +83,22 @@ describe("Order Integration Tests", () => {
       expect(response.body.success).toBe(true);
     });
 
-    it("debería crear una orden como invitado ignorando el userId del body", async () => {
+    it("debería asociar la orden al usuario de la sesión ignorando el userId del body", async () => {
       mockPrisma.plan.findUnique.mockResolvedValue(mockPlan);
       mockPrisma.order.create.mockResolvedValue(mockOrder);
 
       const response = await request(app)
         .post("/api/orders")
         .send({
-          nombreCliente: "Invitado",
-          email: "invitado@test.com",
+          nombreCliente: "Cliente",
+          email: "cliente@test.com",
           userId: "otro-usuario",
           items: [{ planId: "test-plan-id", cantidad: 1 }],
         });
 
       expect(response.status).toBe(201);
       expect(mockPrisma.order.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ userId: undefined }) })
+        expect.objectContaining({ data: expect.objectContaining({ userId: "test-user-id" }) })
       );
     });
 

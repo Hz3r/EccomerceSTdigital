@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { ProductCover } from "@/components/product/product-cover";
-import { useCart } from "@/hooks/useCart";
+import { MAX_QUANTITY, useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/catalog";
 import type { CartItem as CartItemType } from "@/types";
 
@@ -38,8 +38,10 @@ export function CartItem({ item }: CartItemProps) {
             <button
               type="button"
               aria-label="Disminuir cantidad"
+              title={item.cantidad <= 1 ? "Para quitarlo usa el botón eliminar" : undefined}
+              disabled={item.cantidad <= 1}
               onClick={() => updateQuantity(item.planId, item.cantidad - 1)}
-              className="flex h-full w-8 items-center justify-center text-muted-foreground hover:text-foreground"
+              className="flex h-full w-8 items-center justify-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-muted-foreground"
             >
               <Minus className="size-3.5" />
             </button>
@@ -47,8 +49,9 @@ export function CartItem({ item }: CartItemProps) {
             <button
               type="button"
               aria-label="Aumentar cantidad"
+              disabled={item.cantidad >= MAX_QUANTITY}
               onClick={() => updateQuantity(item.planId, item.cantidad + 1)}
-              className="flex h-full w-8 items-center justify-center text-muted-foreground hover:text-foreground"
+              className="flex h-full w-8 items-center justify-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-muted-foreground"
             >
               <Plus className="size-3.5" />
             </button>

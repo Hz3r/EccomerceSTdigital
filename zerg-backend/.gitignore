@@ -9,3 +9,7 @@ uploads/*
 !uploads/*/
 uploads/*/*
 !uploads/**/.gitkeep
+
+# Comprobantes de pago: privados, nunca se sirven por /api/uploads
+private/*
+!private/.gitkeep

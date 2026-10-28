@@ -1,86 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { createOrder } from "@/lib/api";
+import { USE_MOCKS, createOrder, getPaymentMethods } from "@/lib/api";
+import { MethodPicker } from "@/components/payments/method-picker";
+import { apiErrorMessage, loginHref } from "@/lib/auth-redirect";
 import { formatPrice } from "@/lib/catalog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderSummary } from "@/components/cart/order-summary";
-import { ArrowLeft, Check, CheckCircle2, Loader2, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowLeft, CheckCircle2, Loader2, Lock, MessageCircle } from "lucide-react";
+import { CheckoutSteps } from "@/components/checkout/checkout-steps";
+import type { MetodoPago, PaymentMethodOption, User } from "@/types";
 
-const PAYMENT_METHODS = [
-  { id: "yape", label: "Yape" },
-  { id: "plin", label: "Plin" },
-  { id: "tarjeta", label: "Tarjeta" },
-  { id: "paypal", label: "PayPal" },
-];
 
-const STEPS = ["Carrito", "Datos y pago", "Confirmación"];
+// Comprar requiere cuenta: sin sesión se envía al login y, al ingresar, se vuelve aquí con el carrito intacto.
+export default function CheckoutPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+  const needsLogin = !isLoading && !user;
 
-function Steps({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-xs font-semibold md:gap-3">
-      {STEPS.map((s, i) => (
-        <li key={s} className="flex items-center gap-2 md:gap-3">
-          <span
-            className={cn(
-              "flex size-6 items-center justify-center rounded-full text-[11px]",
-              i < current && "bg-brand text-brand-ink",
-              i === current && "bg-surface-ink text-white",
-              i > current && "bg-muted text-muted-foreground"
-            )}
-          >
-            {i < current ? <Check className="size-3.5" /> : i + 1}
-          </span>
-          <span className={cn("hidden sm:inline", i > current && "text-muted-foreground")}>{s}</span>
-          {i < STEPS.length - 1 && <span className="h-px w-6 bg-border md:w-10" />}
-        </li>
-      ))}
-    </ol>
-  );
+  useEffect(() => {
+    if (needsLogin) router.replace(loginHref("/checkout"));
+  }, [needsLogin, router]);
+
+  if (!user) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  return <Checkout user={user} />;
 }
 
-export default function CheckoutPage() {
+function Checkout({ user }: { user: User }) {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
   const [orderNumber, setOrderNumber] = useState("");
-  const [payment, setPayment] = useState(PAYMENT_METHODS[0].id);
-  const [form, setForm] = useState({
-    nombreCliente: user?.nombre || "",
-    email: user?.email || "",
-    telefono: "",
+  const router = useRouter();
+  const [methods, setMethods] = useState<PaymentMethodOption[] | null>(null);
+  const [payment, setPayment] = useState<MetodoPago | null>(null);
+
+  useEffect(() => {
+    getPaymentMethods()
+      .then((list) => {
+        setMethods(list);
+        setPayment((current) => current ?? list.find((m) => m.disponible)?.metodo ?? null);
+      })
+      .catch(() => setMethods([]));
+  }, []);
+  const [form, setForm] = useState(() => ({
+    nombreCliente: user.nombre,
+    email: user.email,
+    // El último WhatsApp usado se recuerda en este navegador para no escribirlo en cada compra
+    telefono: readSavedPhone(),
     notas: "",
-  });
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
+    if (!payment) {
+      setError("Elige un método de pago.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
     try {
-      const paymentLabel = PAYMENT_METHODS.find((m) => m.id === payment)?.label;
       const order = await createOrder({
         ...form,
-        notas: [`Método de pago: ${paymentLabel}`, form.notas].filter(Boolean).join(" · "),
+        metodoPago: payment,
         items: items.map((i) => ({
           planId: i.planId,
           cantidad: i.cantidad,
         })),
       });
-      setOrderNumber(order.numeroOrden);
-      setIsSuccess(true);
+      savePhone(form.telefono);
       clearCart();
-    } catch {
-      setError("No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos.");
+      // Con el pedido creado se pasa a pagarlo (instrucciones, comprobante, tarjeta o Binance)
+      if (USE_MOCKS) {
+        setOrderNumber(order.numeroOrden);
+        setIsSuccess(true);
+      } else {
+        router.push(`/pago/${order.numeroOrden}`);
+      }
+    } catch (err) {
+      setError(apiErrorMessage(err, "No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos."));
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +103,7 @@ export default function CheckoutPage() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center md:px-6">
         <div className="flex justify-center">
-          <Steps current={2} />
+          <CheckoutSteps current={3} className="max-w-xs" />
         </div>
         <span className="mx-auto mt-10 flex size-20 items-center justify-center rounded-full bg-brand/15">
           <CheckCircle2 className="size-10 text-brand-strong" />
@@ -126,14 +139,14 @@ export default function CheckoutPage() {
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">Finalizar compra</h1>
-        <Steps current={1} />
+        <CheckoutSteps current={1} className="md:w-auto" />
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
         <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
           <section className="rounded-3xl border bg-card p-6">
             <h2 className="font-bold">Tus datos</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">Aquí te enviaremos tus accesos.</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">A este correo y WhatsApp te enviaremos tus accesos.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Field id="nombreCliente" label="Nombre completo">
                 <Input
@@ -154,15 +167,20 @@ export default function CheckoutPage() {
                   required
                 />
               </Field>
-              <Field id="telefono" label="WhatsApp (opcional)">
+              <Field id="telefono" label="WhatsApp (recomendado)">
                 <Input
                   id="telefono"
                   type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   className="h-11 rounded-xl"
-                  placeholder="+51 999 999 999"
+                  placeholder="999 999 999"
                   value={form.telefono}
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                 />
+                <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <MessageCircle className="size-3.5 text-[#25D366]" /> Te llegan tus accesos al instante por WhatsApp.
+                </p>
               </Field>
               <Field id="notas" label="Notas (opcional)">
                 <Input
@@ -177,24 +195,16 @@ export default function CheckoutPage() {
 
           <section className="rounded-3xl border bg-card p-6">
             <h2 className="font-bold">Método de pago</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">Te enviaremos las instrucciones al confirmar.</p>
-            <div role="radiogroup" aria-label="Método de pago" className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {PAYMENT_METHODS.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={payment === m.id}
-                  onClick={() => setPayment(m.id)}
-                  className={cn(
-                    "flex h-14 items-center justify-center rounded-xl border text-sm font-bold transition-all",
-                    payment === m.id ? "border-brand-strong bg-brand-mint ring-3 ring-brand/20" : "hover:border-foreground/25"
-                  )}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
+            <p className="mt-0.5 text-sm text-muted-foreground">En el siguiente paso verás cómo pagar.</p>
+            {methods === null ? (
+              <div className="mt-5 space-y-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
+                ))}
+              </div>
+            ) : (
+              <MethodPicker methods={methods} value={payment} onChange={setPayment} className="mt-5" />
+            )}
           </section>
 
           {error && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
@@ -223,6 +233,24 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
+}
+
+const PHONE_KEY = "zerg:telefono";
+
+function readSavedPhone() {
+  try {
+    return typeof window === "undefined" ? "" : (localStorage.getItem(PHONE_KEY) ?? "");
+  } catch {
+    return "";
+  }
+}
+
+function savePhone(value: string) {
+  try {
+    if (value.trim()) localStorage.setItem(PHONE_KEY, value.trim());
+  } catch {
+    // Sin almacenamiento (modo privado): no pasa nada
+  }
 }
 
 function Field({ id, label, children }: { id: string; label: string; children: React.ReactNode }) {

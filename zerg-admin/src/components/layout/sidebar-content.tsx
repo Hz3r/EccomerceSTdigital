@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Logo } from "@/components/brand/logo";
 import { STORE_URL } from "@/lib/format";
 import { useSidebar } from "./admin-sidebar";
+import { useChatUnread } from "@/hooks/useChatUnread";
 import { findNavItem, navigation } from "./navigation";
 
 interface SidebarContentProps {
@@ -25,6 +26,7 @@ export function SidebarContent({ onLinkClick }: SidebarContentProps) {
   const { collapsed, toggleCollapsed } = useSidebar();
   const active = findNavItem(pathname);
   const tip = (label: string) => (collapsed ? label : undefined);
+  const chatUnread = useChatUnread();
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -67,6 +69,14 @@ export function SidebarContent({ onLinkClick }: SidebarContentProps) {
                         )}
                       />
                       <span className="truncate collapsed:sr-only">{item.label}</span>
+                      {item.badge === "chat" && chatUnread > 0 && (
+                        <span
+                          aria-label={`${chatUnread} sin leer`}
+                          className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-brand-ink collapsed:absolute collapsed:top-1 collapsed:right-1 collapsed:ml-0 collapsed:h-4 collapsed:min-w-4 collapsed:px-1"
+                        >
+                          {chatUnread > 99 ? "99+" : chatUnread}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 );

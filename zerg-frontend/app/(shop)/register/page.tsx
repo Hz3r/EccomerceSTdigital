@@ -1,51 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { GoogleButton } from "@/components/auth/google-button";
+import { announceGoogle, announceRegister } from "@/components/auth/auth-toasts";
+import { apiErrorMessage } from "@/lib/auth-redirect";
 import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
-  const { register } = useAuth();
-  const router = useRouter();
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
+  const { register, loginWithGoogle } = useAuth();
+  const { redirect, isCheckout, done } = useAuthRedirect();
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [pending, setPending] = useState<"email" | "google" | null>(null);
   const [form, setForm] = useState({ nombre: "", email: "", password: "" });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const run = async (kind: "email" | "google", action: () => Promise<void>) => {
     setError("");
-    setIsLoading(true);
+    setPending(kind);
     try {
-      await register(form.nombre, form.email, form.password);
-      router.push("/");
+      await action();
+      done();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al registrarse");
-    } finally {
-      setIsLoading(false);
+      setError(apiErrorMessage(err, "No pudimos crear tu cuenta. Inténtalo de nuevo."));
+      setPending(null);
     }
   };
+
+  const loginHref = redirect === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirect)}`;
 
   return (
     <AuthShell
       title="Crea tu cuenta"
-      subtitle="Regístrate en segundos y guarda el historial de tus compras."
+      subtitle={
+        isCheckout
+          ? "Crea tu cuenta para confirmar tu pedido. Tu carrito se mantiene."
+          : "Regístrate en segundos y guarda el historial de tus compras."
+      }
       footer={
         <>
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="font-semibold text-brand-strong hover:underline">
+          <Link href={loginHref} className="font-semibold text-brand-strong hover:underline">
             Ingresa aquí
           </Link>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+      <GoogleButton
+        className="mb-6"
+        text="signup_with"
+        busy={pending === "google"}
+        onCredential={(credential) => run("google", async () => announceGoogle(await loginWithGoogle(credential), "register"))}
+      />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          run("email", async () => announceRegister(await register(form.nombre, form.email, form.password)));
+        }}
+        className="space-y-4"
+      >
+        {error && (
+          <div role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
         <div className="space-y-2">
           <Label htmlFor="nombre">Nombre</Label>
           <Input
@@ -55,6 +86,7 @@ export default function RegisterPage() {
             value={form.nombre}
             onChange={(e) => setForm({ ...form, nombre: e.target.value })}
             required
+            minLength={2}
           />
         </div>
         <div className="space-y-2">
@@ -83,8 +115,8 @@ export default function RegisterPage() {
           />
           <p className="text-xs text-muted-foreground">Mínimo 6 caracteres.</p>
         </div>
-        <Button type="submit" className="h-11 w-full rounded-xl font-semibold" disabled={isLoading}>
-          {isLoading ? (
+        <Button type="submit" className="h-11 w-full rounded-xl font-semibold" disabled={pending !== null}>
+          {pending === "email" ? (
             <>
               <Loader2 className="size-4 animate-spin" />
               Creando cuenta...

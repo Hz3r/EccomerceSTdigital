@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  ChevronDown,
+  Heart,
+  KeyRound,
   LayoutGrid,
   LogOut,
   Menu,
   Package,
-  Search,
   ShoppingCart,
   Tag,
   User,
@@ -28,57 +28,26 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CategoryIcon } from "@/components/product/category-icon";
+import { SearchBox } from "@/components/layout/search-box";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { DesktopMenu, MobileAccordion, MobileMenuItem, resolveMenu } from "@/components/layout/nav-menu";
 import { useSite } from "@/hooks/useSiteSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { cn } from "@/lib/utils";
-
-function SearchBar({ className, inputRef }: { className?: string; inputRef?: React.Ref<HTMLInputElement> }) {
-  const router = useRouter();
-  const { header } = useSite().settings;
-  const [query, setQuery] = useState("");
-
-  return (
-    <form
-      role="search"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const q = query.trim();
-        router.push(q ? `/products?q=${encodeURIComponent(q)}` : "/products");
-      }}
-      className={cn(
-        "group flex h-11 items-center gap-2 rounded-xl border border-transparent bg-muted px-3.5 transition-colors focus-within:border-brand/50 focus-within:bg-background focus-within:ring-3 focus-within:ring-brand/15",
-        className
-      )}
-    >
-      <Search className="size-4 shrink-0 text-muted-foreground" />
-      <input
-        ref={inputRef}
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={header.buscadorPlaceholder}
-        className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-      />
-      <kbd className="hidden items-center gap-0.5 rounded-md border bg-background px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground lg:inline-flex">
-        Ctrl K
-      </kbd>
-    </form>
-  );
-}
 
 export function Navbar() {
   const { user, isLoading, logout } = useAuth();
   const { totalItems } = useCart();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [allCategoriesOpen, setAllCategoriesOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const { settings, categories } = useSite();
   const { header } = settings;
-  // Categorías del menú en el orden elegido en el admin (Marca y header)
-  const navCategories = header.categoriasMenu
-    .map((slug) => categories.find((c) => c.slug === slug))
-    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+  // Menú en el orden elegido en el admin (Marca y header); algunos elementos son desplegables
+  const menu = resolveMenu(header.menu, categories);
+  const closeMobile = () => setMobileOpen(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -105,30 +74,41 @@ export function Navbar() {
                 <Logo className="h-8" />
               </SheetTitle>
             </SheetHeader>
-            <nav className="flex flex-col gap-1 px-4">
+            <nav className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-4 pb-6">
               <Link
                 href="/products"
-                onClick={() => setMobileOpen(false)}
+                onClick={closeMobile}
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold hover:bg-muted"
               >
                 <LayoutGrid className="size-4 text-brand-strong" />
                 Todos los productos
               </Link>
-              {categories.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/products?categoria=${c.slug}`}
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-                  >
-                    <CategoryIcon slug={c.slug} className="size-4" />
-                    {c.nombre}
-                  </Link>
+              {menu.map((item) => (
+                <MobileMenuItem key={item.key} item={item} onNavigate={closeMobile} />
               ))}
+              {categories.length > 0 && (
+                <MobileAccordion
+                  label="Todas las categorías"
+                  expanded={allCategoriesOpen}
+                  onToggle={() => setAllCategoriesOpen((o) => !o)}
+                >
+                  {categories.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/products?categoria=${c.slug}`}
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <CategoryIcon slug={c.slug} className="size-4" />
+                      {c.nombre}
+                    </Link>
+                  ))}
+                </MobileAccordion>
+              )}
               {header.mostrarOfertas && (
                 <Link
                   href="/products?ofertas=1"
-                  onClick={() => setMobileOpen(false)}
+                  onClick={closeMobile}
                   className="mt-2 flex items-center gap-3 rounded-lg bg-surface-ink px-3 py-2.5 text-sm font-semibold text-white"
                 >
                   <Tag className="size-4 text-brand-yellow" />
@@ -141,10 +121,11 @@ export function Navbar() {
 
         <Logo className="h-8 md:h-10" priority />
 
-        <SearchBar className="hidden max-w-xl flex-1 md:flex" inputRef={searchRef} />
+        <SearchBox className="hidden max-w-xl flex-1 md:block" inputRef={searchRef} />
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
+          {user && <NotificationBell />}
           {!isLoading &&
             (user ? (
               <DropdownMenu>
@@ -164,7 +145,15 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem render={<Link href="/account" />}>
                     <Package className="size-4" />
-                    Mi cuenta
+                    Mis pedidos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/account?tab=accesos" />}>
+                    <KeyRound className="size-4" />
+                    Mis accesos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/account?tab=favoritos" />}>
+                    <Heart className="size-4" />
+                    Favoritos
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem variant="destructive" onClick={logout}>
@@ -218,47 +207,37 @@ export function Navbar() {
       </div>
 
       <div className="px-4 pb-3 md:hidden">
-        <SearchBar />
+        <SearchBox />
       </div>
 
       <nav className="hidden border-t md:block" aria-label="Categorías">
-        <div className="mx-auto flex h-12 max-w-7xl items-center gap-1 px-6">
+        <DesktopMenu items={menu}>
           <Link
             href="/products"
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition-colors hover:bg-muted",
+              "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap transition-colors hover:bg-muted",
               pathname === "/products" && "text-brand-strong"
             )}
           >
-            <ChevronDown className="size-3.5" />
+            <LayoutGrid className="size-3.5" />
             Todos los productos
           </Link>
-          {navCategories.map((c) => (
-              <Link
-                key={c.id}
-                href={`/products?categoria=${c.slug}`}
-                className="hidden items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:flex"
-              >
-                <CategoryIcon slug={c.slug} className="size-3.5" />
-                {c.nombre}
-              </Link>
-          ))}
           {header.mostrarOfertas && (
             <Link
               href="/products?ofertas=1"
-              className="ml-2 flex items-center gap-1.5 rounded-lg bg-surface-ink px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-surface-ink-hover"
+              className="order-last ml-2 flex shrink-0 items-center gap-1.5 rounded-lg bg-surface-ink px-3.5 py-1.5 text-[13px] font-semibold whitespace-nowrap text-white transition-colors hover:bg-surface-ink-hover"
             >
               <Tag className="size-3.5 text-brand-yellow" />
               Ofertas
             </Link>
           )}
           {header.anuncio && (
-            <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-brand-ink">
+            <span className="order-last ml-auto hidden shrink-0 items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap text-brand-ink lg:inline-flex">
               <Zap className="size-3.5 fill-current" />
               {header.anuncio}
             </span>
           )}
-        </div>
+        </DesktopMenu>
       </nav>
     </header>
   );

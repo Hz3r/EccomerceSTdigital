@@ -1,18 +1,18 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, LayoutGrid, List, Search, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductCard } from "@/components/product/product-card";
 import { Newsletter } from "@/components/layout/newsletter";
-import { useLiveVersion } from "@/lib/live";
-import { getCategories, getProducts } from "@/lib/api";
-import { activePlans, bestDiscount, cheapestPlan } from "@/lib/catalog";
+import { useCatalog } from "@/hooks/useCatalog";
+import { activePlans, bestDiscount, cheapestPlan, matchesQuery } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
-import type { Category, Product } from "@/types";
+import type { Product } from "@/types";
 
 const DURATIONS = ["1 mes", "3 meses", "6 meses", "12 meses"];
 const PRICE_RANGES = [
@@ -49,9 +49,8 @@ function toggle(list: string[], value: string) {
 }
 
 function Catalog({ params }: { params: URLSearchParams }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Con caché: al cambiar de categoría desde el menú los productos aparecen al instante, sin vaciar la página.
+  const { products, categories, isLoading } = useCatalog();
 
   const [query, setQuery] = useState(params.get("q") ?? "");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
@@ -65,23 +64,12 @@ function Catalog({ params }: { params: URLSearchParams }) {
   const [layout, setLayout] = useState<"grid" | "list">("grid");
   const [visible, setVisible] = useState(PAGE_SIZE);
 
-  // Se actualiza en vivo cuando el admin cambia el catálogo
-  const liveVersion = useLiveVersion("products", "plans", "categories");
-
-  useEffect(() => {
-    Promise.all([getProducts().catch(() => []), getCategories().catch(() => [])])
-      .then(([prods, cats]) => {
-        setProducts(prods.filter((p) => p.isActivo));
-        setCategories(cats.filter((c) => c.isActive));
-      })
-      .finally(() => setIsLoading(false));
-  }, [liveVersion]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list = products.filter((p) => {
       const plans = activePlans(p);
-      if (q && !`${p.nombre} ${p.descripcion ?? ""} ${p.category?.nombre ?? ""}`.toLowerCase().includes(q)) return false;
+      if (q && !matchesQuery(p, q)) return false;
       if (selectedCategories.length && !selectedCategories.includes(p.category?.slug ?? "")) return false;
       if (durations.length && !plans.some((pl) => durations.includes(pl.duracion))) return false;
       if (priceRanges.length) {
@@ -106,9 +94,15 @@ function Catalog({ params }: { params: URLSearchParams }) {
     }
   }, [products, query, selectedCategories, durations, priceRanges, onlyDeals, sort]);
 
+  // Cambia con cada filtro: el listado se vuelve a montar con una entrada suave en lugar de un salto.
+  const resultsKey = [query, selectedCategories, durations, priceRanges, onlyDeals, sort, layout].join("|");
+
   const activeCategory =
     selectedCategories.length === 1 ? categories.find((c) => c.slug === selectedCategories[0]) : undefined;
-  const title = onlyDeals ? "Ofertas" : activeCategory?.nombre ?? "Todos los productos";
+  const searchTerm = query.trim();
+  const title = onlyDeals
+    ? "Ofertas"
+    : activeCategory?.nombre ?? (searchTerm ? `Resultados para “${searchTerm}”` : "Todos los productos");
   const filterCount = selectedCategories.length + durations.length + priceRanges.length + (onlyDeals ? 1 : 0);
 
   const clearFilters = () => {
@@ -199,21 +193,22 @@ function Catalog({ params }: { params: URLSearchParams }) {
               </SheetContent>
             </Sheet>
 
-            <label className="relative">
-              <span className="sr-only">Ordenar por</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="h-10 cursor-pointer appearance-none rounded-lg border bg-background pr-9 pl-3 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              >
+            <Select
+              value={sort}
+              onValueChange={(v) => v && setSort(v as string)}
+              items={SORTS.map((s) => ({ value: s.id, label: s.label }))}
+            >
+              <SelectTrigger aria-label="Ordenar por" className="h-10 min-w-44 bg-background font-medium">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="start">
                 {SORTS.map((s) => (
-                  <option key={s.id} value={s.id}>
+                  <SelectItem key={s.id} value={s.id}>
                     {s.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            </label>
+              </SelectContent>
+            </Select>
 
             <div className="ml-auto flex rounded-lg border p-1" role="group" aria-label="Vista">
               {(
@@ -288,13 +283,20 @@ function Catalog({ params }: { params: URLSearchParams }) {
               ) : (
                 <>
                   <div
+                    key={resultsKey}
                     className={cn(
                       "grid gap-4",
                       layout === "grid" ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" : "grid-cols-1"
                     )}
                   >
-                    {results.slice(0, visible).map((p) => (
-                      <ProductCard key={p.id} product={p} layout={layout} />
+                    {results.slice(0, visible).map((p, i) => (
+                      <div
+                        key={p.id}
+                        className="animate-in fade-in-0 slide-in-from-bottom-2 fill-mode-both duration-300 ease-out motion-reduce:animate-none"
+                        style={{ animationDelay: `${Math.min(i % PAGE_SIZE, 8) * 35}ms` }}
+                      >
+                        <ProductCard product={p} layout={layout} />
+                      </div>
                     ))}
                   </div>
                   {visible < results.length && (

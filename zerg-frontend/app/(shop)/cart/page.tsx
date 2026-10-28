@@ -1,20 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, ShoppingCart } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, ShoppingCart } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { loginHref } from "@/lib/auth-redirect";
 import { CartItem } from "@/components/cart/cart-item";
 import { OrderSummary } from "@/components/cart/order-summary";
 import { Button } from "@/components/ui/button";
+import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 
 export default function CartPage() {
   const { items, totalItems, totalPrice, clearCart } = useCart();
+  const { user, isLoading } = useAuth();
+  const mustLogin = !isLoading && !user;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-6 md:py-12">
-      <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-        Carrito <span className="text-brand-strong">({totalItems})</span>
-      </h1>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+          Carrito <span className="text-brand-strong">({totalItems})</span>
+        </h1>
+        {items.length > 0 && <CheckoutSteps current={0} className="md:w-auto" />}
+      </div>
 
       {items.length === 0 ? (
         <div className="mt-8 flex flex-col items-center rounded-3xl border border-dashed py-20 text-center">
@@ -47,10 +55,20 @@ export default function CartPage() {
           </div>
 
           <OrderSummary items={items} totalPrice={totalPrice}>
-            <Button className="h-12 w-full rounded-xl text-base font-semibold" render={<Link href="/checkout" />} nativeButton={false}>
-              Continuar con el pago
+            <Button
+              className="h-12 w-full rounded-xl text-base font-semibold"
+              render={<Link href={mustLogin ? loginHref("/checkout") : "/checkout"} />}
+              nativeButton={false}
+            >
+              {mustLogin ? <Lock className="size-4" /> : null}
+              {mustLogin ? "Ingresar para pagar" : "Continuar con el pago"}
               <ArrowRight className="size-4" />
             </Button>
+            {mustLogin && (
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                Ingresa o crea tu cuenta (también con Google). Tu carrito se mantiene.
+              </p>
+            )}
           </OrderSummary>
         </div>
       )}

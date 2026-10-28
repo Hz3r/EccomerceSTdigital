@@ -67,6 +67,9 @@
 }
 
 :root {
+  /* Barra de desplazamiento */
+  --scrollbar-thumb: #c4d3cd;
+  --scrollbar-thumb-hover: #0a9e78;
   /* ZERG brand */
   --brand: #05c48a;
   --brand-strong: #0a9e78;
@@ -123,6 +126,8 @@
 }
 
 .dark {
+  --scrollbar-thumb: #22362f;
+  --scrollbar-thumb-hover: #05c48a;
   color-scheme: dark;
   --viz-series: #0aa877;
   --viz-grid: #16251f;
@@ -177,6 +182,35 @@
   }
 }
 
+/* Barras de desplazamiento: finas, redondeadas y con el verde de la marca al usarlas */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--scrollbar-thumb);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  border-width: 2px;
+  background-color: var(--scrollbar-thumb-hover);
+}
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--brand);
+}
+
 @layer utilities {
   /* Degradado principal del logo ZERG */
   .bg-brand-gradient {
@@ -211,7 +245,7 @@
   }
   .scrollbar-thin:hover,
   .scrollbar-thin:focus-within {
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
@@ -221,7 +255,7 @@
     background: transparent;
   }
   .scrollbar-thin:hover::-webkit-scrollbar-thumb {
-    background: var(--border);
+    background: var(--scrollbar-thumb);
   }
   .scrollbar-none {
     scrollbar-width: none;
@@ -240,4 +274,23 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee { animation: none; }
+}
+
+/* Cambio de tema: la View Transition anima toda la página de una vez (ver theme-toggle.tsx) */
+.theme-switching,
+.theme-switching *:not([data-theme-icon]),
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 0;
+}
+::view-transition-new(root) {
+  z-index: 1;
 }
