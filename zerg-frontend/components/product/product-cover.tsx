@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { coverFor } from "@/lib/catalog";
+import { assetUrl } from "@/lib/site-settings";
 import { CategoryIcon } from "./category-icon";
 import type { Product } from "@/types";
 
@@ -17,7 +18,7 @@ export function ProductCover({ product, className, size = "md", showCategory = t
     return (
       <div className={cn("relative overflow-hidden bg-muted", className)}>
         <Image
-          src={product.imagenUrl}
+          src={assetUrl(product.imagenUrl)}
           alt={product.nombre}
           fill
           unoptimized
