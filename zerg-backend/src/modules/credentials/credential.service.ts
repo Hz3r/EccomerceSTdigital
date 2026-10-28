@@ -114,7 +114,7 @@ export async function getForOrder(orderId: string) {
       },
       WHATSAPP: {
         disponible: Boolean(whatsappConfig()) && Boolean(order.telefono),
-        motivo: !whatsappConfig() ? "Conecta WhatsApp Business (variables WHATSAPP_*)" : order.telefono ? null : "El pedido no tiene teléfono",
+        motivo: !whatsappConfig() ? "Conecta WhatsApp Business en Contenido del sitio → WhatsApp" : order.telefono ? null : "El pedido no tiene teléfono",
       },
     },
     destino: { email: order.email, telefono: order.telefono },
