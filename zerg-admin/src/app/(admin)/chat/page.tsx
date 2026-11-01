@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertTriangle, ArrowLeft, CheckCheck, Inbox, Loader2, Mail, MessageCircle, RotateCcw, Send, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -31,7 +32,7 @@ interface WhatsappStatus {
 
 const WINDOW_MS = 24 * 60 * 60 * 1000
 
-// Estado de la conexión con WhatsApp Business (se configura con las variables WHATSAPP_* del backend).
+// Estado de la conexión con WhatsApp Business (se configura en Contenido del sitio → WhatsApp).
 function WhatsappBadge() {
   const [status, setStatus] = React.useState<WhatsappStatus | null>(null)
   React.useEffect(() => {
@@ -42,16 +43,17 @@ function WhatsappBadge() {
   }, [])
   if (!status) return null
   return (
-    <span
-      title={status.conectado ? `Número ${status.numeroId}${status.webhook ? ` · Webhook: ${status.webhook}` : ""}` : "Completa WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_VERIFY_TOKEN y WHATSAPP_APP_SECRET en el backend"}
+    <Link
+      href="/content/whatsapp"
+      title={status.conectado ? `Número ${status.numeroId}${status.webhook ? ` · Webhook: ${status.webhook}` : ""}` : "Conéctalo en Contenido del sitio → WhatsApp"}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-opacity hover:opacity-80",
         status.conectado ? "bg-brand/15 text-brand-strong dark:text-brand-bright" : "bg-muted text-muted-foreground"
       )}
     >
       <span className={cn("size-1.5 rounded-full", status.conectado ? "bg-brand" : "bg-muted-foreground/50")} />
-      {status.conectado ? "WhatsApp Business conectado" : "WhatsApp Business sin conectar"}
-    </span>
+      {status.conectado ? "WhatsApp Business conectado" : "WhatsApp Business sin conectar · Conectar"}
+    </Link>
   )
 }
 
@@ -396,7 +398,7 @@ function WindowNotice({ endsAt }: { endsAt: number }) {
       {open ? <MessageCircle className="mt-px size-3.5 shrink-0 text-[#25D366]" /> : <AlertTriangle className="mt-px size-3.5 shrink-0" />}
       {open
         ? `Tu respuesta llega a su WhatsApp. Puedes escribir libremente hasta las ${clock.format(new Date(endsAt))}${new Date(endsAt).toDateString() !== new Date(now).toDateString() ? " de mañana" : ""}.`
-        : "Pasaron más de 24 h desde su último mensaje: WhatsApp solo deja enviarle la plantilla aprobada (WHATSAPP_TEMPLATE_REPLY)."}
+        : "Pasaron más de 24 h desde su último mensaje: WhatsApp solo deja enviarle la plantilla aprobada (configúrala en Contenido del sitio → WhatsApp)."}
     </p>
   )
 }

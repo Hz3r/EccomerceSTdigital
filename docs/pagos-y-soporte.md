@@ -37,20 +37,25 @@ Alternativas si Izipay no conviene: **Culqi**, **Niubiz** o **Mercado Pago** (mi
 - Desde el admin, si el cliente dejó su teléfono, **Continuar por WhatsApp** abre la conversación en WhatsApp.
 
 ### WhatsApp Business (Cloud API de Meta)
-Con las variables `WHATSAPP_*` del backend, el panel **Mensajes** recibe y responde los chats de tu número de WhatsApp Business.
+Se conecta desde el panel en **Contenido del sitio → WhatsApp**. Con eso, **Mensajes** recibe y responde los chats de tu
+número de WhatsApp Business y puedes enviar accesos por WhatsApp. El token, el App Secret y el verify token se guardan
+cifrados en la base (con `CREDENTIALS_KEY`, o `JWT_SECRET` si falta) y el panel nunca los vuelve a mostrar completos.
 
 1. En [developers.facebook.com](https://developers.facebook.com) crea una app de tipo *Empresa* y agrega el producto **WhatsApp**.
 2. Copia el **Phone Number ID** y genera un **token permanente** (Configuración del negocio → Usuarios del sistema).
-   Ponlos en `WHATSAPP_PHONE_NUMBER_ID` y `WHATSAPP_TOKEN`.
-3. En *Configuración de la app → Básica* copia la **clave secreta** → `WHATSAPP_APP_SECRET`.
-4. Inventa un texto para `WHATSAPP_VERIFY_TOKEN` y registra el webhook en WhatsApp → Configuración:
-   URL `<BACKEND_PUBLIC_URL>/api/whatsapp/webhook`, el mismo verify token, y suscribe el campo **messages**.
-5. Reinicia el backend. En Mensajes verás "WhatsApp Business conectado".
+3. En *Configuración de la app → Básica* copia la **clave secreta** (App Secret).
+4. Pega los tres datos en el panel, pulsa **Generar** para crear el verify token y guarda.
+5. Registra el webhook en Meta (WhatsApp → Configuración) con la **Callback URL** y el verify token que muestra el panel,
+   y suscribe el campo **messages**. La URL es `<BACKEND_PUBLIC_URL>/api/whatsapp/webhook`: define `BACKEND_PUBLIC_URL` en el `.env`.
+6. Pulsa **Probar conexión**: el panel consulta tu número en Meta sin enviar mensajes.
+
+Las variables `WHATSAPP_*` del `.env` siguen funcionando como respaldo: un campo vacío en el panel usa la variable.
+Cambiar `CREDENTIALS_KEY`/`JWT_SECRET` vuelve ilegibles los secretos guardados; habría que ingresarlos de nuevo.
 
 **Regla de 24 h de Meta:** puedes responder con texto libre hasta 24 h después del último mensaje del cliente. Fuera de esa
 ventana solo se envían **plantillas aprobadas**:
-- `WHATSAPP_TEMPLATE_REPLY`: plantilla con `{{1}}` = texto de tu respuesta.
-- `WHATSAPP_TEMPLATE_CREDENTIALS`: plantilla (categoría *Utilidad*) con `{{1}}` nombre, `{{2}}` n.º de pedido y `{{3}}` accesos.
+- **Plantilla para responder** (`WHATSAPP_TEMPLATE_REPLY`): plantilla con `{{1}}` = texto de tu respuesta.
+- **Plantilla para enviar accesos** (`WHATSAPP_TEMPLATE_CREDENTIALS`): plantilla (categoría *Utilidad*) con `{{1}}` nombre, `{{2}}` n.º de pedido y `{{3}}` accesos.
   Ejemplo: *"Hola {{1}}, tus accesos del pedido {{2}} están listos: {{3}}. También los ves en Mi cuenta → Mis accesos."*
 
 ## Entrega de credenciales

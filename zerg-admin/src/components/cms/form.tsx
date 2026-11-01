@@ -48,7 +48,7 @@ export function Section({ title, description, children, aside }: {
   );
 }
 
-export function Field({ label, hint, htmlFor, children }: { label: string; hint?: string; htmlFor?: string; children: React.ReactNode }) {
+export function Field({ label, hint, htmlFor, children }: { label: string; hint?: React.ReactNode; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
       <label htmlFor={htmlFor} className="text-sm font-medium">

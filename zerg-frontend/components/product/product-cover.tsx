@@ -15,15 +15,31 @@ interface ProductCoverProps {
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
 export function ProductCover({ product, className, size = "md", showCategory = true }: ProductCoverProps) {
   if (product.imagenUrl) {
+    const src = assetUrl(product.imagenUrl);
+    // Se adapta a cualquier proporción: la imagen completa (contain) sobre una copia
+    // difuminada de sí misma que rellena el marco, así nunca se recorta ni deja huecos.
     return (
-      <div className={cn("relative overflow-hidden bg-muted", className)}>
+      <div className={cn("relative isolate overflow-hidden bg-muted", className)}>
         <Image
-          src={assetUrl(product.imagenUrl)}
-          alt={product.nombre}
+          src={src}
+          alt=""
+          aria-hidden
           fill
           unoptimized
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="scale-125 object-cover opacity-60 blur-2xl saturate-150"
         />
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-0">
+          <div className="relative size-full">
+            <Image
+              src={src}
+              alt={product.nombre}
+              fill
+              unoptimized
+              className="object-contain transition-transform duration-500 group-hover:scale-105"
+            />
+          </div>
+        </div>
       </div>
     );
   }

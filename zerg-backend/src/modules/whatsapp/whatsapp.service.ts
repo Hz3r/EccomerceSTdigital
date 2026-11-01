@@ -3,7 +3,8 @@ import { getPrisma } from "../../config/database.js";
 import { ConflictError, AppError } from "../../errors/appError.js";
 import { emit } from "../../realtime/events.js";
 import { notifyAdmins } from "../notifications/notification.service.js";
-import { insideWindow, normalizePhone, sendTemplate, sendText, whatsappConfig } from "./whatsapp.client.js";
+import { checkConnection, insideWindow, normalizePhone, sendTemplate, sendText, whatsappConfig } from "./whatsapp.client.js";
+import { effective, ENV_NAMES, ensureWhatsappSettings, panelWhatsapp, SECRET_FIELDS, TEXT_FIELDS } from "./whatsapp.settings.js";
 
 export const WHATSAPP_TEMA = "WhatsApp";
 
@@ -114,32 +115,33 @@ async function receive(input: { waId: string; waMessageId: string; nombre: strin
   return true;
 }
 
-function requireConfig() {
+async function requireConfig() {
+  await ensureWhatsappSettings();
   const config = whatsappConfig();
-  if (!config) throw new AppError("WhatsApp Business no está conectado. Completa las variables WHATSAPP_* del backend.", 503);
+  if (!config) throw new AppError("WhatsApp Business no está conectado. Complétalo en Contenido del sitio → WhatsApp.", 503);
   return config;
 }
 
 /**
  * Respuesta del admin en un chat de WhatsApp. Dentro de las 24 h va como texto libre;
- * fuera de ellas, con la plantilla WHATSAPP_TEMPLATE_REPLY (si existe) llevando el texto como variable.
+ * fuera de ellas, con la plantilla de respuesta configurada (si existe) llevando el texto como variable.
  */
 export async function replyToChat(conversation: { waId: string | null; ultimoEntranteEn: Date | null }, texto: string) {
-  const config = requireConfig();
+  const config = await requireConfig();
   if (!conversation.waId) throw new ConflictError("Este chat no tiene número de WhatsApp");
   if (insideWindow(conversation.ultimoEntranteEn)) return sendText(config, conversation.waId, texto);
   if (config.templates.reply) return sendTemplate(config, conversation.waId, config.templates.reply, [texto]);
   throw new ConflictError(
-    "Pasaron más de 24 h desde el último mensaje del cliente. WhatsApp solo permite escribirle con una plantilla aprobada: configura WHATSAPP_TEMPLATE_REPLY o espera a que el cliente escriba."
+    "Pasaron más de 24 h desde el último mensaje del cliente. WhatsApp solo permite escribirle con una plantilla aprobada: configura la plantilla de respuesta en Contenido del sitio → WhatsApp o espera a que el cliente escriba."
   );
 }
 
 /**
  * Envía las credenciales de un pedido. Si el cliente nos escribió en las últimas 24 h va el texto completo;
- * si no, la plantilla WHATSAPP_TEMPLATE_CREDENTIALS con {{1}} nombre, {{2}} n.º de pedido y {{3}} accesos.
+ * si no, la plantilla de credenciales con {{1}} nombre, {{2}} n.º de pedido y {{3}} accesos.
  */
 export async function sendCredentials(phone: string | null | undefined, input: { nombre: string; numeroOrden: string; detalle: string; texto: string }) {
-  const config = requireConfig();
+  const config = await requireConfig();
   const to = normalizePhone(phone, config.countryCode);
   if (!to) throw new ConflictError("El pedido no tiene un número de WhatsApp válido");
 
@@ -149,18 +151,68 @@ export async function sendCredentials(phone: string | null | undefined, input: {
     return sendTemplate(config, to, config.templates.credentials, [input.nombre, input.numeroOrden, input.detalle]);
   }
   throw new ConflictError(
-    "El cliente no escribió a tu WhatsApp en las últimas 24 h. Para enviarle primero, crea y aprueba una plantilla en Meta y ponla en WHATSAPP_TEMPLATE_CREDENTIALS."
+    "El cliente no escribió a tu WhatsApp en las últimas 24 h. Para enviarle primero, crea y aprueba una plantilla en Meta y ponla en Contenido del sitio → WhatsApp."
   );
 }
 
+const webhookUrl = () => {
+  const base = process.env.BACKEND_PUBLIC_URL?.trim().replace(/\/$/, "");
+  return base ? `${base}/api/whatsapp/webhook` : null;
+};
+
 /** Estado de la conexión para el panel (sin secretos). */
-export function status() {
+export async function status() {
+  await ensureWhatsappSettings();
   const config = whatsappConfig();
   return {
     conectado: Boolean(config),
     numeroId: config ? `…${config.phoneNumberId.slice(-4)}` : null,
     plantillaRespuesta: config?.templates.reply ?? null,
     plantillaCredenciales: config?.templates.credentials ?? null,
-    webhook: process.env.BACKEND_PUBLIC_URL?.trim() ? `${process.env.BACKEND_PUBLIC_URL.trim().replace(/\/$/, "")}/api/whatsapp/webhook` : null,
+    webhook: webhookUrl(),
   };
+}
+
+const hint = (secret: string) => (secret ? `••••${secret.slice(-4)}` : null);
+
+/**
+ * Configuración para la página del panel. El token y el App Secret nunca salen del servidor:
+ * solo se indica si existen y sus últimos 4 caracteres. El verify token sí se muestra (hay que copiarlo en Meta).
+ */
+export async function adminConfig() {
+  await ensureWhatsappSettings();
+  const panel = panelWhatsapp();
+  const fields = [...TEXT_FIELDS, ...SECRET_FIELDS];
+  // Campos que hoy se toman del .env porque en el panel están vacíos
+  const desdeEnv = Object.fromEntries(fields.map((f) => [f, !panel[f] && Boolean(process.env[ENV_NAMES[f]]?.trim())]));
+  return {
+    activo: panel.activo,
+    conectado: Boolean(whatsappConfig()),
+    phoneNumberId: panel.phoneNumberId ?? "",
+    version: panel.version ?? "",
+    countryCode: panel.countryCode ?? "",
+    language: panel.language ?? "",
+    templateReply: panel.templateReply ?? "",
+    templateCredentials: panel.templateCredentials ?? "",
+    verifyToken: panel.verifyToken ?? "",
+    token: hint(effective("token")),
+    appSecret: hint(effective("appSecret")),
+    desdeEnv,
+    efectivo: {
+      phoneNumberId: effective("phoneNumberId"),
+      version: effective("version") || "v21.0",
+      countryCode: effective("countryCode") || "51",
+      language: effective("language") || "es",
+    },
+    webhook: webhookUrl(),
+  };
+}
+
+/** Prueba con los datos guardados (token + Phone Number ID) consultando el número en Meta. */
+export async function testConnection() {
+  await ensureWhatsappSettings();
+  const token = effective("token");
+  const phoneNumberId = effective("phoneNumberId");
+  if (!token || !phoneNumberId) throw new ConflictError("Guarda primero el token y el Phone Number ID");
+  return checkConnection({ token, phoneNumberId, version: effective("version") || "v21.0" });
 }

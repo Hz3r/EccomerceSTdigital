@@ -3,11 +3,13 @@ dotenv.config();
 
 import app from "./app.js";
 import { warnPendingMigrations } from "./config/migrations.js";
+import { loadWhatsappSettings } from "./modules/whatsapp/whatsapp.settings.js";
 
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT,()=>{
     console.log(`Server is running on port ${PORT}`);
     void warnPendingMigrations();
+    void loadWhatsappSettings();
 })
 

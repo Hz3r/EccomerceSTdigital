@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   MessageSquareQuote,
   MessagesSquare,
+  MessageCircle,
   Wallet,
   Package,
   PanelTop,
@@ -58,6 +59,7 @@ export const navigation: NavGroup[] = [
       { href: "/content/home", label: "Portada", icon: Home, description: "Hero, tendencias y secciones" },
       { href: "/content/footer", label: "Contacto y pie", icon: PanelBottom, description: "Datos de contacto y pie de página" },
       { href: "/content/payments", label: "Pagos", icon: Wallet, description: "Yape, Plin, cuentas, Izipay y Binance" },
+      { href: "/content/whatsapp", label: "WhatsApp", icon: MessageCircle, description: "Conexión con WhatsApp Business" },
     ],
   },
 ];
