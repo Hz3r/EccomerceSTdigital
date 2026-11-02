@@ -7,18 +7,22 @@ import type { Product } from "@/types";
 
 interface ProductCoverProps {
   product: Product;
+  /** Foto concreta a mostrar. Sin esta prop se usa la portada del producto. */
+  src?: string | null;
   className?: string;
   size?: "sm" | "md" | "lg";
   showCategory?: boolean;
 }
 
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
-export function ProductCover({ product, className, size = "md", showCategory = true }: ProductCoverProps) {
-  if (product.imagenUrl) {
+export function ProductCover({ product, src, className, size = "md", showCategory = true }: ProductCoverProps) {
+  const image = src ?? product.imagenUrl;
+
+  if (image) {
     return (
       <div className={cn("relative overflow-hidden bg-muted", className)}>
         <Image
-          src={assetUrl(product.imagenUrl)}
+          src={assetUrl(image)}
           alt={product.nombre}
           fill
           unoptimized

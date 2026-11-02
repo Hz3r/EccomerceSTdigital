@@ -10,15 +10,43 @@ const SCRIPT_SRC = "https://accounts.google.com/gsi/client?hl=es";
 const THEME_EVENT = "zerg-theme-change";
 
 // El Client ID lo da el backend (GOOGLE_CLIENT_ID): así se configura en un solo lugar.
-let configPromise: Promise<string> | null = null;
-function getClientId() {
-  if (USE_MOCKS) return Promise.resolve("");
+// Si no hay Client ID se guarda el motivo, para poder mostrarlo en desarrollo en vez de ocultar el botón.
+interface GoogleConfig {
+  clientId: string;
+  problem: string | null;
+}
+
+let configPromise: Promise<GoogleConfig> | null = null;
+function getClientId(): Promise<GoogleConfig> {
+  if (USE_MOCKS) {
+    return Promise.resolve({
+      clientId: "",
+      problem:
+        "el frontend corre en modo mocks (NEXT_PUBLIC_USE_MOCKS=true, o falta NEXT_PUBLIC_API_URL) y no consulta al backend.",
+    });
+  }
   configPromise ??= api
     .get<{ data: { enabled: boolean; clientId: string } }>("/auth/google/config")
-    .then((res) => (res.data.data.enabled ? res.data.data.clientId : ""))
-    .catch(() => {
+    .then((res) =>
+      res.data.data.enabled
+        ? { clientId: res.data.data.clientId, problem: null }
+        : {
+            clientId: "",
+            problem:
+              'el backend respondió enabled=false: GOOGLE_CLIENT_ID está vacío en su .env (¿reiniciaste el backend tras editarlo?).',
+          }
+    )
+    .catch((err: unknown) => {
       configPromise = null;
-      return "";
+      const e = err as { code?: string; response?: { status?: number } };
+      const detail =
+        e?.code === "ERR_NETWORK" || !e?.response
+          ? "no responde (¿está corriendo el backend? ¿es correcta NEXT_PUBLIC_API_URL?)"
+          : `respondió con HTTP ${e.response?.status}`;
+      return {
+        clientId: "",
+        problem: `el frontend no pudo consultar GET /auth/google/config: ${detail}.`,
+      };
     });
   return configPromise;
 }
@@ -47,6 +75,7 @@ let handleCredential: ((credential: string) => void) | null = null;
 /**
  * Botón oficial "Continuar con Google". No se muestra si el backend no tiene GOOGLE_CLIENT_ID.
  * Entrega a `onCredential` el ID token que el backend verifica en /auth/google.
+ * En desarrollo, si el botón no aparece se muestra el motivo en vez de ocultarlo en silencio.
  */
 export function GoogleButton({ onCredential, text = "continue_with", busy, className }: {
   onCredential: (credential: string) => void;
@@ -56,6 +85,7 @@ export function GoogleButton({ onCredential, text = "continue_with", busy, class
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "hidden" | "error">("loading");
+  const [hiddenReason, setHiddenReason] = useState("");
   const onCredentialRef = useRef(onCredential);
 
   useEffect(() => {
@@ -81,9 +111,14 @@ export function GoogleButton({ onCredential, text = "continue_with", busy, class
     };
 
     getClientId()
-      .then(async (clientId) => {
+      .then(async ({ clientId, problem }) => {
         if (cancelled) return;
-        if (!clientId) return setStatus("hidden");
+        if (!clientId) {
+          if (problem) console.warn(`[GoogleButton] El botón no se muestra: ${problem}`);
+          setHiddenReason(problem ?? "");
+          setStatus("hidden");
+          return;
+        }
         await loadScript();
         if (cancelled || !window.google) return;
         if (initializedFor !== clientId) {
@@ -110,7 +145,17 @@ export function GoogleButton({ onCredential, text = "continue_with", busy, class
     };
   }, [text]);
 
-  if (status === "hidden") return null;
+  // En producción el botón sigue desapareciendo; en desarrollo se expone el motivo.
+  if (status === "hidden") {
+    if (process.env.NODE_ENV === "production") return null;
+    return (
+      <div className={className}>
+        <div role="status" className="rounded-xl border border-dashed border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400">
+          <p className="font-semibold">Botón de Google oculto: {hiddenReason || "motivo desconocido."}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("space-y-4", className)}>

@@ -27,6 +27,8 @@ export interface Product {
   slug: string;
   descripcion?: string;
   imagenUrl?: string;
+  /** Fotos adicionales de la galería; la portada siempre es imagenUrl. */
+  galeria?: string[] | null;
   // Contenido propio de la página (vacío = textos generales de la tienda)
   incluye?: string[] | null;
   pasos?: { titulo: string; texto: string }[] | null;

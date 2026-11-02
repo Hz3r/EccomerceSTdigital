@@ -121,6 +121,8 @@ model Product {
   slug        String     @unique
   descripcion String?
   imagenUrl   String?
+  // Fotos adicionales de la galería (la portada siempre es imagenUrl)
+  galeria     Json?
   // Contenido de la página del producto (vacío = se usan los textos generales de la tienda)
   incluye     Json?
   pasos       Json?

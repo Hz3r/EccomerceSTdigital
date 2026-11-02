@@ -4,6 +4,7 @@ import type { Prisma } from "@prisma/client";
 
 type ContentField = Prisma.InputJsonValue | Prisma.NullTypes.JsonNull | undefined;
 interface ProductContent {
+  galeria?: ContentField;
   incluye?: ContentField;
   pasos?: ContentField;
   faqs?: ContentField;

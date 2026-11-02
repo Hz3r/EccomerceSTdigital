@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlanSelector } from "@/components/product/plan-selector";
-import { ProductCover } from "@/components/product/product-cover";
+import { ProductGallery } from "@/components/product/product-gallery";
 import { ReviewForm, StoreReply } from "@/components/product/review-form";
 import { useFavorites } from "@/hooks/useFavorites";
 import { productFaqs, productIncluye, productPasos } from "@/lib/product-content";
@@ -186,28 +186,20 @@ export default function ProductDetailPage() {
           <span className="font-medium text-foreground">{product.nombre}</span>
         </nav>
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-10">
-          {/* Galería e info */}
-          <div>
-            <div className="grid gap-3 sm:grid-cols-[1fr_110px]">
-              <ProductCover product={product} size="lg" className="aspect-[4/3] rounded-3xl" />
-              <div className="hidden flex-col gap-3 sm:flex">
-                <ProductCover product={product} size="sm" className="aspect-square rounded-2xl ring-2 ring-brand" />
-                <InfoThumb icon={MonitorSmartphone} label="Multi-dispositivo" />
-                <InfoThumb icon={ShieldCheck} label="Garantía" />
-              </div>
-            </div>
-
-            <div className="mt-8">
+        <div className="mt-6 grid gap-8 lg:grid-cols-[1.5fr_1fr] lg:gap-12">
+          {/* Columna izquierda: Título → Galería → Descripción */}
+          <div className="flex flex-col gap-6">
+            {/* Cabecera del producto */}
+            <div>
               <p className="text-sm font-semibold text-brand-strong">{product.category?.nombre ?? "Digital"}</p>
-              <div className="mt-1 flex items-start justify-between gap-4">
+              <div className="mt-1.5 flex items-start justify-between gap-4">
                 <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">{product.nombre}</h1>
                 <button
                   type="button"
                   aria-label={isFavorite(product.id) ? "Quitar de favoritos" : "Agregar a favoritos"}
                   aria-pressed={isFavorite(product.id)}
                   onClick={() => toggleFavorite(product.id, product.nombre)}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-full border transition-colors hover:bg-muted"
+                  className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border transition-colors hover:bg-muted"
                 >
                   <Heart className={cn("size-4 transition-transform active:scale-125", isFavorite(product.id) && "fill-destructive text-destructive")} />
                 </button>
@@ -215,57 +207,67 @@ export default function ProductDetailPage() {
               {rating && (
                 <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                   <Rating value={rating.value} />
-                  <span>
-                    {rating.value.toFixed(1)} · {rating.count} reseñas
-                  </span>
+                  <span>{rating.value.toFixed(1)} · {rating.count} reseñas</span>
                 </div>
               )}
-              <div className="mt-4 flex flex-wrap gap-2">
+              {product.descripcion && (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{product.descripcion}</p>
+              )}
+              <div className="mt-3 flex flex-wrap gap-2">
                 {["Entrega inmediata", "Garantía todo el plan", "TV · Celular · PC"].map((chip) => (
-                  <span key={chip} className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                  <span key={chip} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
                     {chip}
                   </span>
                 ))}
               </div>
-              {product.descripcion && (
-                <p className="mt-5 max-w-2xl text-sm leading-relaxed text-muted-foreground">{product.descripcion}</p>
-              )}
+            </div>
+
+            {/* Galería */}
+            <div className="grid gap-3 sm:grid-cols-[1fr_100px]">
+              <ProductGallery product={product} />
+              <div className="hidden flex-col gap-3 sm:flex">
+                <InfoThumb icon={MonitorSmartphone} label="Multi-dispositivo" />
+                <InfoThumb icon={ShieldCheck} label="Garantía" />
+              </div>
             </div>
           </div>
 
-          {/* Caja de compra */}
-          <aside className="self-start rounded-3xl bg-brand-mint p-5 ring-1 ring-brand/15 md:p-7 lg:sticky lg:top-36">
+          {/* Caja de compra — columna derecha sticky */}
+          <aside className="self-start rounded-2xl border border-border bg-card p-5 shadow-xl md:p-6 lg:sticky lg:top-36">
             {plan ? (
               <>
-                <div className="flex items-end justify-between gap-3">
-                  <p className="text-4xl font-black tracking-tight">{formatPrice(plan.precio * quantity)}</p>
+                <div className="flex items-baseline justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Desde</p>
+                    <p className="text-4xl font-black tracking-tight text-foreground">{formatPrice(plan.precio * quantity)}</p>
+                  </div>
                   {plan.precioOriginal && plan.precioOriginal > plan.precio ? (
-                    <p className="pb-1 text-sm text-muted-foreground">
-                      <span className="line-through">{formatPrice(plan.precioOriginal * quantity)}</span>{" "}
-                      <span className="font-bold text-brand-strong">-{discountPercent(plan)}%</span>
-                    </p>
+                    <div className="text-right">
+                      <span className="text-sm text-muted-foreground line-through">{formatPrice(plan.precioOriginal * quantity)}</span>
+                      <span className="ml-1.5 rounded-full bg-brand-yellow px-2 py-0.5 text-xs font-bold text-brand-ink">-{discountPercent(plan)}%</span>
+                    </div>
                   ) : (
                     <p className="pb-1 text-sm text-muted-foreground">por {plan.duracion}</p>
                   )}
                 </div>
 
-                <p className="mt-6 mb-2.5 text-xs font-bold tracking-widest text-muted-foreground uppercase">
+                <p className="mt-5 mb-2.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
                   Elige tu plan
                 </p>
                 <PlanSelector plans={plans} value={plan.id} onChange={setPlanId} />
 
                 <div className="mt-5 flex gap-2">
-                  <div className="flex h-11 items-center rounded-xl border bg-background">
+                  <div className="flex h-11 items-center rounded-xl border border-border bg-background">
                     <button
                       type="button"
                       aria-label="Disminuir cantidad"
                       disabled={quantity <= 1}
                       onClick={() => setQuantity((q) => clampQuantity(q - 1))}
-                      className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-muted-foreground"
+                      className="flex h-full w-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <Minus className="size-3.5" />
                     </button>
-                    <span className="w-6 text-center text-sm font-semibold" aria-live="polite">
+                    <span className="w-7 text-center text-sm font-semibold" aria-live="polite">
                       {quantity}
                     </span>
                     <button
@@ -273,18 +275,18 @@ export default function ProductDetailPage() {
                       aria-label="Aumentar cantidad"
                       disabled={quantity >= MAX_QUANTITY}
                       onClick={() => setQuantity((q) => clampQuantity(q + 1))}
-                      className="flex h-full w-9 items-center justify-center text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:text-muted-foreground"
+                      className="flex h-full w-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <Plus className="size-3.5" />
                     </button>
                   </div>
-                  <Button className="h-11 flex-1 rounded-xl font-semibold" onClick={addToCart}>
+                  <Button className="h-11 flex-1 rounded-xl text-sm font-semibold" onClick={addToCart}>
                     <ShoppingCart className="size-4" />
                     Añadir al carrito
                   </Button>
                 </div>
                 <Button
-                  className="mt-2 h-11 w-full rounded-xl bg-brand font-semibold text-brand-ink hover:bg-brand-bright"
+                  className="mt-2.5 h-11 w-full rounded-xl bg-brand text-sm font-semibold text-brand-ink hover:bg-brand-bright"
                   onClick={() => {
                     addToCart();
                     router.push("/checkout");
@@ -298,7 +300,7 @@ export default function ProductDetailPage() {
               <p className="text-sm text-muted-foreground">Este producto no tiene planes disponibles por ahora.</p>
             )}
 
-            <div className="mt-6 grid grid-cols-2 gap-2">
+            <div className="mt-5 grid grid-cols-2 gap-2">
               <DeliveryTile icon={Zap} title="Entrega inmediata" text="En minutos a tu correo" />
               <DeliveryTile icon={RefreshCw} title="Reemplazo gratis" text="Durante todo el plan" />
             </div>

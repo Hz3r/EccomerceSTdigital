@@ -34,6 +34,7 @@ import { DesktopMenu, MobileAccordion, MobileMenuItem, resolveMenu } from "@/com
 import { useSite } from "@/hooks/useSiteSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
+import { assetUrl } from "@/lib/site-settings";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -131,7 +132,7 @@ export function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon-lg" className="rounded-full" />}>
                   <Avatar size="sm">
-                    <AvatarImage src={user.avatarUrl} alt={user.nombre} />
+                    <AvatarImage src={assetUrl(user.avatarUrl)} alt={user.nombre} />
                     <AvatarFallback className="bg-brand text-brand-ink font-semibold">
                       {user.nombre.charAt(0).toUpperCase()}
                     </AvatarFallback>

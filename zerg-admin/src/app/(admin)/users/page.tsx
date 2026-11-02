@@ -21,6 +21,7 @@ import {
 } from "@/components/data-table/data-table"
 import { useAuth } from "@/hooks/useAuth"
 import { useLiveVersion } from "@/lib/live"
+import { assetUrl } from "@/lib/format"
 import api from "@/lib/axios"
 import {
   PencilIcon,
@@ -111,7 +112,7 @@ export default function UsersPage() {
       render: (item) => (
         <div className="flex items-center gap-2">
           {item.avatarUrl ? (
-            <img src={item.avatarUrl} alt={item.nombre} className="h-6 w-6 rounded-full object-cover" />
+            <img src={assetUrl(item.avatarUrl)} alt={item.nombre} className="h-6 w-6 rounded-full object-cover" />
           ) : (
             <UserIcon className="h-6 w-6 text-muted-foreground" />
           )}

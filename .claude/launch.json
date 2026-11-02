@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "zerg-frontend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "zerg-frontend", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "zerg-backend",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "zerg-backend", "dev"],
+      "port": 3001
+    }
+  ]
+}
