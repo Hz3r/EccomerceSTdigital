@@ -19,31 +19,18 @@ export function ProductCover({ product, src, className, size = "md", showCategor
   const image = src ?? product.imagenUrl;
 
   if (image) {
-    // Se adapta a cualquier proporción: la imagen completa (contain) sobre una copia
-    // difuminada de sí misma que rellena el marco, así nunca se recorta ni deja huecos.
-    const resolved = assetUrl(image);
+    // Llena el box por completo y recorta solo el exceso mínimo según la proporción
+    // de cada marco (object-cover), sin dejar espacios vacíos.
     return (
-      <div className={cn("relative isolate overflow-hidden bg-muted", className)}>
+      <div className={cn("relative overflow-hidden bg-muted", className)}>
         <Image
-          src={resolved}
-          alt=""
-          aria-hidden
+          src={assetUrl(image)}
+          alt={product.nombre}
           fill
           unoptimized
-          className="scale-125 object-cover opacity-60 blur-2xl saturate-150"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0">
-          <div className="relative size-full">
-            <Image
-              src={resolved}
-              alt={product.nombre}
-              fill
-              unoptimized
-              className="object-contain transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-        </div>
       </div>
     );
   }
