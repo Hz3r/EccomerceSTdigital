@@ -7,39 +7,30 @@ import type { Product } from "@/types";
 
 interface ProductCoverProps {
   product: Product;
+  /** Foto concreta a mostrar. Sin esta prop se usa la portada del producto. */
+  src?: string | null;
   className?: string;
   size?: "sm" | "md" | "lg";
   showCategory?: boolean;
 }
 
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
-export function ProductCover({ product, className, size = "md", showCategory = true }: ProductCoverProps) {
-  if (product.imagenUrl) {
-    const src = assetUrl(product.imagenUrl);
-    // Se adapta a cualquier proporción: la imagen completa (contain) sobre una copia
-    // difuminada de sí misma que rellena el marco, así nunca se recorta ni deja huecos.
+export function ProductCover({ product, src, className, size = "md", showCategory = true }: ProductCoverProps) {
+  const image = src ?? product.imagenUrl;
+
+  if (image) {
+    // Llena el box por completo y recorta solo el exceso mínimo según la proporción
+    // de cada marco (object-cover), sin dejar espacios vacíos.
     return (
-      <div className={cn("relative isolate overflow-hidden bg-muted", className)}>
+      <div className={cn("relative overflow-hidden bg-muted", className)}>
         <Image
-          src={src}
-          alt=""
-          aria-hidden
+          src={assetUrl(image)}
+          alt={product.nombre}
           fill
           unoptimized
-          className="scale-125 object-cover opacity-60 blur-2xl saturate-150"
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0">
-          <div className="relative size-full">
-            <Image
-              src={src}
-              alt={product.nombre}
-              fill
-              unoptimized
-              className="object-contain transition-transform duration-500 group-hover:scale-105"
-            />
-          </div>
-        </div>
       </div>
     );
   }

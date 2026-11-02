@@ -37,7 +37,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       )}
     >
       <Link href={href} className={cn("relative block shrink-0", isList && "sm:w-56")}>
-        <ProductCover product={product} className="aspect-[4/3] rounded-xl" />
+        <ProductCover product={product} className="aspect-video rounded-xl" />
         {discount > 0 && (
           <span className="absolute top-2.5 right-2.5 rounded-full bg-brand-yellow px-2.5 py-0.5 text-xs font-bold text-brand-ink shadow-sm">
             -{discount}%

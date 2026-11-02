@@ -4,9 +4,10 @@ import { BadRequestError } from "../../errors/appError.js";
 // Contenido propio de cada producto en su página: "Qué incluye", "Cómo funciona" y "Preguntas frecuentes".
 // Una lista vacía guarda null y la tienda usa los textos generales.
 
-const LIMITS = { incluye: 10, pasos: 6, faqs: 15 } as const;
+const LIMITS = { incluye: 10, pasos: 6, faqs: 15, galeria: 10 } as const;
 const MAX_SHORT = 160;
 const MAX_LONG = 600;
+const MAX_URL = 500;
 
 const text = (value: unknown, max: number, field: string) => {
   if (typeof value !== "string") throw new BadRequestError(`${field}: debe ser texto`);
@@ -29,6 +30,8 @@ const obj = (item: unknown) => (typeof item === "object" && item !== null ? (ite
 /** Valida el contenido enviado desde el admin. Las claves ausentes no se tocan. */
 export function parseProductContent(body: Record<string, unknown>) {
   return {
+    // Fotos adicionales: la portada siempre es product.imagenUrl y no viaja aquí.
+    galeria: list(body.galeria, "galeria", (item, i) => text(item, MAX_URL, `Imagen ${i + 1}`) || null),
     incluye: list(body.incluye, "incluye", (item, i) => text(item, MAX_SHORT, `Qué incluye ${i + 1}`) || null),
     pasos: list(body.pasos, "pasos", (item, i) => {
       const titulo = text(obj(item).titulo ?? "", MAX_SHORT, `Paso ${i + 1}`);

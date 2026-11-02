@@ -25,6 +25,8 @@ export interface Product {
   incluye?: string[] | null;
   pasos?: { titulo: string; texto: string }[] | null;
   faqs?: { pregunta: string; respuesta: string }[] | null;
+  /** Fotos adicionales; la portada siempre es imagenUrl. */
+  galeria?: string[] | null;
   id: string;
   nombre: string;
   slug: string;

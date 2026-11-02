@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { ImageField } from "@/components/image-field"
+import { ImageGalleryField } from "@/components/image-gallery-field"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { assetUrl, formatPrice, slugify, STORE_URL } from "@/lib/format"
@@ -35,6 +36,7 @@ interface ProductDraft extends ProductContent {
   descripcion: string
   categoryId: string
   imagenUrl: string
+  galeria: string[]
   isActivo: boolean
   plans: PlanDraft[]
 }
@@ -42,12 +44,14 @@ interface ProductDraft extends ProductContent {
 const EMPTY_PLAN: PlanDraft = { nombre: "1 mes", duracion: "1 mes", precio: "", precioOriginal: "", isActivo: true }
 
 function toDraft(product?: Product): ProductDraft {
+  const galeria = product?.galeria
   return {
     nombre: product?.nombre ?? "",
     slug: product?.slug ?? "",
     descripcion: product?.descripcion ?? "",
     categoryId: product?.categoryId ?? "",
     imagenUrl: product?.imagenUrl ?? "",
+    galeria: Array.isArray(galeria) ? galeria : [],
     isActivo: product?.isActivo ?? true,
     incluye: product?.incluye ?? [],
     pasos: product?.pasos ?? [],
@@ -298,6 +302,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         descripcion: draft.descripcion.trim() || undefined,
         categoryId: draft.categoryId,
         imagenUrl: draft.imagenUrl,
+        galeria: draft.galeria.filter(Boolean),
         isActivo: draft.isActivo,
         // Lista vacía = la tienda usa los textos generales
         incluye: draft.incluye.map((x) => x.trim()).filter(Boolean),
@@ -368,6 +373,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
       <Tabs defaultValue="general" className="gap-4">
         <TabsList>
           <TabsTrigger value="general">General y planes</TabsTrigger>
+          <TabsTrigger value="galeria">Galería</TabsTrigger>
           <TabsTrigger value="pagina">Página del producto</TabsTrigger>
           {product && <TabsTrigger value="resenas">Reseñas</TabsTrigger>}
         </TabsList>
@@ -435,7 +441,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Imagen</Label>
+            <Label>Imagen de portada</Label>
             <ImageField value={draft.imagenUrl} onChange={(url) => set("imagenUrl", url)} folder="products" className="flex-col" previewClassName="aspect-[4/3] size-auto w-full" />
           </div>
           <label className="flex cursor-pointer items-center justify-between rounded-xl border p-3 text-sm">
@@ -510,6 +516,33 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         </ul>
       </div>
 
+        </TabsContent>
+
+        <TabsContent value="galeria" className="space-y-4">
+          <div className="rounded-xl border p-4">
+            <p className="font-semibold">Fotos del producto</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              La portada se elige en <b>General y planes</b> y siempre va primero en la tienda. Aquí agregas las fotos
+              adicionales que se ven en la ficha: se recortan solas a la proporción de cada lugar (4:3 en tarjetas, 16:9
+              en banners, 1:1 en miniaturas), así que sirve la misma foto en todos lados.
+            </p>
+          </div>
+          <ImageGalleryField
+            value={draft.galeria}
+            onChange={(galeria) => set("galeria", galeria)}
+            folder="products"
+            coverUrl={draft.imagenUrl || undefined}
+            max={10}
+            onMakeCover={(i) =>
+              setDraft((d) => ({
+                ...d,
+                imagenUrl: d.galeria[i] ?? d.imagenUrl,
+                galeria: d.imagenUrl
+                  ? d.galeria.map((url, j) => (j === i ? d.imagenUrl : url))
+                  : d.galeria.filter((_, j) => j !== i),
+              }))
+            }
+          />
         </TabsContent>
 
         <TabsContent value="pagina">

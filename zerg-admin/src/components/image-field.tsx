@@ -4,11 +4,11 @@ import * as React from "react"
 import { ImageIcon, Loader2, TrashIcon, UploadIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import api from "@/lib/axios"
 import { assetUrl } from "@/lib/format"
+import { IMAGE_ACCEPT, MAX_IMAGE_SIZE, uploadErrorMessage, uploadImage, type UploadFolder } from "@/lib/upload"
 import { cn } from "@/lib/utils"
 
-export type UploadFolder = "products" | "categories" | "avatars" | "general" | "branding"
+export type { UploadFolder }
 
 interface ImageFieldProps {
   value: string
@@ -27,21 +27,15 @@ function useImageUpload(folder: UploadFolder, onChange: (url: string) => void) {
 
   const upload = async (file: File) => {
     setError("")
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > MAX_IMAGE_SIZE) {
       setError("La imagen supera los 5 MB")
       return
     }
     setUploading(true)
     try {
-      const form = new FormData()
-      form.append("file", file)
-      const res = await api.post<{ data: { url: string } }>(`/upload/${folder}`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      onChange(res.data.data.url)
+      onChange(await uploadImage(folder, file))
     } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message
-      setError(message ?? "No se pudo subir la imagen")
+      setError(uploadErrorMessage(err, "No se pudo subir la imagen"))
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ""
@@ -52,7 +46,7 @@ function useImageUpload(folder: UploadFolder, onChange: (url: string) => void) {
     <input
       ref={fileRef}
       type="file"
-      accept="image/jpeg,image/png,image/webp,image/gif"
+      accept={IMAGE_ACCEPT}
       className="hidden"
       onChange={(e) => {
         const file = e.target.files?.[0]

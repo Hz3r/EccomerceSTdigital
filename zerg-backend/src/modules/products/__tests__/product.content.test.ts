@@ -26,4 +26,24 @@ describe("Contenido del producto", () => {
     expect(() => parseProductContent({ pasos: Array(7).fill({ titulo: "a", texto: "b" }) })).toThrow("máximo 6");
     expect(() => parseProductContent({ faqs: [{ pregunta: "x".repeat(161), respuesta: "y" }] })).toThrow("máximo 160");
   });
+
+  it("la galería limpia los espacios y descarta entradas vacías", () => {
+    const result = parseProductContent({
+      galeria: ["/api/uploads/products/a.png", "  /api/uploads/products/b.png  ", ""],
+    });
+    expect(result.galeria).toEqual(["/api/uploads/products/a.png", "/api/uploads/products/b.png"]);
+  });
+
+  it("una galería vacía se guarda como null y la clave ausente no se toca", () => {
+    expect(parseProductContent({ galeria: [] }).galeria).toBe(Prisma.JsonNull);
+    expect(parseProductContent({ galeria: [""] }).galeria).toBe(Prisma.JsonNull);
+    expect(parseProductContent({}).galeria).toBeUndefined();
+  });
+
+  it("rechaza una galería con más de 10 fotos o entradas que no son texto", () => {
+    expect(() => parseProductContent({ galeria: Array(11).fill("/api/uploads/products/a.png") })).toThrow("máximo 10");
+    expect(() => parseProductContent({ galeria: "/api/uploads/products/a.png" })).toThrow("debe ser una lista");
+    expect(() => parseProductContent({ galeria: ["/api/x.png", 42] })).toThrow("debe ser texto");
+    expect(() => parseProductContent({ galeria: ["/x".repeat(251)] })).toThrow("máximo 500");
+  });
 });
