@@ -16,8 +16,14 @@ interface ProductGalleryProps {
 // Cada foto se recorta con object-cover a la proporción del contenedor.
 export function ProductGallery({ product, className }: ProductGalleryProps) {
   // La portada va primera y no se repite aunque aparezca también en la galería.
+  // Las fotos que no cargan se quitan de la galería en vez de mostrarse rotas.
+  const [broken, setBroken] = React.useState<string[]>([]);
+  const markBroken = React.useCallback(
+    (url: string) => setBroken((prev) => (prev.includes(url) ? prev : [...prev, url])),
+    []
+  );
   const images = [product.imagenUrl, ...(product.galeria ?? [])].filter(
-    (url, i, all): url is string => Boolean(url) && all.indexOf(url) === i
+    (url, i, all): url is string => Boolean(url) && all.indexOf(url) === i && !broken.includes(url as string)
   );
 
   // La selección se guarda junto al id: si cambia de producto vuelve a la portada sin efectos.
@@ -31,7 +37,7 @@ export function ProductGallery({ product, className }: ProductGalleryProps) {
 
   return (
     <div className={cn("space-y-3", className)}>
-      <ProductCover product={product} src={current} size="lg" className="aspect-video rounded-2xl" />
+      <ProductCover product={product} src={current} size="lg" className="aspect-video rounded-2xl" onImageError={markBroken} />
 
       {images.length > 1 && (
         <ul className="flex gap-3 overflow-x-auto pb-1">
@@ -48,7 +54,7 @@ export function ProductGallery({ product, className }: ProductGalleryProps) {
                 )}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={assetUrl(url)} alt="" loading="lazy" className="size-full object-cover" />
+                <img src={assetUrl(url)} alt="" loading="lazy" onError={() => markBroken(url)} className="size-full object-cover" />
               </button>
             </li>
           ))}

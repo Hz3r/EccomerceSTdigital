@@ -1,10 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { NotFoundError, BadRequestError } from "../../errors/appError.js";
-
-const UPLOADS_DIR = "uploads";
-
-const ALLOWED_FOLDERS = ["products", "categories", "avatars", "general", "branding"];
+import { UPLOADS_DIR, UPLOAD_FOLDERS as ALLOWED_FOLDERS } from "../../config/paths.js";
 
 export const getUploadUrl = (folder: string, filename: string) => {
   return `/api/uploads/${folder}/${filename}`;
@@ -15,7 +12,7 @@ export const deleteFile = async (folder: string, filename: string) => {
     throw new BadRequestError("Carpeta no válida");
   }
 
-  const filePath = path.join(UPLOADS_DIR, folder, filename);
+  const filePath = path.join(UPLOADS_DIR, folder, path.basename(filename));
 
   try {
     await fs.access(filePath);

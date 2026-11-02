@@ -7,8 +7,6 @@ import express, {
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import path from "path";
-import { fileURLToPath } from "url";
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/users/user.routes.js";
 import categoryRoutes from "./modules/categories/category.routes.js";
@@ -26,11 +24,9 @@ import favoriteRoutes from "./modules/favorites/favorite.routes.js";
 import credentialRoutes from "./modules/credentials/credential.routes.js";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js";
 import { AppError } from "./errors/appError.js";
+import { UPLOADS_DIR } from "./config/paths.js";
 import { databaseConnectionError } from "./errors/database.js";
 import { emitOnMutation, eventsHandler } from "./realtime/events.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app: Application = express();
 
@@ -81,7 +77,7 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use(
   "/api/uploads",
-  express.static(path.join(__dirname, "../uploads"))
+  express.static(UPLOADS_DIR)
 );
 
 app.get("/", (_req: Request, res: Response) => {
