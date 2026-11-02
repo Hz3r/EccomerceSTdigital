@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { coverFor } from "@/lib/catalog";
@@ -12,13 +15,17 @@ interface ProductCoverProps {
   className?: string;
   size?: "sm" | "md" | "lg";
   showCategory?: boolean;
+  /** Avisa cuando la foto no carga (la galería la quita de las miniaturas). */
+  onImageError?: (src: string) => void;
 }
 
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
-export function ProductCover({ product, src, className, size = "md", showCategory = true }: ProductCoverProps) {
+export function ProductCover({ product, src, className, size = "md", showCategory = true, onImageError }: ProductCoverProps) {
   const image = src ?? product.imagenUrl;
+  // Si la imagen no carga (borrada, URL rota), se muestra la portada generada en vez del ícono roto.
+  const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
 
-  if (image) {
+  if (image && failedSrc !== image) {
     // Llena el box por completo y recorta solo el exceso mínimo según la proporción
     // de cada marco (object-cover), sin dejar espacios vacíos.
     return (
@@ -28,6 +35,10 @@ export function ProductCover({ product, src, className, size = "md", showCategor
           alt={product.nombre}
           fill
           unoptimized
+          onError={() => {
+            setFailedSrc(image);
+            onImageError?.(image);
+          }}
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />

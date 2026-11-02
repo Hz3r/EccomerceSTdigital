@@ -61,6 +61,9 @@ function useImageUpload(folder: UploadFolder, onChange: (url: string) => void) {
 // Vista previa + subir archivo al backend (POST /upload/:folder) o pegar una URL.
 export function ImageField({ value, onChange, folder, id, className, previewClassName }: ImageFieldProps) {
   const { input, pick, uploading, error } = useImageUpload(folder, onChange)
+  // Si la imagen no carga se muestra un aviso en vez del ícono roto del navegador.
+  const [failedSrc, setFailedSrc] = React.useState<string | null>(null)
+  const broken = Boolean(value) && failedSrc === value
 
   return (
     <div className={cn("flex gap-4", className)}>
@@ -70,9 +73,19 @@ export function ImageField({ value, onChange, folder, id, className, previewClas
           previewClassName
         )}
       >
-        {value ? (
+        {value && !broken ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={assetUrl(value)} alt="Vista previa" className="size-full object-contain" />
+          <img
+            src={assetUrl(value)}
+            alt="Vista previa"
+            onError={() => setFailedSrc(value)}
+            className="size-full object-contain"
+          />
+        ) : broken ? (
+          <div className="flex flex-col items-center gap-1 p-2 text-center text-muted-foreground">
+            <ImageIcon className="size-7" />
+            <span className="text-[11px]">No se pudo cargar la imagen. Vuelve a subirla.</span>
+          </div>
         ) : (
           <ImageIcon className="size-7 text-muted-foreground" />
         )}
