@@ -204,6 +204,15 @@ export interface Plataforma {
   logoUrl: string;
 }
 
+/** Columna de "Recién llegados". Con `productos` se muestran esos; si no, los últimos de `categorias`. */
+export interface ColumnaRecientes {
+  titulo: string;
+  icono: string;
+  color: string;
+  categorias: string[];
+  productos: string[];
+}
+
 // Contenido editable de la tienda (GET/PUT /api/settings).
 export interface SiteSettings {
   marca: { nombre: string; logoUrl: string; iconoUrl: string };
@@ -229,6 +238,7 @@ export interface SiteSettings {
     spotlight: string[];
     carruseles: string[];
     plataformas: Plataforma[];
+    recienLlegados: { titulo: string; subtitulo: string; cantidad: number; columnas: ColumnaRecientes[] };
     secciones: Record<
       | "beneficios"
       | "masBuscado"

@@ -25,6 +25,19 @@ const cuentaBancaria = { banco: "", titular: "", numero: "", cci: "" };
 // Plataformas de la marquesina: nombre y, si tiene, logo (se muestra la imagen en lugar del texto).
 const plataforma = { nombre: "", logoUrl: "" };
 
+// Columna de "Recién llegados": muestra los últimos productos de sus categorías.
+// Si `productos` tiene elementos, se muestran esos (en ese orden) en lugar de los automáticos.
+// `icono` es el slug de un ícono de categoría (vacío = el de la primera categoría); `color` es el borde superior.
+const columnaRecientes = { titulo: "", icono: "", color: "verde", categorias: [] as string[], productos: [] as string[] };
+const columna = (titulo: string, icono: string, color: string, categorias: string[]) => ({
+  ...columnaRecientes,
+  titulo,
+  icono,
+  color,
+  categorias,
+  productos: [],
+});
+
 export const defaultSettings = {
   marca: {
     nombre: "ZERG",
@@ -92,6 +105,18 @@ export const defaultSettings = {
         "ChatGPT", "Canva", "Microsoft 365", "Xbox", "PlayStation", "NordVPN",
       ].map((nombre) => ({ ...plataforma, nombre }))
     ),
+    recienLlegados: {
+      titulo: "Recién llegados",
+      subtitulo: "Los últimos servicios que sumamos al catálogo",
+      // Productos por columna (1 a 12)
+      cantidad: 8,
+      columnas: listOf(columnaRecientes, [
+        columna("Inteligencia Artificial", "ia", "verde", ["ia"]),
+        columna("Diseño y creatividad", "diseno", "amarillo", ["diseno"]),
+        columna("Streaming y música", "streaming", "neon", ["streaming", "musica"]),
+        columna("Gaming y más", "gaming", "azul", ["gaming", "productividad", "seguridad"]),
+      ]),
+    },
     secciones: {
       beneficios: true,
       masBuscado: true,

@@ -1,7 +1,9 @@
 "use client";
 
 import { SetupBanner, Field, OrderedPicker, PageIntro, SaveBar, Section, SettingsState, TextField, Toggle } from "@/components/cms/form";
+import { NewArrivalsEditor } from "@/components/cms/new-arrivals-editor";
 import { PlatformsEditor } from "@/components/cms/platforms-editor";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCatalogOptions } from "@/hooks/useCatalogOptions";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -32,6 +34,8 @@ export default function HomeContentPage() {
   const hero = portada.hero;
   const setHero = (patch: Partial<typeof hero>) => set("hero", { ...hero, ...patch });
   const destacado = portada.destacado;
+  const recientes = portada.recienLlegados;
+  const setRecientes = (patch: Partial<typeof recientes>) => set("recienLlegados", { ...recientes, ...patch });
 
   return (
     <div className="space-y-6">
@@ -102,6 +106,27 @@ export default function HomeContentPage() {
           <OrderedPicker options={categories} value={portada.carruseles} onChange={(v) => set("carruseles", v)} max={5} />
         </Section>
       </div>
+
+      <Section
+        title="Recién llegados"
+        description="Columnas con los últimos servicios de cada grupo. Las columnas sin productos no se muestran en la tienda."
+      >
+        <div className="grid gap-4 sm:grid-cols-[1fr_1fr_10rem]">
+          <TextField id="recientes-titulo" label="Título" value={recientes.titulo} onChange={(v) => setRecientes({ titulo: v })} />
+          <TextField id="recientes-subtitulo" label="Subtítulo" value={recientes.subtitulo} onChange={(v) => setRecientes({ subtitulo: v })} />
+          <Field label="Productos por columna" htmlFor="recientes-cantidad" hint="De 1 a 12.">
+            <Input
+              id="recientes-cantidad"
+              type="number"
+              min={1}
+              max={12}
+              value={recientes.cantidad}
+              onChange={(e) => setRecientes({ cantidad: Math.min(Math.max(Number(e.target.value) || 1, 1), 12) })}
+            />
+          </Field>
+        </div>
+        <NewArrivalsEditor value={recientes.columnas} onChange={(v) => setRecientes({ columnas: v })} categories={categories} products={products} />
+      </Section>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <Section title="Plataformas" description="Se desplazan en la marquesina. Sube un logo (PNG transparente) para mostrar la imagen en lugar del nombre.">
