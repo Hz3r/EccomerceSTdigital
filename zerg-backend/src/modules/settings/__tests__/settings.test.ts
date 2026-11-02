@@ -85,6 +85,38 @@ describe("sanitize", () => {
   });
 });
 
+describe("recienLlegados", () => {
+  it("valida las columnas editadas desde el admin", () => {
+    const result = sanitize(defaultSettings as never, {
+      portada: {
+        recienLlegados: {
+          titulo: "Novedades",
+          columnas: [
+            { titulo: "Streaming", icono: "streaming", color: "azul", categorias: ["streaming", 3], productos: ["netflix-premium"], extra: true },
+            "Solo texto",
+          ],
+        },
+      },
+    }) as typeof defaultSettings;
+    expect(result.portada.recienLlegados.titulo).toBe("Novedades");
+    expect(result.portada.recienLlegados.cantidad).toBe(8);
+    expect(result.portada.recienLlegados.columnas).toEqual([
+      { titulo: "Streaming", icono: "streaming", color: "azul", categorias: ["streaming"], productos: ["netflix-premium"] },
+      { titulo: "Solo texto", icono: "", color: "verde", categorias: [], productos: [] },
+    ]);
+  });
+
+  it("sin datos guardados usa las 4 columnas por defecto", () => {
+    const result = sanitize(defaultSettings as never, {}) as typeof defaultSettings;
+    expect(result.portada.recienLlegados.columnas.map((c) => c.titulo)).toEqual([
+      "Inteligencia Artificial",
+      "Diseño y creatividad",
+      "Streaming y música",
+      "Gaming y más",
+    ]);
+  });
+});
+
 describe("migrate", () => {
   it("pasa el antiguo categoriasMenu al nuevo menú", () => {
     const migrated = migrate({ header: { categoriasMenu: ["ia", "gaming"] } });

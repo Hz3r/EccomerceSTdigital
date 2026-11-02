@@ -16,7 +16,7 @@ import { ProductTile } from "@/components/product/product-tile";
 import { CategorySpotlight } from "@/components/home/category-spotlight";
 import { ExploreCategories } from "@/components/home/explore-categories";
 import { GrowWithZerg } from "@/components/home/grow-with-zerg";
-import { NewArrivals } from "@/components/home/new-arrivals";
+import { hasNewArrivals, NewArrivals } from "@/components/home/new-arrivals";
 import { Rail } from "@/components/home/rail";
 import { SectionHeader } from "@/components/home/section-header";
 import { Testimonials } from "@/components/home/testimonials";
@@ -82,6 +82,8 @@ export default function Home() {
   }, [products, portada.tendencias]);
   const featured = products.find((p) => p.slug === destacado.productoSlug) ?? products[0];
   const featuredPlan = featured && cheapestPlan(featured);
+  const recientes = portada.recienLlegados;
+  const hasRecientes = hasNewArrivals(products, recientes.columnas);
 
   return (
     <div className="flex flex-col">
@@ -331,15 +333,15 @@ export default function Home() {
           )}
 
           {/* Recién llegados */}
-          {secciones.recienLlegados && (
+          {secciones.recienLlegados && hasRecientes && (
           <section className="mx-auto w-full max-w-7xl px-4 pt-16 md:px-6 md:pt-20">
             <SectionHeader
-              title="Recién llegados"
-              subtitle="Los últimos servicios que sumamos al catálogo"
+              title={recientes.titulo || "Recién llegados"}
+              subtitle={recientes.subtitulo}
               href="/products"
               className="mb-6"
             />
-            <NewArrivals products={products} />
+            <NewArrivals products={products} columnas={recientes.columnas} cantidad={recientes.cantidad} />
           </section>
           )}
         </>

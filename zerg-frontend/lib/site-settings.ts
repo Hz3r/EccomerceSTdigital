@@ -36,6 +36,15 @@ export interface CuentaBancaria {
   cci: string;
 }
 
+/** Columna de "Recién llegados". Con `productos` se muestran esos; si no, los últimos de `categorias`. */
+export interface ColumnaRecientes {
+  titulo: string;
+  icono: string;
+  color: string;
+  categorias: string[];
+  productos: string[];
+}
+
 export interface SiteSettings {
   marca: { nombre: string; logoUrl: string; iconoUrl: string };
   header: { anuncio: string; buscadorPlaceholder: string; mostrarOfertas: boolean; menu: MenuItem[] };
@@ -55,6 +64,7 @@ export interface SiteSettings {
     spotlight: string[];
     carruseles: string[];
     plataformas: Plataforma[];
+    recienLlegados: { titulo: string; subtitulo: string; cantidad: number; columnas: ColumnaRecientes[] };
     secciones: Record<
       | "beneficios"
       | "masBuscado"
@@ -148,6 +158,17 @@ export const defaultSettings: SiteSettings = {
       "Netflix", "Disney+", "Max", "Prime Video", "Spotify", "YouTube", "Crunchyroll",
       "ChatGPT", "Canva", "Microsoft 365", "Xbox", "PlayStation", "NordVPN",
     ].map((nombre) => ({ nombre, logoUrl: "" })),
+    recienLlegados: {
+      titulo: "Recién llegados",
+      subtitulo: "Los últimos servicios que sumamos al catálogo",
+      cantidad: 8,
+      columnas: [
+        { titulo: "Inteligencia Artificial", icono: "ia", color: "verde", categorias: ["ia"], productos: [] },
+        { titulo: "Diseño y creatividad", icono: "diseno", color: "amarillo", categorias: ["diseno"], productos: [] },
+        { titulo: "Streaming y música", icono: "streaming", color: "neon", categorias: ["streaming", "musica"], productos: [] },
+        { titulo: "Gaming y más", icono: "gaming", color: "azul", categorias: ["gaming", "productividad", "seguridad"], productos: [] },
+      ],
+    },
     secciones: {
       beneficios: true,
       masBuscado: true,
@@ -196,7 +217,7 @@ function normalize(s: SiteSettings): SiteSettings {
     ...s,
     pagos: s.pagos ?? defaultSettings.pagos,
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
-    portada: { ...s.portada, plataformas },
+    portada: { ...s.portada, plataformas, recienLlegados: s.portada.recienLlegados ?? defaultSettings.portada.recienLlegados },
   };
 }
 
