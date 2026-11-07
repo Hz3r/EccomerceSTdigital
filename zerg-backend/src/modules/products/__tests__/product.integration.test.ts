@@ -124,6 +124,23 @@ describe("Product Integration Tests", () => {
       expect(response.body.success).toBe(true);
     });
 
+    it("guarda la imagen de tarjeta y la borra con un texto vacío", async () => {
+      // mockReset: descarta respuestas "Once" que hayan quedado de otros tests
+      mockPrisma.product.findUnique.mockReset().mockResolvedValue(mockProduct);
+      mockPrisma.product.update.mockResolvedValue(mockProduct);
+
+      await request(app)
+        .put("/api/products/test-product-id")
+        .send({ imagenTarjeta: " /api/uploads/products/tarjeta.png " });
+      expect(mockPrisma.product.update.mock.calls.at(-1)?.[0].data.imagenTarjeta).toBe("/api/uploads/products/tarjeta.png");
+
+      await request(app).put("/api/products/test-product-id").send({ imagenTarjeta: "" });
+      expect(mockPrisma.product.update.mock.calls.at(-1)?.[0].data.imagenTarjeta).toBeNull();
+
+      await request(app).put("/api/products/test-product-id").send({ nombre: "Sin tocar la tarjeta" });
+      expect(mockPrisma.product.update.mock.calls.at(-1)?.[0].data.imagenTarjeta).toBeUndefined();
+    });
+
     it("debería retornar 404 si el producto no existe", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(null);
 

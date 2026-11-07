@@ -36,6 +36,7 @@ interface ProductDraft extends ProductContent {
   descripcion: string
   categoryId: string
   imagenUrl: string
+  imagenTarjeta: string
   galeria: string[]
   isActivo: boolean
   plans: PlanDraft[]
@@ -51,6 +52,7 @@ function toDraft(product?: Product): ProductDraft {
     descripcion: product?.descripcion ?? "",
     categoryId: product?.categoryId ?? "",
     imagenUrl: product?.imagenUrl ?? "",
+    imagenTarjeta: product?.imagenTarjeta ?? "",
     galeria: Array.isArray(galeria) ? galeria : [],
     isActivo: product?.isActivo ?? true,
     incluye: product?.incluye ?? [],
@@ -302,6 +304,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         descripcion: draft.descripcion.trim() || undefined,
         categoryId: draft.categoryId,
         imagenUrl: draft.imagenUrl,
+        imagenTarjeta: draft.imagenTarjeta,
         galeria: draft.galeria.filter(Boolean),
         isActivo: draft.isActivo,
         // Lista vacía = la tienda usa los textos generales
@@ -431,7 +434,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
             <textarea
               id="descripcion"
               rows={3}
-              placeholder="Resumen que aparece bajo el nombre y en la pestaña Descripción"
+              placeholder="Resumen que aparece bajo el nombre del producto"
               value={draft.descripcion}
               onChange={(e) => set("descripcion", e.target.value)}
               className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -441,8 +444,23 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Imagen de portada</Label>
-            <ImageField value={draft.imagenUrl} onChange={(url) => set("imagenUrl", url)} folder="products" className="flex-col" previewClassName="aspect-[4/3] size-auto w-full" />
+            <Label>Imagen de portada (horizontal)</Label>
+            <p className="text-xs text-muted-foreground">Ficha del producto, catálogo y producto destacado. Ideal 1280×720 (16:9).</p>
+            <ImageField value={draft.imagenUrl} onChange={(url) => set("imagenUrl", url)} folder="products" className="flex-col" previewClassName="aspect-video size-auto w-full" />
+          </div>
+          <div className="space-y-2">
+            <Label>Imagen para tarjetas (cuadrada)</Label>
+            <p className="text-xs text-muted-foreground">
+              Tendencias, carruseles, carrito y buscador. Ideal 1000×1000, con el logo en la parte de arriba y el tercio
+              inferior libre (ahí van el nombre y el precio). Si la dejas vacía se usa la portada recortada al centro.
+            </p>
+            <ImageField
+              value={draft.imagenTarjeta}
+              onChange={(url) => set("imagenTarjeta", url)}
+              folder="products"
+              className="flex-col"
+              previewClassName="aspect-square size-auto w-full max-w-48"
+            />
           </div>
           <label className="flex cursor-pointer items-center justify-between rounded-xl border p-3 text-sm">
             <span>

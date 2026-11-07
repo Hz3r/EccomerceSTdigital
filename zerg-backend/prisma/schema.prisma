@@ -121,6 +121,9 @@ model Product {
   slug        String     @unique
   descripcion String?
   imagenUrl   String?
+  // Imagen cuadrada para las tarjetas (tendencias, carruseles, carrito, buscador).
+  // Vacía = se usa imagenUrl recortada al centro.
+  imagenTarjeta String?
   // Fotos adicionales de la galería (la portada siempre es imagenUrl)
   galeria     Json?
   // Contenido de la página del producto (vacío = se usan los textos generales de la tienda)

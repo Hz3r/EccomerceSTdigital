@@ -22,6 +22,10 @@ export const getById = async (req: AuthRequest, res: Response) => {
   });
 };
 
+// "" o null borra la imagen de tarjeta; si no viene, no se toca.
+const cardImage = (value: unknown) =>
+  value === null ? null : typeof value === "string" ? value.trim().slice(0, 500) || null : undefined;
+
 export const create = async (req: AuthRequest, res: Response) => {
   const { nombre, slug, descripcion, imagenUrl, categoryId } = req.body;
 
@@ -30,6 +34,7 @@ export const create = async (req: AuthRequest, res: Response) => {
     slug,
     descripcion,
     imagenUrl,
+    imagenTarjeta: cardImage(req.body?.imagenTarjeta),
     categoryId,
     ...parseProductContent(req.body ?? {}),
   });
@@ -51,6 +56,7 @@ export const update = async (req: AuthRequest, res: Response) => {
     slug,
     descripcion,
     imagenUrl,
+    imagenTarjeta: cardImage(req.body?.imagenTarjeta),
     categoryId,
     isActivo,
     ...parseProductContent(req.body ?? {}),

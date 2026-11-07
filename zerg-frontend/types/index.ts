@@ -27,6 +27,8 @@ export interface Product {
   slug: string;
   descripcion?: string;
   imagenUrl?: string;
+  /** Imagen cuadrada para las tarjetas (tendencias, carruseles, carrito, buscador). Vacía = la portada recortada. */
+  imagenTarjeta?: string | null;
   /** Fotos adicionales de la galería; la portada siempre es imagenUrl. */
   galeria?: string[] | null;
   // Contenido propio de la página (vacío = textos generales de la tienda)
