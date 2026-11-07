@@ -17,7 +17,7 @@ export function CartItem({ item }: CartItemProps) {
   return (
     <div className="flex gap-4 p-4 md:p-5">
       <Link href={`/product/${item.producto.slug}`} className="group shrink-0">
-        <ProductCover product={item.producto} size="sm" className="size-20 rounded-xl md:size-24" />
+        <ProductCover product={item.producto} variant="tarjeta" size="sm" className="size-20 rounded-xl md:size-24" />
       </Link>
 
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 sm:flex-row sm:items-center">

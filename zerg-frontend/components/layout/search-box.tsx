@@ -246,7 +246,7 @@ export function SearchBox({ className, inputRef }: { className?: string; inputRe
                           onMouseEnter={() => setActive(i)}
                           className={cn("flex items-center gap-3 px-3 py-2.5 transition-colors", active === i && "bg-muted")}
                         >
-                          <ProductCover product={p} size="sm" showCategory={false} className="size-11 shrink-0 rounded-lg" />
+                          <ProductCover product={p} variant="tarjeta" size="sm" showCategory={false} className="size-11 shrink-0 rounded-lg" />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-semibold">
                               <Highlight text={p.nombre} query={q} />
