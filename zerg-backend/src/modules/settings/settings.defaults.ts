@@ -148,6 +148,9 @@ export const defaultSettings = {
   },
   contacto: {
     whatsapp: "",
+    // Mensaje que ya va escrito al abrir WhatsApp desde el chat de ayuda.
+    // {tienda} = nombre de la marca; {cliente} = " (soy Nombre)" si el cliente inició sesión.
+    whatsappMensaje: "Hola {tienda}, necesito ayuda{cliente}.",
     email: "soporte@zerg.store",
     horario: "Lun a Dom · 8:00 a 23:00",
   },

@@ -10,6 +10,8 @@ export function planCountLabel(product: Product) {
 }
 
 // Tarjeta compacta: portada con insignia y nombre. Para tendencias y carruseles.
+// La foto se muestra completa (fit="contain") porque estas tarjetas son cuadradas o altas
+// y los banners de producto son horizontales: con "cover" se cortaba el logo y el texto.
 export function ProductTile({
   product,
   size = "sm",
@@ -34,6 +36,8 @@ export function ProductTile({
         product={product}
         size={size === "lg" ? "lg" : "md"}
         showCategory={false}
+        fit="contain"
+        containClassName={size === "lg" ? "inset-x-5 top-10 bottom-28" : "inset-x-2.5 top-8 bottom-12"}
         className="absolute inset-0 [&>div:last-child]:pb-10"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />

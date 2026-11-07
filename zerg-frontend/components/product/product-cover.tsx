@@ -17,13 +17,58 @@ interface ProductCoverProps {
   showCategory?: boolean;
   /** Avisa cuando la foto no carga (la galería la quita de las miniaturas). */
   onImageError?: (src: string) => void;
+  /**
+   * "cover" llena el marco recortando lo que sobra (bien cuando el marco tiene la forma de la foto).
+   * "contain" muestra la foto completa sobre una copia difuminada de sí misma: se adapta a marcos
+   * cuadrados o altos sin cortar el logo ni el texto del banner.
+   */
+  fit?: "cover" | "contain";
+  /** Con fit="contain": zona donde se coloca la foto (ej. dejar espacio abajo para el nombre). */
+  containClassName?: string;
 }
 
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
-export function ProductCover({ product, src, className, size = "md", showCategory = true, onImageError }: ProductCoverProps) {
+export function ProductCover({ product, src, className, size = "md", showCategory = true, onImageError, fit = "cover", containClassName }: ProductCoverProps) {
   const image = src ?? product.imagenUrl;
   // Si la imagen no carga (borrada, URL rota), se muestra la portada generada en vez del ícono roto.
   const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
+
+  const handleError = () => {
+    if (!image) return;
+    setFailedSrc(image);
+    onImageError?.(image);
+  };
+
+  if (image && failedSrc !== image && fit === "contain") {
+    return (
+      <div className={cn("relative overflow-hidden bg-muted", className)}>
+        {/* Fondo: la misma foto ampliada y difuminada para rellenar el marco sin bandas vacías */}
+        <Image
+          src={assetUrl(image)}
+          alt=""
+          aria-hidden
+          fill
+          unoptimized
+          sizes="(max-width: 768px) 100vw, 33vw"
+          className="scale-125 object-cover opacity-70 blur-2xl saturate-150"
+        />
+        {/* span y no div: así los estilos de las tarjetas para la portada generada ([&>div:last-child]) no le afectan */}
+        <span className={cn("absolute inset-0 block", containClassName)}>
+          <span className="relative block size-full">
+            <Image
+              src={assetUrl(image)}
+              alt={product.nombre}
+              fill
+              unoptimized
+              onError={handleError}
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-contain drop-shadow-xl transition-transform duration-500 group-hover:scale-105"
+            />
+          </span>
+        </span>
+      </div>
+    );
+  }
 
   if (image && failedSrc !== image) {
     // Llena el box por completo y recorta solo el exceso mínimo según la proporción
@@ -35,10 +80,7 @@ export function ProductCover({ product, src, className, size = "md", showCategor
           alt={product.nombre}
           fill
           unoptimized
-          onError={() => {
-            setFailedSrc(image);
-            onImageError?.(image);
-          }}
+          onError={handleError}
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />

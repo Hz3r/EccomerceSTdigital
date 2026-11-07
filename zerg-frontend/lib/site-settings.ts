@@ -91,7 +91,7 @@ export interface SiteSettings {
     };
     tipoCambioUsdt: number;
   };
-  contacto: { whatsapp: string; email: string; horario: string };
+  contacto: { whatsapp: string; whatsappMensaje: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
 }
 
@@ -197,6 +197,7 @@ export const defaultSettings: SiteSettings = {
   },
   contacto: {
     whatsapp: "",
+    whatsappMensaje: "Hola {tienda}, necesito ayuda{cliente}.",
     email: "soporte@zerg.store",
     horario: "Lun a Dom · 8:00 a 23:00",
   },
@@ -216,6 +217,7 @@ function normalize(s: SiteSettings): SiteSettings {
   return {
     ...s,
     pagos: s.pagos ?? defaultSettings.pagos,
+    contacto: { ...defaultSettings.contacto, ...s.contacto },
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
     portada: { ...s.portada, plataformas, recienLlegados: s.portada.recienLlegados ?? defaultSettings.portada.recienLlegados },
   };

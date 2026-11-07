@@ -114,7 +114,13 @@ export function SupportWidget() {
     setView(hasChat ? "chat" : "start");
   };
 
-  const waText = encodeURIComponent(`Hola ${marca.nombre}, necesito ayuda${user ? ` (soy ${user.nombre})` : ""}.`);
+  // Mensaje predefinido (Contacto y pie de página en el admin). {tienda} y {cliente} se completan aquí.
+  const waText = encodeURIComponent(
+    (contacto.whatsappMensaje || "Hola {tienda}, necesito ayuda{cliente}.")
+      .replaceAll("{tienda}", marca.nombre)
+      .replaceAll("{cliente}", user ? ` (soy ${user.nombre})` : "")
+      .replaceAll("{nombre}", user?.nombre ?? "")
+  );
 
   return (
     <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
@@ -174,8 +180,8 @@ export function SupportWidget() {
                     <WhatsAppIcon className="size-5" />
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">Escribir por WhatsApp</span>
-                    <span className="block text-xs text-muted-foreground">Se abre WhatsApp con un mensaje listo.</span>
+                    <span className="block font-semibold">WhatsApp</span>
+                    <span className="block text-xs text-muted-foreground">Hablar por WhatsApp con un mensaje listo.</span>
                   </span>
                 </a>
               )}
