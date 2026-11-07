@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
 const TABS = [
-  { id: "descripcion", label: "Descripción" },
+  { id: "descripcion", label: "Qué incluye" },
   { id: "como-funciona", label: "Cómo funciona" },
   { id: "resenas", label: "Reseñas" },
   { id: "preguntas", label: "Preguntas frecuentes" },
@@ -336,10 +336,7 @@ export default function ProductDetailPage() {
           <div role="tabpanel" className="mx-auto max-w-7xl px-4 py-10 md:px-6">
             {tab === "descripcion" && (
               <div className="max-w-3xl space-y-6 text-sm leading-relaxed">
-                <div>
-                  <h3 className="font-bold">Sobre {product.nombre}</h3>
-                  <p className="mt-1 text-muted-foreground">{product.descripcion}</p>
-                </div>
+                {/* La descripción ya se muestra bajo el título: aquí solo lo que incluye, sin repetirla. */}
                 <div>
                   <h3 className="font-bold">¿Qué incluye?</h3>
                   <ul className="mt-2 space-y-1.5 text-muted-foreground">

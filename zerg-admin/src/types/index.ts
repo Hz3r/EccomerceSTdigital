@@ -265,7 +265,7 @@ export interface SiteSettings {
     };
     tipoCambioUsdt: number;
   };
-  contacto: { whatsapp: string; email: string; horario: string };
+  contacto: { whatsapp: string; whatsappMensaje: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
 }
 

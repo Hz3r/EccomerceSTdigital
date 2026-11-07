@@ -23,7 +23,15 @@ export default function FooterContentPage() {
             placeholder="+51 999 999 999"
             value={contacto.whatsapp}
             onChange={(v) => update("contacto", { ...contacto, whatsapp: v })}
-            hint="Con código de país. El botón “Escríbenos por WhatsApp” abre un chat con este número."
+            hint="Con código de país. Con un número aquí, el chat de ayuda de la tienda muestra la opción “WhatsApp”."
+          />
+          <TextField
+            id="contacto-whatsapp-mensaje"
+            label="Mensaje predefinido de WhatsApp"
+            multiline
+            value={contacto.whatsappMensaje}
+            onChange={(v) => update("contacto", { ...contacto, whatsappMensaje: v })}
+            hint="Texto que ya aparece escrito al abrir WhatsApp. Puedes usar {tienda} (nombre de tu marca), {nombre} (nombre del cliente) y {cliente} (agrega “(soy Nombre)” si inició sesión)."
           />
           <TextField id="contacto-email" label="Correo de soporte" value={contacto.email} onChange={(v) => update("contacto", { ...contacto, email: v })} />
           <TextField id="contacto-horario" label="Horario de atención" value={contacto.horario} onChange={(v) => update("contacto", { ...contacto, horario: v })} />
