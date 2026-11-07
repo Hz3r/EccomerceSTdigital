@@ -22,6 +22,7 @@ import paymentRoutes from "./modules/payments/payment.routes.js";
 import supportRoutes from "./modules/support/support.routes.js";
 import favoriteRoutes from "./modules/favorites/favorite.routes.js";
 import credentialRoutes from "./modules/credentials/credential.routes.js";
+import newsletterRoutes from "./modules/newsletter/newsletter.routes.js";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js";
 import { AppError } from "./errors/appError.js";
 import { UPLOADS_DIR } from "./config/paths.js";
@@ -106,6 +107,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/credentials", credentialRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {

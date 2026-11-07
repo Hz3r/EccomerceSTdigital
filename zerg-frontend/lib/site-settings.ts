@@ -64,6 +64,7 @@ export interface SiteSettings {
     spotlight: string[];
     carruseles: string[];
     plataformas: Plataforma[];
+    boletin: { titulo: string; descripcion: string; boton: string; mensajeExito: string };
     recienLlegados: { titulo: string; subtitulo: string; cantidad: number; columnas: ColumnaRecientes[] };
     secciones: Record<
       | "beneficios"
@@ -158,6 +159,12 @@ export const defaultSettings: SiteSettings = {
       "Netflix", "Disney+", "Max", "Prime Video", "Spotify", "YouTube", "Crunchyroll",
       "ChatGPT", "Canva", "Microsoft 365", "Xbox", "PlayStation", "NordVPN",
     ].map((nombre) => ({ nombre, logoUrl: "" })),
+    boletin: {
+      titulo: "Suscríbete a nuestro boletín",
+      descripcion: "Recibe primero las ofertas, combos y nuevos servicios. Un correo a la semana, sin spam.",
+      boton: "Suscribirme",
+      mensajeExito: "¡Listo! Te avisaremos de las próximas ofertas.",
+    },
     recienLlegados: {
       titulo: "Recién llegados",
       subtitulo: "Los últimos servicios que sumamos al catálogo",
@@ -219,7 +226,7 @@ function normalize(s: SiteSettings): SiteSettings {
     pagos: s.pagos ?? defaultSettings.pagos,
     contacto: { ...defaultSettings.contacto, ...s.contacto },
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
-    portada: { ...s.portada, plataformas, recienLlegados: s.portada.recienLlegados ?? defaultSettings.portada.recienLlegados },
+    portada: { ...s.portada, plataformas, recienLlegados: s.portada.recienLlegados ?? defaultSettings.portada.recienLlegados, boletin: { ...defaultSettings.portada.boletin, ...s.portada.boletin } },
   };
 }
 

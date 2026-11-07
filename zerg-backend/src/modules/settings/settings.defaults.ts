@@ -105,6 +105,12 @@ export const defaultSettings = {
         "ChatGPT", "Canva", "Microsoft 365", "Xbox", "PlayStation", "NordVPN",
       ].map((nombre) => ({ ...plataforma, nombre }))
     ),
+    boletin: {
+      titulo: "Suscríbete a nuestro boletín",
+      descripcion: "Recibe primero las ofertas, combos y nuevos servicios. Un correo a la semana, sin spam.",
+      boton: "Suscribirme",
+      mensajeExito: "¡Listo! Te avisaremos de las próximas ofertas.",
+    },
     recienLlegados: {
       titulo: "Recién llegados",
       subtitulo: "Los últimos servicios que sumamos al catálogo",

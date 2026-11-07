@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import type { NextFunction, Request, Response } from "express";
 
 // Temas que la tienda y el admin escuchan para actualizarse sin recargar.
-export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users" | "notifications" | "support";
+export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users" | "notifications" | "support" | "subscribers";
 
 const bus = new EventEmitter();
 bus.setMaxListeners(0);
@@ -26,6 +26,7 @@ const ROUTE_TOPICS: Record<string, Topic[]> = {
   "/api/users": ["users"],
   "/api/notifications": ["notifications"],
   "/api/payments": ["orders"],
+  "/api/newsletter": ["subscribers"],
 };
 
 const MUTATIONS = new Set(["POST", "PUT", "PATCH", "DELETE"]);

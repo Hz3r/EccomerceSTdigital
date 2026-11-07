@@ -2,6 +2,7 @@ import {
   CreditCard,
   Home,
   LayoutDashboard,
+  Mail,
   MessageSquareQuote,
   MessagesSquare,
   MessageCircle,
@@ -50,6 +51,7 @@ export const navigation: NavGroup[] = [
       { href: "/chat", label: "Mensajes", icon: MessagesSquare, description: "Chat de soporte con clientes", badge: "chat" },
       { href: "/users", label: "Clientes", icon: Users, description: "Usuarios registrados" },
       { href: "/reviews", label: "Reseñas", icon: MessageSquareQuote, description: "Moderación de opiniones" },
+      { href: "/subscribers", label: "Suscriptores", icon: Mail, description: "Boletín: correos suscritos y exportación" },
     ],
   },
   {

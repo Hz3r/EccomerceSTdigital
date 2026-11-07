@@ -356,3 +356,18 @@ model Credential {
 
   @@map("credentials")
 }
+
+// ==================== BOLETÍN ====================
+
+// Suscriptores del formulario "Suscríbete a nuestro boletín" de la tienda.
+// `activo` = false cuando se da de baja (se guarda para no volver a escribirle).
+model Subscriber {
+  id          String   @id @default(uuid())
+  nombre      String
+  email       String   @unique
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now())
+  actualizado DateTime @updatedAt
+
+  @@map("subscribers")
+}
