@@ -26,7 +26,7 @@ import { Newsletter } from "@/components/layout/newsletter";
 import { MAX_QUANTITY, clampQuantity, useCart } from "@/hooks/useCart";
 import { useLiveVersion } from "@/lib/live";
 import { getProductBySlug, getProducts } from "@/lib/api";
-import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice } from "@/lib/catalog";
+import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice, planLabel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -247,7 +247,7 @@ export default function ProductDetailPage() {
                       <span className="ml-1.5 rounded-full bg-brand-yellow px-2 py-0.5 text-xs font-bold text-brand-ink">-{discountPercent(plan)}%</span>
                     </div>
                   ) : (
-                    <p className="pb-1 text-sm text-muted-foreground">por {plan.duracion}</p>
+                    <p className="pb-1 text-sm text-muted-foreground">por {planLabel(plan)}</p>
                   )}
                 </div>
 

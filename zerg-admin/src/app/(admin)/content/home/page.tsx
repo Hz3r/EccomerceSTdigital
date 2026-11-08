@@ -21,7 +21,7 @@ const SECTION_LABELS: { key: keyof Secciones; label: string; hint: string }[] = 
   { key: "opiniones", label: "Opiniones de clientes", hint: "Reseñas aprobadas" },
   { key: "recienLlegados", label: "Recién llegados", hint: "Listas de los últimos servicios" },
   { key: "creceConZerg", label: "Crece con ZERG", hint: "Referidos, distribuidores y ZERG Shield" },
-  { key: "boletin", label: "Boletín", hint: "Formulario de suscripción" },
+  { key: "boletin", label: "Boletín", hint: "Formulario de suscripción (también en el catálogo y en cada producto)" },
 ];
 
 export default function HomeContentPage() {
@@ -34,6 +34,8 @@ export default function HomeContentPage() {
   const hero = portada.hero;
   const setHero = (patch: Partial<typeof hero>) => set("hero", { ...hero, ...patch });
   const destacado = portada.destacado;
+  const boletin = portada.boletin;
+  const setBoletin = (patch: Partial<typeof boletin>) => set("boletin", { ...boletin, ...patch });
   const recientes = portada.recienLlegados;
   const setRecientes = (patch: Partial<typeof recientes>) => set("recienLlegados", { ...recientes, ...patch });
 
@@ -126,6 +128,24 @@ export default function HomeContentPage() {
           </Field>
         </div>
         <NewArrivalsEditor value={recientes.columnas} onChange={(v) => setRecientes({ columnas: v })} categories={categories} products={products} />
+      </Section>
+
+      <Section
+        title="Boletín"
+        description="El bloque verde “Suscríbete a nuestro boletín”. Los correos que dejan tus clientes llegan a Suscriptores."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField id="boletin-titulo" label="Título" value={boletin.titulo} onChange={(v) => setBoletin({ titulo: v })} />
+          <TextField id="boletin-boton" label="Texto del botón" value={boletin.boton} onChange={(v) => setBoletin({ boton: v })} />
+        </div>
+        <TextField id="boletin-descripcion" label="Descripción" multiline value={boletin.descripcion} onChange={(v) => setBoletin({ descripcion: v })} />
+        <TextField
+          id="boletin-exito"
+          label="Mensaje al suscribirse"
+          value={boletin.mensajeExito}
+          onChange={(v) => setBoletin({ mensajeExito: v })}
+          hint="Se muestra en lugar del formulario cuando el cliente se suscribe."
+        />
       </Section>
 
       <div className="grid gap-6 xl:grid-cols-2">

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ProductCover } from "./product-cover";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
-import { activePlans, bestDiscount, cheapestPlan, discountPercent, formatPrice } from "@/lib/catalog";
+import { activePlans, bestDiscount, cheapestPlan, discountPercent, formatPrice, planLabel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -71,7 +71,7 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
                 {plan.precioOriginal && plan.precioOriginal > plan.precio ? (
                   <p className="text-xs text-muted-foreground line-through">{formatPrice(plan.precioOriginal)}</p>
                 ) : (
-                  <p className="text-xs text-muted-foreground">por {plan.duracion}</p>
+                  <p className="text-xs text-muted-foreground">por {planLabel(plan)}</p>
                 )}
               </div>
             </div>

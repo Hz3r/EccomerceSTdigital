@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, planLabel } from "@/lib/catalog";
 import type { CartItem } from "@/types";
 
 export function OrderSummary({
@@ -28,7 +28,7 @@ export function OrderSummary({
           {items.map((i) => (
             <li key={i.planId} className="flex justify-between gap-3 text-sm">
               <span className="text-muted-foreground">
-                {i.producto.nombre} <span className="text-xs">({i.plan.duracion})</span> ×{i.cantidad}
+                {i.producto.nombre} <span className="text-xs">({planLabel(i.plan)})</span> ×{i.cantidad}
               </span>
               <span className="font-medium">{formatPrice(i.plan.precio * i.cantidad)}</span>
             </li>

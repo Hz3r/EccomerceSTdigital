@@ -49,6 +49,8 @@ export interface Plan {
   nombre: string;
   slug: string;
   duracion: string;
+  /** Perfiles que incluye (ej. "1 perfil", "Cuenta completa"). Vacío = no se muestra. */
+  perfiles?: string | null;
   precio: number;
   precioOriginal?: number;
   descripcion?: string;

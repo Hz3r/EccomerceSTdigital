@@ -1,10 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Send } from "lucide-react";
+import { Check, Loader2, Send } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useSite } from "@/hooks/useSiteSettings";
+import api from "@/lib/axios";
+import { USE_MOCKS } from "@/lib/api";
+import { apiErrorMessage } from "@/lib/auth-redirect";
 
+// Formulario del boletín: guarda el suscriptor en el backend (Suscriptores en el admin).
+// Los textos se editan en el admin (Portada → Boletín) y la sección se oculta desde "Secciones visibles".
 export function Newsletter() {
-  const [sent, setSent] = useState(false);
+  const { user } = useAuth();
+  const { boletin, secciones } = useSite().settings.portada;
+  // null = aún no escrito: se propone el nombre y correo de la cuenta (si inició sesión)
+  const [nombre, setNombre] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState("");
+
+  if (!secciones.boletin) return null;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSending(true);
+    try {
+      const body = { nombre: nombre ?? user?.nombre ?? "", email: email ?? user?.email ?? "" };
+      const message = USE_MOCKS
+        ? boletin.mensajeExito
+        : (await api.post<{ message?: string }>("/newsletter/subscribe", body)).data.message;
+      setSent(boletin.mensajeExito || message || "¡Listo!");
+    } catch (err) {
+      setError(apiErrorMessage(err, "No pudimos suscribirte. Intenta de nuevo."));
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <section className="relative px-4 py-16 md:px-6 md:py-24">
@@ -18,27 +51,23 @@ export function Newsletter() {
 
         <div className="relative px-6 py-10 md:px-12 md:py-14">
           <h2 className="max-w-md text-2xl font-extrabold tracking-tight text-brand-ink md:text-4xl">
-            Suscríbete a nuestro boletín
+            {boletin.titulo}
           </h2>
-          <p className="mt-3 max-w-sm text-sm text-brand-ink/75">
-            Recibe primero las ofertas, combos y nuevos servicios. Un correo a la semana, sin spam.
-          </p>
+          {boletin.descripcion && <p className="mt-3 max-w-sm text-sm text-brand-ink/75">{boletin.descripcion}</p>}
 
           {sent ? (
             <p className="mt-8 inline-flex items-center gap-2 rounded-xl bg-surface-ink px-4 py-3 text-sm font-medium text-white">
               <Check className="size-4 text-brand" />
-              ¡Listo! Te avisaremos de las próximas ofertas.
+              {sent}
             </p>
           ) : (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSent(true);
-              }}
-              className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row"
-            >
+            <form onSubmit={submit} className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row">
               <input
                 required
+                maxLength={80}
+                autoComplete="name"
+                value={nombre ?? user?.nombre ?? ""}
+                onChange={(e) => setNombre(e.target.value)}
                 placeholder="Nombre"
                 aria-label="Nombre"
                 className="h-11 rounded-xl border border-brand-ink/15 bg-white/90 px-4 text-sm text-brand-ink outline-none placeholder:text-brand-ink/50 focus:bg-white focus:ring-3 focus:ring-brand-ink/20 sm:w-40"
@@ -46,18 +75,28 @@ export function Newsletter() {
               <input
                 required
                 type="email"
+                maxLength={160}
+                autoComplete="email"
+                value={email ?? user?.email ?? ""}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Correo electrónico"
                 aria-label="Correo electrónico"
                 className="h-11 flex-1 rounded-xl border border-brand-ink/15 bg-white/90 px-4 text-sm text-brand-ink outline-none placeholder:text-brand-ink/50 focus:bg-white focus:ring-3 focus:ring-brand-ink/20"
               />
               <button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-surface-ink-hover"
+                disabled={sending}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-surface-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-surface-ink-hover disabled:opacity-70"
               >
-                <Send className="size-4" />
-                Suscribirme
+                {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                {boletin.boton || "Suscribirme"}
               </button>
             </form>
+          )}
+          {error && !sent && (
+            <p role="alert" className="mt-3 max-w-xl rounded-lg bg-surface-ink/85 px-3 py-2 text-xs font-medium text-white">
+              {error}
+            </p>
           )}
         </div>
       </div>

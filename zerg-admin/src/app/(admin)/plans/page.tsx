@@ -23,6 +23,7 @@ import {
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
+import { ProfilesInput } from "@/components/products/profiles-input"
 import {
   PlusIcon,
   PencilIcon,
@@ -41,6 +42,7 @@ export default function PlansPage() {
   const [formNombre, setFormNombre] = React.useState("")
   const [formSlug, setFormSlug] = React.useState("")
   const [formDuracion, setFormDuracion] = React.useState("")
+  const [formPerfiles, setFormPerfiles] = React.useState("")
   const [formPrecio, setFormPrecio] = React.useState("")
   const [formPrecioOriginal, setFormPrecioOriginal] = React.useState("")
   const [formDescripcion, setFormDescripcion] = React.useState("")
@@ -79,6 +81,7 @@ export default function PlansPage() {
     setFormDuracion("")
     setFormPrecio("")
     setFormPrecioOriginal("")
+    setFormPerfiles("")
     setFormDescripcion("")
     setFormProductId("")
     setOpen(true)
@@ -89,6 +92,7 @@ export default function PlansPage() {
     setFormNombre(plan.nombre)
     setFormSlug(plan.slug)
     setFormDuracion(plan.duracion)
+    setFormPerfiles(plan.perfiles ?? "")
     setFormPrecio(String(plan.precio))
     setFormPrecioOriginal(plan.precioOriginal ? String(plan.precioOriginal) : "")
     setFormDescripcion(plan.descripcion ?? "")
@@ -103,6 +107,7 @@ export default function PlansPage() {
         nombre: formNombre,
         slug: formSlug,
         duracion: formDuracion,
+        perfiles: formPerfiles,
         precio: parseFloat(formPrecio),
         precioOriginal: formPrecioOriginal ? parseFloat(formPrecioOriginal) : undefined,
         descripcion: formDescripcion || undefined,
@@ -144,6 +149,7 @@ export default function PlansPage() {
       },
     },
     { key: "duracion", label: "Duración", hideOnMobile: true },
+    { key: "perfiles", label: "Perfiles", hideOnMobile: true, render: (item) => <span>{item.perfiles || "—"}</span> },
     {
       key: "precio",
       label: "Precio",
@@ -249,6 +255,11 @@ export default function PlansPage() {
             <div className="flex flex-col gap-2">
               <Label htmlFor="duracion">Duración</Label>
               <Input id="duracion" placeholder="Ej: 1 año" value={formDuracion} onChange={(e) => setFormDuracion(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="perfiles">Perfiles</Label>
+              <ProfilesInput id="perfiles" value={formPerfiles} onChange={setFormPerfiles} />
+              <p className="text-xs text-muted-foreground">Ej. 1 perfil o Cuenta completa. Vacío = no se muestra en la tienda.</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">

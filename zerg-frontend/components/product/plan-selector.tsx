@@ -48,8 +48,7 @@ export function PlanSelector({ plans, value, onChange }: PlanSelectorProps) {
               </span>
             </span>
             <span className="mt-1 text-xs text-muted-foreground">
-              {plan.nombre !== plan.duracion && `${plan.duracion} · `}
-              {formatPrice(plan.precio)}
+              {[plan.nombre !== plan.duracion && plan.duracion, plan.perfiles, formatPrice(plan.precio)].filter(Boolean).join(" · ")}
             </span>
           </button>
         );

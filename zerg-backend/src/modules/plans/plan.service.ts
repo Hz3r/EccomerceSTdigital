@@ -33,6 +33,7 @@ export const create = async (data: {
   nombre: string;
   slug: string;
   duracion: string;
+  perfiles?: string | null;
   precio: number;
   precioOriginal?: number;
   descripcion?: string;
@@ -68,6 +69,7 @@ export const update = async (
     nombre?: string;
     slug?: string;
     duracion?: string;
+    perfiles?: string | null;
     precio?: number;
     precioOriginal?: number;
     descripcion?: string;

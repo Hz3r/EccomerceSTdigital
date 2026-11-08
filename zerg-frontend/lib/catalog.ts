@@ -7,6 +7,11 @@ export function formatPrice(value: number) {
   return `S/ ${PEN.format(value)}`;
 }
 
+/** Duración y perfiles del plan para mostrar: "1 mes · 1 perfil" (sin perfiles: solo la duración). */
+export function planLabel(plan?: { duracion?: string; perfiles?: string | null } | null) {
+  return [plan?.duracion, plan?.perfiles].filter(Boolean).join(" · ");
+}
+
 export function activePlans(product: Product): Plan[] {
   return (product.plans ?? []).filter((p) => p.isActivo);
 }

@@ -23,7 +23,7 @@ interface Credential {
 }
 
 interface DeliveryData {
-  items: { id: string; cantidad: number; producto: string; plan: string; duracion: string; credential: Credential | null }[]
+  items: { id: string; cantidad: number; producto: string; plan: string; duracion: string; perfiles?: string | null; credential: Credential | null }[]
   canales: Record<Canal, { disponible: boolean; motivo: string | null }>
   destino: { email: string; telefono: string | null }
 }
@@ -166,7 +166,7 @@ export function CredentialDelivery({ orderId }: { orderId: string }) {
           <div key={item.id} className="space-y-2 rounded-lg bg-muted/40 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-sm font-semibold">
-                {item.producto} <span className="font-normal text-muted-foreground">· {item.plan}{item.cantidad > 1 ? ` ×${item.cantidad}` : ""}</span>
+                {item.producto} <span className="font-normal text-muted-foreground">· {[item.plan, item.perfiles].filter(Boolean).join(" · ")}{item.cantidad > 1 ? ` ×${item.cantidad}` : ""}</span>
               </p>
               <span className="flex flex-wrap gap-1">
                 {c && <Sent icon={Globe} label="Web" at={c.publicadoEn} />}

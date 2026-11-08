@@ -149,6 +149,8 @@ model Plan {
   nombre         String
   slug           String      @unique
   duracion       String
+  // Perfiles que incluye (ej. "1 perfil", "Cuenta completa"). Vacío = no se muestra.
+  perfiles       String?
   precio         Decimal     @db.Decimal(10, 2)
   precioOriginal Decimal?    @db.Decimal(10, 2)
   descripcion    String?
@@ -355,4 +357,19 @@ model Credential {
   actualizado       DateTime  @updatedAt
 
   @@map("credentials")
+}
+
+// ==================== BOLETÍN ====================
+
+// Suscriptores del formulario "Suscríbete a nuestro boletín" de la tienda.
+// `activo` = false cuando se da de baja (se guarda para no volver a escribirle).
+model Subscriber {
+  id          String   @id @default(uuid())
+  nombre      String
+  email       String   @unique
+  activo      Boolean  @default(true)
+  creadoEn    DateTime @default(now())
+  actualizado DateTime @updatedAt
+
+  @@map("subscribers")
 }

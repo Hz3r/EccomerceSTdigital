@@ -48,6 +48,8 @@ export interface Plan {
   nombre: string;
   slug: string;
   duracion: string;
+  /** Perfiles que incluye (ej. "1 perfil", "Cuenta completa"). Vacío = no se muestra. */
+  perfiles?: string | null;
   precio: number;
   precioOriginal?: number;
   descripcion?: string;
@@ -240,6 +242,7 @@ export interface SiteSettings {
     spotlight: string[];
     carruseles: string[];
     plataformas: Plataforma[];
+    boletin: { titulo: string; descripcion: string; boton: string; mensajeExito: string };
     recienLlegados: { titulo: string; subtitulo: string; cantidad: number; columnas: ColumnaRecientes[] };
     secciones: Record<
       | "beneficios"
@@ -301,4 +304,14 @@ export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+}
+
+/** Suscriptor del boletín de la tienda. `activo` = false cuando se dio de baja. */
+export interface Subscriber {
+  id: string;
+  nombre: string;
+  email: string;
+  activo: boolean;
+  creadoEn: string;
+  actualizado: string;
 }
