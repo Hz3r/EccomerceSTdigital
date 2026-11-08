@@ -164,7 +164,13 @@ export function GoogleButton({ onCredential, text = "continue_with", busy, class
         {status === "error" && (
           <p className="text-center text-xs text-muted-foreground">No se pudo cargar el acceso con Google. Recarga la página.</p>
         )}
-        <div ref={containerRef} className={cn("flex justify-center", status !== "ready" && "hidden", busy && "pointer-events-none opacity-50")} />
+        {/* color-scheme: light evita el recuadro blanco en modo oscuro: el botón de Google es un iframe
+            claro y, si la página declara color-scheme: dark, el navegador le pinta un fondo opaco. */}
+        <div
+          ref={containerRef}
+          style={{ colorScheme: "light" }}
+          className={cn("flex justify-center", status !== "ready" && "hidden", busy && "pointer-events-none opacity-50")}
+        />
         {busy && <Loader2 className="absolute size-5 animate-spin text-muted-foreground" />}
       </div>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
