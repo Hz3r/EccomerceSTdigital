@@ -254,3 +254,20 @@
 ::view-transition-new(root) {
   z-index: 1;
 }
+
+/* Brillo que recorre una imagen mientras carga (portadas de productos) */
+.image-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, color-mix(in oklab, var(--foreground) 7%, transparent) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: image-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes image-shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .image-shimmer::before { animation: none; }
+}
