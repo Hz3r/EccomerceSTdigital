@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { authMiddleware } from "../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../middlewares/role.middleware.js";
 import * as newsletterService from "./newsletter.service.js";
+import * as campaignService from "./newsletter.campaign.js";
 
 const router: RouterType = Router();
 
@@ -20,8 +21,29 @@ router.post("/subscribe", subscribeLimiter, async (req: Request, res: Response) 
   res.status(200).json({ success: true, ...result });
 });
 
+// Enlace "Darse de baja" de los correos (página /boletin/baja de la tienda). Va firmado.
+const unsubscribeLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+router.post("/unsubscribe", unsubscribeLimiter, async (req: Request, res: Response) => {
+  const result = await campaignService.unsubscribe(req.body?.id, req.body?.t);
+  res.status(200).json({ success: true, data: result });
+});
+
 // Panel admin
 router.use(authMiddleware, roleMiddleware("ADMIN"));
+
+// Envío del boletín
+router.get("/campaigns", async (_req: Request, res: Response) => {
+  res.status(200).json({ success: true, data: await campaignService.listCampaigns() });
+});
+router.post("/campaigns/preview", async (req: Request, res: Response) => {
+  res.status(200).json({ success: true, data: { html: await campaignService.preview(req.body ?? {}) } });
+});
+router.post("/campaigns/test", async (req: Request, res: Response) => {
+  res.status(200).json({ success: true, ...(await campaignService.sendTest(req.body ?? {})) });
+});
+router.post("/campaigns", async (req: Request, res: Response) => {
+  res.status(201).json({ success: true, data: await campaignService.startCampaign(req.body ?? {}) });
+});
 
 router.get("/", async (_req: Request, res: Response) => {
   res.status(200).json({ success: true, data: await newsletterService.list() });

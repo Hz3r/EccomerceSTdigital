@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
+import { CampaignComposer } from "@/components/newsletter/campaign-composer"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { cn } from "@/lib/utils"
@@ -123,7 +125,7 @@ export default function SubscribersPage() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Suscriptores</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Personas que dejaron su correo en el boletín de la tienda. Exporta la lista para enviar tus campañas desde Mailchimp, Brevo u otro servicio.
+            Personas que dejaron su correo en el boletín de la tienda. Envíales correos desde “Enviar boletín” o exporta la lista para usarla en otro servicio.
           </p>
         </div>
         <div className="flex gap-2">
@@ -137,6 +139,17 @@ export default function SubscribersPage() {
         </div>
       </div>
 
+      <Tabs defaultValue="lista" className="gap-4">
+        <TabsList>
+          <TabsTrigger value="lista">Suscriptores</TabsTrigger>
+          <TabsTrigger value="enviar">Enviar boletín</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="enviar">
+          <CampaignComposer activos={activos} />
+        </TabsContent>
+
+        <TabsContent value="lista" className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         {filtros.map((f) => (
           <button
@@ -178,6 +191,8 @@ export default function SubscribersPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
