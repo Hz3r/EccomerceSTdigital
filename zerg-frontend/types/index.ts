@@ -29,6 +29,8 @@ export interface Product {
   imagenUrl?: string;
   /** Imagen cuadrada para las tarjetas (tendencias, carruseles, carrito, buscador). Vacía = la portada recortada. */
   imagenTarjeta?: string | null;
+  /** Nota junto al selector de cantidad en la ficha (ej. "La cantidad es el número de perfiles"). */
+  notaCantidad?: string | null;
   /** Fotos adicionales de la galería; la portada siempre es imagenUrl. */
   galeria?: string[] | null;
   // Contenido propio de la página (vacío = textos generales de la tienda)

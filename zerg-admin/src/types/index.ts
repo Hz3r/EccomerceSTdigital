@@ -27,6 +27,8 @@ export interface Product {
   faqs?: { pregunta: string; respuesta: string }[] | null;
   /** Imagen cuadrada para las tarjetas (tendencias, carruseles, carrito, buscador). Vacía = la portada recortada. */
   imagenTarjeta?: string | null;
+  /** Nota junto al selector de cantidad en la ficha (ej. "La cantidad es el número de perfiles"). */
+  notaCantidad?: string | null;
   /** Fotos adicionales; la portada siempre es imagenUrl. */
   galeria?: string[] | null;
   id: string;

@@ -124,6 +124,9 @@ model Product {
   // Imagen cuadrada para las tarjetas (tendencias, carruseles, carrito, buscador).
   // Vacía = se usa imagenUrl recortada al centro.
   imagenTarjeta String?
+  // Nota que se muestra junto al selector de cantidad en la ficha
+  // (ej. "La cantidad es el número de perfiles"). Vacía = no se muestra.
+  notaCantidad String?
   // Fotos adicionales de la galería (la portada siempre es imagenUrl)
   galeria     Json?
   // Contenido de la página del producto (vacío = se usan los textos generales de la tienda)

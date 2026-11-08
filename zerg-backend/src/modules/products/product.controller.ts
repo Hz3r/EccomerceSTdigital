@@ -22,9 +22,9 @@ export const getById = async (req: AuthRequest, res: Response) => {
   });
 };
 
-// "" o null borra la imagen de tarjeta; si no viene, no se toca.
-const cardImage = (value: unknown) =>
-  value === null ? null : typeof value === "string" ? value.trim().slice(0, 500) || null : undefined;
+// Texto opcional: "" o null lo borra; si no viene, no se toca.
+const optionalText = (value: unknown, max: number) =>
+  value === null ? null : typeof value === "string" ? value.trim().slice(0, max) || null : undefined;
 
 export const create = async (req: AuthRequest, res: Response) => {
   const { nombre, slug, descripcion, imagenUrl, categoryId } = req.body;
@@ -34,7 +34,8 @@ export const create = async (req: AuthRequest, res: Response) => {
     slug,
     descripcion,
     imagenUrl,
-    imagenTarjeta: cardImage(req.body?.imagenTarjeta),
+    imagenTarjeta: optionalText(req.body?.imagenTarjeta, 500),
+    notaCantidad: optionalText(req.body?.notaCantidad, 160),
     categoryId,
     ...parseProductContent(req.body ?? {}),
   });
@@ -56,7 +57,8 @@ export const update = async (req: AuthRequest, res: Response) => {
     slug,
     descripcion,
     imagenUrl,
-    imagenTarjeta: cardImage(req.body?.imagenTarjeta),
+    imagenTarjeta: optionalText(req.body?.imagenTarjeta, 500),
+    notaCantidad: optionalText(req.body?.notaCantidad, 160),
     categoryId,
     isActivo,
     ...parseProductContent(req.body ?? {}),

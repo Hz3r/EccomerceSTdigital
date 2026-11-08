@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ChevronRight,
   Heart,
+  Info,
   Minus,
   MonitorSmartphone,
   Plus,
@@ -285,6 +286,12 @@ export default function ProductDetailPage() {
                     Añadir al carrito
                   </Button>
                 </div>
+                {product.notaCantidad && (
+                  <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <Info className="mt-px size-3.5 shrink-0 text-brand-strong dark:text-brand-bright" />
+                    {product.notaCantidad}
+                  </p>
+                )}
                 <Button
                   className="mt-2.5 h-11 w-full rounded-xl bg-brand text-sm font-semibold text-brand-ink hover:bg-brand-bright"
                   onClick={() => {
