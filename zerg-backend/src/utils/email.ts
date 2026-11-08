@@ -5,15 +5,17 @@ import { AppError } from "../errors/appError.js";
 
 export const emailConfigured = () => Boolean(process.env.RESEND_API_KEY?.trim() && process.env.EMAIL_FROM?.trim());
 
-export async function sendEmail(input: { to: string; subject: string; html: string; text: string }) {
+export async function sendEmail(input: { to: string; subject: string; html: string; text: string; headers?: Record<string, string> }) {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.EMAIL_FROM?.trim();
   if (!apiKey || !from) throw new AppError("El correo no está configurado. Completa RESEND_API_KEY y EMAIL_FROM en el backend.", 503);
 
-  const res = await fetch("https://api.resend.com/emails", {
+  // RESEND_API_URL solo para pruebas locales (un servidor falso); en producción no se define.
+  const baseUrl = (process.env.RESEND_API_URL?.trim() || "https://api.resend.com").replace(/\/$/, "");
+  const res = await fetch(`${baseUrl}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to: [input.to], subject: input.subject, html: input.html, text: input.text }),
+    body: JSON.stringify({ from, to: [input.to], subject: input.subject, html: input.html, text: input.text, ...(input.headers ? { headers: input.headers } : {}) }),
   }).catch(() => null);
 
   const body = (await res?.json().catch(() => null)) as { id?: string; message?: string } | null;

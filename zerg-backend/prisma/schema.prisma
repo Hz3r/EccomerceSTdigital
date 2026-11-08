@@ -376,3 +376,21 @@ model Subscriber {
 
   @@map("subscribers")
 }
+
+// Correos del boletín enviados desde el admin (historial y progreso del envío).
+// estado: ENVIANDO | ENVIADA | CON_ERRORES | INTERRUMPIDA
+model NewsletterCampaign {
+  id          String    @id @default(uuid())
+  asunto      String
+  mensaje     String
+  botonTexto  String?
+  botonUrl    String?
+  estado      String    @default("ENVIANDO")
+  total       Int       @default(0)
+  enviados    Int       @default(0)
+  fallidos    Int       @default(0)
+  creadoEn    DateTime  @default(now())
+  terminadoEn DateTime?
+
+  @@map("newsletter_campaigns")
+}
