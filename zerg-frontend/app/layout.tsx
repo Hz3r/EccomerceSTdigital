@@ -18,7 +18,9 @@ export const metadata: Metadata = {
     template: "%s · ZERG",
   },
   description: "Streaming, música, IA y gaming al mejor precio, con entrega inmediata y garantía.",
-  icons: { icon: "/zerg-icon.png", apple: "/zerg-icon.png" },
+  // Pestaña: app/favicon.ico (Next lo enlaza solo) y este PNG, ambos con el símbolo Z redondo.
+  // apple-touch necesita fondo, por eso usa el cuadrado.
+  icons: { icon: [{ url: "/zerg-favicon.png", type: "image/png" }], apple: "/zerg-icon.png" },
 };
 
 // Tema oscuro por defecto: el HTML llega con la clase "dark" y este script la quita
