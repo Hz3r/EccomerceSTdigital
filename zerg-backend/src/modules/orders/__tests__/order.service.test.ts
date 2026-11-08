@@ -60,6 +60,24 @@ describe("Order Service", () => {
       expect(mockPrisma.order.create).toHaveBeenCalled();
     });
 
+    it("no permite comprar un producto agotado ni más unidades que el stock", async () => {
+      const order = (cantidad: number) =>
+        orderService.create({ nombreCliente: "Juan", email: "juan@test.com", items: [{ planId: "test-plan-id", cantidad }] });
+      const withProduct = (product: Record<string, unknown>) =>
+        mockPrisma.plan.findUnique.mockResolvedValue({ ...mockPlan, product: { nombre: "Netflix", ...product } });
+
+      withProduct({ disponible: false, stock: null });
+      await expect(order(1)).rejects.toThrow("Netflix está agotado");
+      withProduct({ disponible: true, stock: 0 });
+      await expect(order(1)).rejects.toThrow("agotado");
+      withProduct({ disponible: true, stock: 2 });
+      await expect(order(3)).rejects.toThrow("Solo quedan 2");
+      expect(mockPrisma.order.create).not.toHaveBeenCalled();
+
+      mockPrisma.order.create.mockResolvedValue(mockOrder);
+      await expect(order(2)).resolves.toEqual(mockOrder);
+    });
+
     it("debería lanzar error si no hay items", async () => {
       await expect(
         orderService.create({

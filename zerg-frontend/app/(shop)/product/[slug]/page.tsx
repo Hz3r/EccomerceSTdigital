@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ChevronRight,
+  Ban,
   Heart,
   Info,
   Minus,
@@ -27,7 +28,7 @@ import { Newsletter } from "@/components/layout/newsletter";
 import { MAX_QUANTITY, clampQuantity, useCart } from "@/hooks/useCart";
 import { useLiveVersion } from "@/lib/live";
 import { getProductBySlug, getProducts } from "@/lib/api";
-import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice, planLabel } from "@/lib/catalog";
+import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice, isSoldOut, planLabel, soldOutLabel, stockLabel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -106,9 +107,13 @@ export default function ProductDetailPage() {
   const reviews = useMemo(() => (product?.reviews ?? []).filter((r) => r.isApproved), [product]);
   const rating = product ? averageRating(product) : null;
   const plan = plans.find((p) => p.id === planId) ?? plans[0];
+  const soldOut = product ? isSoldOut(product) : false;
+  const stock = product ? stockLabel(product) : null;
+  // Con stock definido no se puede elegir más de lo que hay
+  const maxQuantity = Math.min(MAX_QUANTITY, product?.stock ?? MAX_QUANTITY);
 
   const addToCart = () => {
-    if (!product || !plan) return;
+    if (!product || !plan || soldOut) return;
     const current = items.find((i) => i.planId === plan.id)?.cantidad ?? 0;
     addItem(plan, product);
     updateQuantity(plan.id, current + quantity);
@@ -235,6 +240,17 @@ export default function ProductDetailPage() {
 
           {/* Caja de compra — columna derecha sticky */}
           <aside className="self-start rounded-2xl border border-border bg-card p-5 shadow-xl md:p-6 lg:sticky lg:top-36">
+            {soldOut && (
+              <div role="status" className="mb-5 flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-3.5">
+                <Ban className="mt-0.5 size-5 shrink-0 text-destructive" />
+                <div className="min-w-0">
+                  <p className="font-bold text-destructive">{soldOutLabel(product)}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Por ahora no tenemos stock de este producto. Escríbenos por el chat y te avisamos cuando vuelva.
+                  </p>
+                </div>
+              </div>
+            )}
             {plan ? (
               <>
                 <div className="flex items-baseline justify-between gap-3">
@@ -257,8 +273,8 @@ export default function ProductDetailPage() {
                 </p>
                 <PlanSelector plans={plans} value={plan.id} onChange={setPlanId} />
 
-                <div className="mt-5 flex gap-2">
-                  <div className="flex h-11 items-center rounded-xl border border-border bg-background">
+                <div className={cn("mt-5 flex gap-2", soldOut && "pointer-events-none")} aria-disabled={soldOut || undefined}>
+                  <div className={cn("flex h-11 items-center rounded-xl border border-border bg-background", soldOut && "opacity-40")}>
                     <button
                       type="button"
                       aria-label="Disminuir cantidad"
@@ -274,26 +290,40 @@ export default function ProductDetailPage() {
                     <button
                       type="button"
                       aria-label="Aumentar cantidad"
-                      disabled={quantity >= MAX_QUANTITY}
-                      onClick={() => setQuantity((q) => clampQuantity(q + 1))}
+                      disabled={quantity >= maxQuantity}
+                      onClick={() => setQuantity((q) => Math.min(clampQuantity(q + 1), maxQuantity))}
                       className="flex h-full w-9 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <Plus className="size-3.5" />
                     </button>
                   </div>
-                  <Button className="h-11 flex-1 rounded-xl text-sm font-semibold" onClick={addToCart}>
+                  <Button
+                    className={cn("h-11 flex-1 rounded-xl text-sm font-semibold", soldOut && "bg-muted text-muted-foreground disabled:opacity-100")}
+                    onClick={addToCart}
+                    disabled={soldOut}
+                  >
                     <ShoppingCart className="size-4" />
                     Añadir al carrito
                   </Button>
                 </div>
-                {product.notaCantidad && (
+                {stock && (
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-brand-strong dark:text-brand-bright">
+                    <span className="inline-flex size-2 rounded-full bg-brand" />
+                    {stock}
+                  </p>
+                )}
+                {product.notaCantidad && !soldOut && (
                   <p className="mt-2 flex items-start gap-1.5 text-xs text-muted-foreground">
                     <Info className="mt-px size-3.5 shrink-0 text-brand-strong dark:text-brand-bright" />
                     {product.notaCantidad}
                   </p>
                 )}
                 <Button
-                  className="mt-2.5 h-11 w-full rounded-xl bg-brand text-sm font-semibold text-brand-ink hover:bg-brand-bright"
+                  className={cn(
+                    "mt-2.5 h-11 w-full rounded-xl bg-brand text-sm font-semibold text-brand-ink hover:bg-brand-bright",
+                    soldOut && "hidden"
+                  )}
+                  disabled={soldOut}
                   onClick={() => {
                     addToCart();
                     router.push("/checkout");

@@ -12,6 +12,7 @@ import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { cn } from "@/lib/utils"
 import type { Subscriber } from "@/types"
+import { confirmAction, toast } from "@/components/feedback"
 
 type Filtro = "todos" | "activos" | "bajas"
 
@@ -54,12 +55,13 @@ export default function SubscribersPage() {
   }
 
   const remove = async (s: Subscriber) => {
-    if (!window.confirm(`¿Eliminar a ${s.email} de la lista? Si solo no quiere recibir correos, mejor dalo de baja.`)) return
+    if (!(await confirmAction({ title: `¿Eliminar a ${s.email}?`, description: "Si solo no quiere recibir correos, mejor dalo de baja.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/newsletter/${s.id}`)
       setSubscribers((prev) => prev.filter((x) => x.id !== s.id))
+      toast.success("Suscriptor eliminado")
     } catch {
-      // error manejado por el interceptor
+      toast.error("No se pudo eliminar el suscriptor")
     }
   }
 

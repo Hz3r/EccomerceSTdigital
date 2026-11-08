@@ -30,6 +30,7 @@ import {
   ImageIcon,
 } from "lucide-react"
 import type { Category } from "@/types"
+import { confirmAction, toast } from "@/components/feedback"
 
 export default function CategoriesPage() {
   const [categories, setCategories] = React.useState<Category[]>([])
@@ -119,11 +120,14 @@ export default function CategoriesPage() {
   }
 
   const handleDelete = async (cat: Category) => {
-    if (!window.confirm(`¿Eliminar la categoría "${cat.nombre}"?`)) return
+    if (!(await confirmAction({ title: `¿Eliminar la categoría "${cat.nombre}"?`, description: "Si tiene productos, mejor ocúltala.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/categories/${cat.id}`)
       setCategories((prev) => prev.filter((c) => c.id !== cat.id))
-    } catch {}
+      toast.success("Categoría eliminada")
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? "No se pudo eliminar. Si tiene productos, ocúltala en su lugar.")
+    }
   }
 
   const columns: DataTableColumn<Category>[] = [

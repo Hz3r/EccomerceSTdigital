@@ -120,6 +120,7 @@ export const create = async (data: {
   for (const item of data.items) {
     const plan = await getPrisma().plan.findUnique({
       where: { id: item.planId },
+      include: { product: { select: { nombre: true, disponible: true, stock: true } } },
     });
 
     if (!plan) {
@@ -128,6 +129,15 @@ export const create = async (data: {
 
     if (!plan.isActivo) {
       throw new BadRequestError(`Plan inactivo: ${plan.nombre}`);
+    }
+
+    // Disponibilidad del producto (se marca en el admin): agotado o sin unidades suficientes.
+    const product = plan.product;
+    if (product && (!product.disponible || product.stock === 0)) {
+      throw new BadRequestError(`${product.nombre} está agotado por ahora`);
+    }
+    if (product?.stock != null && item.cantidad > product.stock) {
+      throw new BadRequestError(`Solo quedan ${product.stock} disponibles de ${product.nombre}`);
     }
 
     const subtotal = Number(plan.precio) * item.cantidad;

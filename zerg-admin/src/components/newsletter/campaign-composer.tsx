@@ -11,6 +11,7 @@ import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { STORE_URL } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { confirmAction } from "@/components/feedback"
 
 interface Campaign {
   id: string
@@ -111,7 +112,12 @@ export function CampaignComposer({ activos }: { activos: number }) {
   }
 
   const sendAll = async () => {
-    if (!window.confirm(`¿Enviar "${asunto.trim()}" a ${activos} suscriptor${activos === 1 ? "" : "es"}? No se puede deshacer.`)) return
+    const ok = await confirmAction({
+      title: `¿Enviar a ${activos} suscriptor${activos === 1 ? "" : "es"}?`,
+      description: `Se enviará “${asunto.trim()}”. Una vez iniciado no se puede deshacer.`,
+      confirmText: "Enviar boletín",
+    })
+    if (!ok) return
     setBusy("send")
     setNotice(null)
     try {

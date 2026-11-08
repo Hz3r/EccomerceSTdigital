@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ProductCover } from "./product-cover";
-import { activePlans, bestDiscount, cheapestPlan, formatPrice } from "@/lib/catalog";
+import { activePlans, bestDiscount, cheapestPlan, formatPrice, isSoldOut, soldOutLabel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -23,6 +23,7 @@ export function ProductTile({
 }) {
   const plan = cheapestPlan(product);
   const discount = bestDiscount(product);
+  const soldOut = isSoldOut(product);
 
   return (
     <Link
@@ -37,17 +38,17 @@ export function ProductTile({
         size={size === "lg" ? "lg" : "md"}
         showCategory={false}
         variant="tarjeta"
-        className="absolute inset-0 [&>div:last-child]:pb-10"
+        className={cn("absolute inset-0 [&>div:last-child]:pb-10", soldOut && "opacity-60 grayscale")}
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
       <span
         className={cn(
-          "absolute top-2.5 right-2.5 rounded-md px-2 py-0.5 text-[10px] font-bold",
-          discount > 0 ? "bg-brand-yellow text-brand-ink" : "bg-black/45 text-white backdrop-blur-sm"
+          "absolute top-2.5 right-2.5 max-w-[70%] truncate rounded-md px-2 py-0.5 text-[10px] font-bold",
+          soldOut ? "bg-destructive text-white" : discount > 0 ? "bg-brand-yellow text-brand-ink" : "bg-black/45 text-white backdrop-blur-sm"
         )}
       >
-        {discount > 0 ? `-${discount}%` : planCountLabel(product)}
+        {soldOut ? soldOutLabel(product) : discount > 0 ? `-${discount}%` : planCountLabel(product)}
       </span>
 
       <div className={cn("absolute inset-x-0 bottom-0 text-white", size === "lg" ? "p-6" : "p-3")}>

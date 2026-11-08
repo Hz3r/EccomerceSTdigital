@@ -31,6 +31,12 @@ export interface Product {
   imagenTarjeta?: string | null;
   /** Nota junto al selector de cantidad en la ficha (ej. "La cantidad es el número de perfiles"). */
   notaCantidad?: string | null;
+  /** false = sin stock: se sigue mostrando, con un aviso y sin poder comprarse. */
+  disponible?: boolean;
+  /** Unidades a mostrar ("12 disponibles"). null = no se muestra número; 0 = agotado. */
+  stock?: number | null;
+  /** Texto del aviso de agotado (vacío = "Agotado"). */
+  mensajeAgotado?: string | null;
   /** Fotos adicionales de la galería; la portada siempre es imagenUrl. */
   galeria?: string[] | null;
   // Contenido propio de la página (vacío = textos generales de la tienda)

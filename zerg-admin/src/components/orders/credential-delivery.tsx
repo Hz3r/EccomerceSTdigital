@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { cn } from "@/lib/utils"
+import { confirmAction, toast } from "@/components/feedback"
 
 type Campo = "usuario" | "contrasena" | "perfil" | "pin" | "enlace" | "notas"
 type Datos = Partial<Record<Campo, string>>
@@ -124,8 +125,14 @@ export function CredentialDelivery({ orderId }: { orderId: string }) {
   }
 
   const remove = async (itemId: string) => {
-    if (!window.confirm("¿Borrar los accesos guardados de este producto?")) return
-    await api.delete(`/credentials/admin/items/${itemId}`).catch(() => {})
+    if (!(await confirmAction({ title: "¿Borrar los accesos guardados?", description: "Se borrarán los datos de acceso guardados de este producto del pedido.", confirmText: "Borrar", destructive: true }))) return
+    try {
+      await api.delete(`/credentials/admin/items/${itemId}`)
+      toast.success("Accesos borrados")
+    } catch {
+      toast.error("No se pudieron borrar los accesos")
+      return
+    }
     setData((prev) => prev && { ...prev, items: prev.items.map((i) => (i.id === itemId ? { ...i, credential: null } : i)) })
     setDrafts((prev) => omit(prev, itemId))
   }
