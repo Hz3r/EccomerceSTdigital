@@ -5,7 +5,7 @@ import { ImageIcon, Loader2, TrashIcon, UploadIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { assetUrl } from "@/lib/format"
-import { IMAGE_ACCEPT, MAX_IMAGE_SIZE, uploadErrorMessage, uploadImage, type UploadFolder } from "@/lib/upload"
+import { IMAGE_ACCEPT, uploadErrorMessage, uploadImage, type UploadFolder } from "@/lib/upload"
 import { cn } from "@/lib/utils"
 
 export type { UploadFolder }
@@ -27,10 +27,6 @@ function useImageUpload(folder: UploadFolder, onChange: (url: string) => void) {
 
   const upload = async (file: File) => {
     setError("")
-    if (file.size > MAX_IMAGE_SIZE) {
-      setError("La imagen supera los 5 MB")
-      return
-    }
     setUploading(true)
     try {
       onChange(await uploadImage(folder, file))

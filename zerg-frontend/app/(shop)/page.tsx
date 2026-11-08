@@ -160,6 +160,8 @@ export default function Home() {
               <ProductCover
                 product={featured}
                 size="md"
+                priority
+                sizes="(max-width: 1024px) 100vw, 420px"
                 className="my-6 aspect-[16/9] rounded-2xl shadow-xl ring-1 ring-black/10"
               />
             )}

@@ -84,7 +84,9 @@ app.use(express.json({ limit: "1mb" }));
 
 app.use(
   "/api/uploads",
-  express.static(UPLOADS_DIR)
+  // Cada archivo subido tiene un nombre único y no cambia: el navegador (y el optimizador de imágenes
+  // de la tienda) lo guardan en caché un año y no lo vuelven a pedir al recargar.
+  express.static(UPLOADS_DIR, { maxAge: "365d", immutable: true })
 );
 
 app.get("/", (_req: Request, res: Response) => {

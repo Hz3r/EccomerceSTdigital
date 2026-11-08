@@ -4,7 +4,7 @@ import * as React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { coverFor } from "@/lib/catalog";
-import { assetUrl } from "@/lib/site-settings";
+import { API_ORIGIN, assetUrl } from "@/lib/site-settings";
 import { CategoryIcon } from "./category-icon";
 import type { Product } from "@/types";
 
@@ -22,33 +22,64 @@ interface ProductCoverProps {
    * "tarjeta": la imagen cuadrada para tarjetas pequeñas o altas; si el producto no tiene, usa la portada.
    */
   variant?: "portada" | "tarjeta";
+  /** Imagen visible al abrir la página (portada destacada, primeras tarjetas): se pide primero. */
+  priority?: boolean;
+  /** Ancho con que se muestra, para pedir el tamaño justo. Por defecto según `size`. */
+  sizes?: string;
 }
 
+const SIZES = {
+  sm: "96px",
+  md: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px",
+  lg: "(max-width: 1024px) 100vw, 720px",
+};
+
+// Solo las imágenes subidas al backend pasan por el optimizador de Next (las de otros sitios se muestran tal cual).
+const optimizable = (url: string) => url.startsWith(`${API_ORIGIN}/api/uploads/`);
+
 // Portada del producto: usa la imagen si existe; si no, genera una tarjeta con los colores de ZERG.
-export function ProductCover({ product, src, className, size = "md", showCategory = true, onImageError, variant = "portada" }: ProductCoverProps) {
+export function ProductCover({ product, src, className, size = "md", showCategory = true, onImageError, variant = "portada", priority = false, sizes }: ProductCoverProps) {
   const image = src ?? (variant === "tarjeta" ? product.imagenTarjeta || product.imagenUrl : product.imagenUrl);
   // Si la imagen no carga (borrada, URL rota), se muestra la portada generada en vez del ícono roto.
   const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
+  // Si la versión optimizada falla, se intenta una vez con el archivo original antes de rendirse.
+  const [rawSrc, setRawSrc] = React.useState<string | null>(null);
+  const [loadedSrc, setLoadedSrc] = React.useState<string | null>(null);
 
   const handleError = () => {
     if (!image) return;
+    const url = assetUrl(image);
+    if (optimizable(url) && rawSrc !== image) {
+      setRawSrc(image);
+      return;
+    }
     setFailedSrc(image);
     onImageError?.(image);
   };
 
   if (image && failedSrc !== image) {
+    const url = assetUrl(image);
+    const loaded = loadedSrc === image;
     // Llena el box por completo y recorta solo el exceso mínimo según la proporción
-    // de cada marco (object-cover), sin dejar espacios vacíos.
+    // de cada marco (object-cover), sin dejar espacios vacíos. Mientras carga se ve un brillo
+    // suave y la foto aparece con un fundido, sin saltos.
     return (
-      <div className={cn("relative overflow-hidden bg-muted", className)}>
+      <div className={cn("relative overflow-hidden bg-muted", !loaded && "image-shimmer", className)}>
         <Image
-          src={assetUrl(image)}
+          key={rawSrc === image ? "raw" : "opt"}
+          src={url}
           alt={product.nombre}
           fill
-          unoptimized
+          unoptimized={!optimizable(url) || rawSrc === image}
+          priority={priority}
+          quality={size === "sm" ? 75 : 85}
+          onLoad={() => setLoadedSrc(image)}
           onError={handleError}
-          sizes="(max-width: 768px) 100vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes={sizes ?? SIZES[size]}
+          className={cn(
+            "object-cover transition-[opacity,scale,transform] duration-500 group-hover:scale-105",
+            loaded ? "opacity-100 scale-100" : "opacity-0 scale-[1.02]"
+          )}
         />
       </div>
     );

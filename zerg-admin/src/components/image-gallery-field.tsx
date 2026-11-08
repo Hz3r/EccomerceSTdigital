@@ -4,7 +4,7 @@ import * as React from "react"
 import { Loader2, PlusIcon } from "lucide-react"
 import { ListControls, moveItem, removeItem } from "@/components/cms/list-controls"
 import { assetUrl } from "@/lib/format"
-import { IMAGE_ACCEPT, MAX_IMAGE_SIZE, uploadErrorMessage, uploadImage, type UploadFolder } from "@/lib/upload"
+import { IMAGE_ACCEPT, uploadErrorMessage, uploadImage, type UploadFolder } from "@/lib/upload"
 import { cn } from "@/lib/utils"
 
 interface ImageGalleryFieldProps {
@@ -42,10 +42,6 @@ function useMultiImageUpload(folder: UploadFolder, { value, max, onChange }: Upl
 
   const upload = async (files: File[]) => {
     setError("")
-    if (files.some((file) => file.size > MAX_IMAGE_SIZE)) {
-      setError("Hay imágenes de más de 5 MB")
-      return
-    }
     setProgress({ current: 0, total: files.length })
     try {
       const urls: string[] = []
