@@ -1,13 +1,13 @@
-import { mkdirSync } from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import multer from "multer";
 import { v4 as uuid } from "uuid";
 import { BadRequestError } from "../../errors/appError.js";
 
+import { PROOFS_DIR } from "../../config/paths.js";
+
 // Comprobantes de pago: fuera de /uploads (que es público). Solo se entregan al dueño del pedido y al admin.
-export const PROOFS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../private/comprobantes");
-mkdirSync(PROOFS_DIR, { recursive: true });
+// La carpeta (y si es persistente) se define en config/paths.ts.
+export { PROOFS_DIR };
 
 const ALLOWED: Record<string, string> = {
   "image/jpeg": ".jpg",

@@ -72,6 +72,9 @@ export const create = async (data: {
   imagenUrl?: string;
   imagenTarjeta?: string | null;
   notaCantidad?: string | null;
+  disponible?: boolean;
+  stock?: number | null;
+  mensajeAgotado?: string | null;
   categoryId: string;
 } & ProductContent) => {
   const slugExists = await getPrisma().product.findUnique({
@@ -107,6 +110,9 @@ export const update = async (
     imagenUrl?: string;
     imagenTarjeta?: string | null;
     notaCantidad?: string | null;
+    disponible?: boolean;
+    stock?: number | null;
+    mensajeAgotado?: string | null;
     categoryId?: string;
     isActivo?: boolean;
   } & ProductContent

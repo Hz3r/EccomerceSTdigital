@@ -141,6 +141,22 @@ describe("Product Integration Tests", () => {
       expect(mockPrisma.product.update.mock.calls.at(-1)?.[0].data.imagenTarjeta).toBeUndefined();
     });
 
+    it("guarda la disponibilidad, el stock y el aviso de agotado", async () => {
+      mockPrisma.product.findUnique.mockReset().mockResolvedValue(mockProduct);
+      mockPrisma.product.update.mockResolvedValue(mockProduct);
+      const lastData = () => mockPrisma.product.update.mock.calls.at(-1)?.[0].data;
+
+      await request(app).put("/api/products/test-product-id").send({ disponible: false, stock: "12", mensajeAgotado: " Sin stock " });
+      expect(lastData()).toMatchObject({ disponible: false, stock: 12, mensajeAgotado: "Sin stock" });
+
+      await request(app).put("/api/products/test-product-id").send({ stock: "" });
+      expect(lastData().stock).toBeNull();
+      expect(lastData().disponible).toBeUndefined();
+
+      const bad = await request(app).put("/api/products/test-product-id").send({ stock: -1 });
+      expect(bad.status).toBe(400);
+    });
+
     it("guarda la nota de cantidad y la borra con un texto vacío", async () => {
       mockPrisma.product.findUnique.mockReset().mockResolvedValue(mockProduct);
       mockPrisma.product.update.mockResolvedValue(mockProduct);

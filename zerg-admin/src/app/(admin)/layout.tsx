@@ -5,6 +5,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { AdminHeader } from "@/components/layout/admin-header";
 import { LiveToasts } from "@/components/live-toasts";
+import { FeedbackProvider } from "@/components/feedback";
 
 export default function AdminLayout({
   children,
@@ -22,6 +23,7 @@ export default function AdminLayout({
             </div>
           </div>
           <LiveToasts />
+          <FeedbackProvider />
         </AdminSidebar>
       </AuthGuard>
     </AuthProvider>

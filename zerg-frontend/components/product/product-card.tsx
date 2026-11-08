@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, Heart, ShoppingCart, Zap } from "lucide-react";
+import { Ban, Check, Heart, ShoppingCart, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductCover } from "./product-cover";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
-import { activePlans, bestDiscount, cheapestPlan, discountPercent, formatPrice, planLabel } from "@/lib/catalog";
+import { activePlans, bestDiscount, cheapestPlan, discountPercent, formatPrice, isSoldOut, planLabel, soldOutLabel, stockLabel } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/types";
 
@@ -28,6 +28,8 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
   const inCart = plan ? items.some((i) => i.planId === plan.id) : false;
   const href = `/product/${product.slug}`;
   const isList = layout === "list";
+  const soldOut = isSoldOut(product);
+  const stock = stockLabel(product);
 
   return (
     <article
@@ -37,8 +39,17 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
       )}
     >
       <Link href={href} className={cn("relative block shrink-0", isList && "sm:w-56")}>
-        <ProductCover product={product} className="aspect-video rounded-xl" />
-        {discount > 0 && (
+        <ProductCover product={product} className={cn("aspect-video rounded-xl", soldOut && "opacity-60 grayscale")} />
+        {soldOut && (
+          // Aviso de agotado sobre la portada: el producto se sigue viendo, pero se nota que no hay
+          <span className="absolute top-2.5 right-2.5 left-2.5 flex justify-end">
+            <span className="inline-flex max-w-full items-center gap-1.5 truncate rounded-full bg-surface-ink/90 px-2.5 py-0.5 text-xs font-bold text-white shadow-lg ring-1 ring-white/10 backdrop-blur-sm">
+              <Ban className="size-3.5 shrink-0 text-destructive" />
+              <span className="truncate">{soldOutLabel(product)}</span>
+            </span>
+          </span>
+        )}
+        {discount > 0 && !soldOut && (
           <span className="absolute top-2.5 right-2.5 rounded-full bg-brand-yellow px-2.5 py-0.5 text-xs font-bold text-brand-ink shadow-sm">
             -{discount}%
           </span>
@@ -55,7 +66,8 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
         </div>
 
         <Link href={href} className="mt-1.5">
-          <h3 className="line-clamp-1 font-semibold text-foreground transition-colors group-hover:text-brand-strong">
+          {/* Hasta 2 líneas; en la grilla reserva el alto de 2 para que las tarjetas queden alineadas */}
+          <h3 className={cn("line-clamp-2 leading-snug font-semibold text-foreground transition-colors group-hover:text-brand-strong", !isList && "min-h-[2.75em]")}>
             {product.nombre}
           </h3>
         </Link>
@@ -77,53 +89,56 @@ export function ProductCard({ product, layout = "grid" }: ProductCardProps) {
             </div>
           )}
 
-          <div className="mt-3 flex gap-2">
-            {plans.length > 1 ? (
+          {/* Selector de plan a todo el ancho (los nombres largos ya no se cortan) y el botón debajo */}
+          <div className="mt-3 flex flex-col gap-2">
+            {plans.length > 1 && (
               <Select
                 value={plan?.id ?? null}
                 onValueChange={(v) => v && setPlanId(v as string)}
                 items={plans.map((p) => ({ value: p.id, label: p.nombre }))}
               >
-                <SelectTrigger aria-label="Plan" className="h-9 w-[5.25rem] shrink-0 bg-background px-2 text-xs font-medium">
+                <SelectTrigger aria-label="Plan" className="h-9 w-full min-w-0 bg-background px-2.5 text-xs font-medium [&_[data-slot=select-value]]:truncate">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent align="start" className="min-w-40">
+                <SelectContent align="start" className="min-w-56">
                   {plans.map((p) => (
                     <SelectItem key={p.id} value={p.id} className="text-xs">
-                      <span className="truncate">{p.nombre}</span>
-                      <span className="ml-auto shrink-0 text-muted-foreground tabular-nums">{formatPrice(p.precio)}</span>
+                      <span className="min-w-0 truncate">{p.nombre}</span>
+                      <span className="ml-auto shrink-0 pl-3 text-muted-foreground tabular-nums">{formatPrice(p.precio)}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            ) : (
-              plan && (
-                <span className="inline-flex h-9 w-[5.25rem] shrink-0 items-center justify-center truncate rounded-lg border border-input px-1 text-xs font-medium">
-                  {plan.nombre}
-                </span>
-              )
             )}
             <Button
               className={cn(
-                "h-9 min-w-0 flex-1 rounded-lg text-xs font-semibold",
-                inCart && "bg-brand text-brand-ink hover:bg-brand/90"
+                "h-9 w-full rounded-lg text-xs font-semibold",
+                inCart && !soldOut && "bg-brand text-brand-ink hover:bg-brand/90",
+                soldOut && "bg-muted text-muted-foreground disabled:opacity-100"
               )}
-              disabled={!plan}
-              onClick={() => plan && addItem(plan, product)}
+              disabled={!plan || soldOut}
+              onClick={() => plan && !soldOut && addItem(plan, product)}
             >
-              {inCart ? <Check className="size-3.5" /> : <ShoppingCart className="size-3.5" />}
-              {inCart ? "Agregado" : "Añadir"}
+              {soldOut ? <Ban className="size-3.5" /> : inCart ? <Check className="size-3.5" /> : <ShoppingCart className="size-3.5" />}
+              {soldOut ? "Sin stock" : inCart ? "Agregado" : "Añadir al carrito"}
             </Button>
           </div>
 
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="relative flex size-2">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand opacity-60" />
-                <span className="relative inline-flex size-2 rounded-full bg-brand" />
+            {soldOut ? (
+              <span className="inline-flex min-w-0 items-center gap-1.5 font-medium text-destructive">
+                <span className="inline-flex size-2 shrink-0 rounded-full bg-destructive" />
+                <span className="truncate">{soldOutLabel(product)}</span>
               </span>
-              Disponible
-            </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="relative flex size-2">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-brand opacity-60" />
+                  <span className="relative inline-flex size-2 rounded-full bg-brand" />
+                </span>
+                {stock ? <span className="font-medium text-foreground">{stock}</span> : "Disponible"}
+              </span>
+            )}
             <button
               type="button"
               aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}

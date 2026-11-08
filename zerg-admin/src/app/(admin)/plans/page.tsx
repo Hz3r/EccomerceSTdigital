@@ -30,6 +30,7 @@ import {
   TrashIcon,
 } from "lucide-react"
 import type { Plan, Product } from "@/types"
+import { confirmAction, toast } from "@/components/feedback"
 
 export default function PlansPage() {
   const [plans, setPlans] = React.useState<Plan[]>([])
@@ -130,11 +131,14 @@ export default function PlansPage() {
   }
 
   const handleDelete = async (plan: Plan) => {
-    if (!window.confirm(`¿Eliminar el plan "${plan.nombre}"?`)) return
+    if (!(await confirmAction({ title: `¿Eliminar el plan "${plan.nombre}"?`, description: "Si tiene ventas, mejor desactívalo.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/plans/${plan.id}`)
       setPlans((prev) => prev.filter((p) => p.id !== plan.id))
-    } catch {}
+      toast.success("Plan eliminado")
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? "No se pudo eliminar. Si tiene ventas, desactívalo en su lugar.")
+    }
   }
 
   const columns: DataTableColumn<Plan>[] = [

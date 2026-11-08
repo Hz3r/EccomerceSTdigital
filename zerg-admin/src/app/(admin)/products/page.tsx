@@ -21,6 +21,8 @@ import type { Category, Product } from "@/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProductContentEditor, type ProductContent } from "@/components/products/product-content-editor"
 import { ProductReviews } from "@/components/products/product-reviews"
+import { confirmAction, toast } from "@/components/feedback"
+import { StorageWarning } from "@/components/storage-warning"
 
 interface PlanDraft {
   id?: string // sin id = plan nuevo
@@ -40,6 +42,9 @@ interface ProductDraft extends ProductContent {
   imagenUrl: string
   imagenTarjeta: string
   notaCantidad: string
+  disponible: boolean
+  stock: string
+  mensajeAgotado: string
   galeria: string[]
   isActivo: boolean
   plans: PlanDraft[]
@@ -57,6 +62,9 @@ function toDraft(product?: Product): ProductDraft {
     imagenUrl: product?.imagenUrl ?? "",
     imagenTarjeta: product?.imagenTarjeta ?? "",
     notaCantidad: product?.notaCantidad ?? "",
+    disponible: product?.disponible ?? true,
+    stock: product?.stock != null ? String(product.stock) : "",
+    mensajeAgotado: product?.mensajeAgotado ?? "",
     galeria: Array.isArray(galeria) ? galeria : [],
     isActivo: product?.isActivo ?? true,
     incluye: product?.incluye ?? [],
@@ -133,12 +141,13 @@ function ProductsPageInner() {
   }
 
   const handleDelete = async (prod: Product) => {
-    if (!window.confirm(`¿Eliminar el producto "${prod.nombre}"? Si tiene ventas, mejor desactívalo.`)) return
+    if (!(await confirmAction({ title: `¿Eliminar "${prod.nombre}"?`, description: "Si tiene ventas, mejor desactívalo o márcalo sin stock.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/products/${prod.id}`)
       setProducts((prev) => prev.filter((p) => p.id !== prod.id))
+      toast.success("Producto eliminado")
     } catch (err) {
-      window.alert(apiError(err, "No se pudo eliminar. Si tiene planes u órdenes, desactívalo en su lugar."))
+      toast.error(apiError(err, "No se pudo eliminar. Si tiene planes u órdenes, desactívalo en su lugar."))
     }
   }
 
@@ -205,6 +214,20 @@ function ProductsPageInner() {
         </button>
       ),
     },
+    {
+      key: "disponible",
+      label: "Stock",
+      hideOnMobile: true,
+      render: (item) =>
+        item.disponible === false || item.stock === 0 ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive/10 px-2.5 py-1 text-xs font-semibold text-destructive">
+            <span className="size-1.5 rounded-full bg-destructive" />
+            {item.mensajeAgotado || "Agotado"}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">{item.stock != null ? `${item.stock} disponibles` : "Disponible"}</span>
+        ),
+    },
   ]
 
   const actions: DataTableAction<Product>[] = [
@@ -226,6 +249,8 @@ function ProductsPageInner() {
           <span className="hidden sm:inline">Nuevo producto</span>
         </Button>
       </div>
+
+      <StorageWarning />
 
       <Card>
         <CardContent>
@@ -311,6 +336,9 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         imagenUrl: draft.imagenUrl,
         imagenTarjeta: draft.imagenTarjeta,
         notaCantidad: draft.notaCantidad.trim(),
+        disponible: draft.disponible,
+        stock: draft.stock.trim() === "" ? null : Number(draft.stock),
+        mensajeAgotado: draft.mensajeAgotado.trim(),
         galeria: draft.galeria.filter(Boolean),
         isActivo: draft.isActivo,
         // Lista vacía = la tienda usa los textos generales
@@ -352,6 +380,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         // Un plan con ventas no se puede borrar: se oculta
         await api.delete(`/plans/${id}`).catch(() => api.put(`/plans/${id}`, { isActivo: false }))
       }
+      toast.success(product ? "Producto guardado" : "Producto creado")
       onSaved()
     } catch (err) {
       setError(apiError(err, "No se pudo guardar el producto"))
@@ -503,6 +532,48 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
               className="size-4 accent-[var(--brand)]"
             />
           </label>
+
+          {/* Disponibilidad: sin stock el producto se sigue viendo, con un aviso y sin poder comprarse */}
+          <div className="space-y-3 rounded-xl border p-3 text-sm">
+            <label className="flex cursor-pointer items-center justify-between gap-3">
+              <span>
+                <span className="block font-medium">Hay stock</span>
+                <span className="block text-xs text-muted-foreground">Desmárcalo y se mostrará como agotado (sin borrarlo)</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={draft.disponible}
+                onChange={(e) => set("disponible", e.target.checked)}
+                className="size-4 accent-[var(--brand)]"
+              />
+            </label>
+            <div className="space-y-1.5">
+              <Label htmlFor="stock" className="text-xs">Cuentas disponibles (opcional)</Label>
+              <Input
+                id="stock"
+                type="number"
+                min="0"
+                step="1"
+                inputMode="numeric"
+                placeholder="Sin número"
+                value={draft.stock}
+                disabled={!draft.disponible}
+                onChange={(e) => set("stock", e.target.value.replace(/[^0-9]/g, ""))}
+              />
+              <p className="text-[11px] text-muted-foreground">Se muestra como “12 disponibles”. Vacío = solo “Disponible”. En 0 queda agotado.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mensaje-agotado" className="text-xs">Texto cuando no hay stock</Label>
+              <Input
+                id="mensaje-agotado"
+                maxLength={80}
+                placeholder="Agotado"
+                value={draft.mensajeAgotado}
+                onChange={(e) => set("mensajeAgotado", e.target.value)}
+              />
+              <p className="text-[11px] text-muted-foreground">Ej. “Sin stock”, “Vuelve pronto”, “Próximamente”.</p>
+            </div>
+          </div>
         </div>
       </div>
 

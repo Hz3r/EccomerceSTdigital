@@ -7,6 +7,7 @@ import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
 import { cn } from "@/lib/utils"
 import type { Review } from "@/types"
+import { confirmAction, toast } from "@/components/feedback"
 
 type Filter = "pendientes" | "sin-responder" | "aprobadas" | "todas"
 const MAX_REPLY = 1000
@@ -43,12 +44,13 @@ export default function ReviewsPage() {
   }
 
   const remove = async (review: Review) => {
-    if (!window.confirm("¿Eliminar esta reseña definitivamente?")) return
+    if (!(await confirmAction({ title: "¿Eliminar esta reseña?", description: "Se borrará definitivamente.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/reviews/${review.id}`)
       setReviews((prev) => prev.filter((r) => r.id !== review.id))
+      toast.success("Reseña eliminada")
     } catch {
-      window.alert("No se pudo eliminar la reseña")
+      toast.error("No se pudo eliminar la reseña")
     }
   }
 
@@ -274,7 +276,9 @@ function ReplyBox({ review, onSave }: { review: Review; onSave: (text: string) =
             type="button"
             aria-label="Quitar respuesta"
             disabled={saving}
-            onClick={() => window.confirm("¿Quitar la respuesta de esta reseña?") && save("")}
+            onClick={async () => {
+              if (await confirmAction({ title: "¿Quitar la respuesta de esta reseña?", confirmText: "Quitar", destructive: true })) save("")
+            }}
             className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive"
           >
             <TrashIcon className="size-3.5" />

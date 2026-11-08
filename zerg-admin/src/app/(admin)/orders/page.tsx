@@ -16,6 +16,7 @@ import api from "@/lib/axios"
 import { formatPrice } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import type { Order, StatusOrden } from "@/types"
+import { confirmAction, toast } from "@/components/feedback"
 
 const STATUSES: StatusOrden[] = ["PENDIENTE", "ENVIADO", "COMPLETADO", "CANCELADO"]
 const dateTime = new Intl.DateTimeFormat("es-PE", { dateStyle: "medium", timeStyle: "short" })
@@ -85,17 +86,18 @@ function OrdersContent() {
       await api.patch(`/orders/${order.id}/status`, { status })
     } catch {
       setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: previous } : o)))
-      window.alert("No se pudo cambiar el estado")
+      toast.error("No se pudo cambiar el estado")
     }
   }
 
   const remove = async (order: Order) => {
-    if (!window.confirm(`¿Eliminar la orden ${order.numeroOrden}?`)) return
+    if (!(await confirmAction({ title: `¿Eliminar la orden ${order.numeroOrden}?`, description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/orders/${order.id}`)
       setOrders((prev) => prev.filter((o) => o.id !== order.id))
+      toast.success("Orden eliminada")
     } catch {
-      window.alert("No se pudo eliminar la orden")
+      toast.error("No se pudo eliminar la orden")
     }
   }
 

@@ -12,6 +12,22 @@ export function planLabel(plan?: { duracion?: string; perfiles?: string | null }
   return [plan?.duracion, plan?.perfiles].filter(Boolean).join(" · ");
 }
 
+/** Sin stock: marcado como no disponible en el admin o con stock 0. */
+export function isSoldOut(product: Pick<Product, "disponible" | "stock">) {
+  return product.disponible === false || product.stock === 0;
+}
+
+/** Texto del aviso de agotado (personalizable en el admin). */
+export function soldOutLabel(product: Pick<Product, "mensajeAgotado">) {
+  return product.mensajeAgotado?.trim() || "Agotado";
+}
+
+/** "12 disponibles" / "1 disponible" si el admin puso un número; si no, null. */
+export function stockLabel(product: Pick<Product, "stock" | "disponible">) {
+  if (isSoldOut(product) || product.stock == null) return null;
+  return `${product.stock} ${product.stock === 1 ? "disponible" : "disponibles"}`;
+}
+
 export function activePlans(product: Product): Plan[] {
   return (product.plans ?? []).filter((p) => p.isActivo);
 }

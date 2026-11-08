@@ -3,10 +3,17 @@ import * as uploadController from "./upload.controller.js";
 import { authMiddleware } from "../../middlewares/auth.middleware.js";
 import { roleMiddleware } from "../../middlewares/role.middleware.js";
 import { upload } from "../../config/upload.js";
+import { PERSISTENT_STORAGE } from "../../config/paths.js";
 
 const router: RouterType = Router();
 
 router.use(authMiddleware);
+
+// El admin avisa si las imágenes se borrarán en el próximo despliegue (Railway sin Volume).
+router.get("/status", roleMiddleware("ADMIN"), (_req, res) => {
+  const nube = Boolean(process.env.RAILWAY_ENVIRONMENT);
+  res.status(200).json({ success: true, data: { persistente: PERSISTENT_STORAGE || !nube, nube } });
+});
 
 router.post(
   "/:folder",

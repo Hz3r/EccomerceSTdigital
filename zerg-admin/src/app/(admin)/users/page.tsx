@@ -29,6 +29,7 @@ import {
   UserIcon,
 } from "lucide-react"
 import type { User } from "@/types"
+import { confirmAction, toast } from "@/components/feedback"
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth()
@@ -96,12 +97,13 @@ export default function UsersPage() {
 
   const handleDelete = async (user: User) => {
     if (user.id === currentUser?.id) return
-    if (!window.confirm(`¿Eliminar a ${user.nombre}?`)) return
+    if (!(await confirmAction({ title: `¿Eliminar a ${user.nombre}?`, description: "Se borrará su cuenta. Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true }))) return
     try {
       await api.delete(`/users/${user.id}`)
       setUsers((prev) => prev.filter((u) => u.id !== user.id))
-    } catch {
-      // error handled by interceptor
+      toast.success("Usuario eliminado")
+    } catch (err) {
+      toast.error((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? "No se pudo eliminar el usuario")
     }
   }
 
