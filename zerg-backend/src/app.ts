@@ -57,6 +57,11 @@ app.use(
     origin: [
       process.env.FRONTEND_URL || "http://localhost:3000",
       process.env.ADMIN_URL || "http://localhost:3002",
+      // Dominios extra permitidos (p. ej. dominio propio con y sin www), separados por coma.
+      ...(process.env.EXTRA_CORS_ORIGINS || "")
+        .split(",")
+        .map((o) => o.trim().replace(/\/$/, ""))
+        .filter(Boolean),
     ],
     credentials: true,
   })
