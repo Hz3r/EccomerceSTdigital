@@ -32,12 +32,12 @@ export function ProductGallery({ product, className }: ProductGalleryProps) {
   const current = images[active];
 
   if (!current) {
-    return <ProductCover product={product} size="lg" className={cn("aspect-video rounded-2xl", className)} />;
+    return <ProductCover product={product} size="lg" priority className={cn("aspect-video rounded-2xl", className)} />;
   }
 
   return (
     <div className={cn("space-y-3", className)}>
-      <ProductCover product={product} src={current} size="lg" className="aspect-video rounded-2xl" onImageError={markBroken} />
+      <ProductCover product={product} src={current} size="lg" priority className="aspect-video rounded-2xl" onImageError={markBroken} />
 
       {images.length > 1 && (
         <ul className="flex gap-3 overflow-x-auto pb-1">

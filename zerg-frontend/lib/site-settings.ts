@@ -247,7 +247,7 @@ export function safeHref(url?: string | null) {
   return /^(\/|#|https?:\/\/|mailto:)/i.test(u) ? u : "";
 }
 
-const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api").replace(/\/api\/?$/, "");
+export const API_ORIGIN = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api").replace(/\/api\/?$/, "");
 
 // Las imágenes subidas desde el admin llegan como "/api/uploads/...": se completan con el origen de la API.
 export function assetUrl(url?: string | null) {
