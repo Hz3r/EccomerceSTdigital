@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import type { NextFunction, Request, Response } from "express";
 
 // Temas que la tienda y el admin escuchan para actualizarse sin recargar.
-export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users" | "notifications" | "support" | "subscribers";
+export type Topic = "settings" | "products" | "categories" | "plans" | "reviews" | "orders" | "users" | "notifications" | "support" | "subscribers" | "pages";
 
 const bus = new EventEmitter();
 bus.setMaxListeners(0);
