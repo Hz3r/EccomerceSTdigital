@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s · ZERG Admin",
   },
   description: "Panel de administración y CRM de la tienda ZERG",
-  icons: { icon: "/zerg-icon.png" },
+  icons: { icon: [{ url: "/zerg-favicon.png", type: "image/png" }] },
 };
 
 // Tema oscuro por defecto; el script lo quita antes de pintar si se eligió el claro.
