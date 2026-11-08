@@ -141,6 +141,18 @@ describe("Product Integration Tests", () => {
       expect(mockPrisma.product.update.mock.calls.at(-1)?.[0].data.imagenTarjeta).toBeUndefined();
     });
 
+    it("guarda la nota de cantidad y la borra con un texto vacío", async () => {
+      mockPrisma.product.findUnique.mockReset().mockResolvedValue(mockProduct);
+      mockPrisma.product.update.mockResolvedValue(mockProduct);
+      const lastData = () => mockPrisma.product.update.mock.calls.at(-1)?.[0].data;
+
+      await request(app).put("/api/products/test-product-id").send({ notaCantidad: " La cantidad es el número de perfiles " });
+      expect(lastData().notaCantidad).toBe("La cantidad es el número de perfiles");
+
+      await request(app).put("/api/products/test-product-id").send({ notaCantidad: "" });
+      expect(lastData().notaCantidad).toBeNull();
+    });
+
     it("debería retornar 404 si el producto no existe", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(null);
 
