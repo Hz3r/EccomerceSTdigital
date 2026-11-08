@@ -18,11 +18,11 @@ const columns = (categories: Category[]) => [
   {
     title: "Ayuda",
     links: [
-      { label: "¿Cómo comprar?", href: "#" },
-      { label: "Preguntas frecuentes", href: "#" },
-      { label: "Garantía y reemplazos", href: "#" },
-      { label: "Términos y condiciones", href: "#" },
-      { label: "Política de privacidad", href: "#" },
+      { label: "¿Cómo comprar?", href: "/ayuda/como-comprar" },
+      { label: "Preguntas frecuentes", href: "/ayuda/preguntas-frecuentes" },
+      { label: "Garantía y reemplazos", href: "/ayuda/garantia" },
+      { label: "Términos y condiciones", href: "/ayuda/terminos" },
+      { label: "Política de privacidad", href: "/ayuda/privacidad" },
     ],
   },
   {

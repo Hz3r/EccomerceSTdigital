@@ -116,37 +116,37 @@ model Category {
 // ==================== PRODUCTOS ====================
 
 model Product {
-  id          String     @id @default(uuid())
-  nombre      String
-  slug        String     @unique
-  descripcion String?
-  imagenUrl   String?
+  id             String     @id @default(uuid())
+  nombre         String
+  slug           String     @unique
+  descripcion    String?
+  imagenUrl      String?
   // Imagen cuadrada para las tarjetas (tendencias, carruseles, carrito, buscador).
   // Vacía = se usa imagenUrl recortada al centro.
-  imagenTarjeta String?
+  imagenTarjeta  String?
   // Nota que se muestra junto al selector de cantidad en la ficha
   // (ej. "La cantidad es el número de perfiles"). Vacía = no se muestra.
-  notaCantidad String?
+  notaCantidad   String?
   // Disponibilidad: sin stock se sigue mostrando, pero con un aviso y sin poder comprarse.
-  disponible     Boolean @default(true)
+  disponible     Boolean    @default(true)
   // Unidades disponibles a mostrar ("12 disponibles"). Vacío = no se muestra número. 0 = agotado.
   stock          Int?
   // Texto del aviso cuando no hay stock (vacío = "Agotado").
   mensajeAgotado String?
   // Fotos adicionales de la galería (la portada siempre es imagenUrl)
-  galeria     Json?
+  galeria        Json?
   // Contenido de la página del producto (vacío = se usan los textos generales de la tienda)
-  incluye     Json?
-  pasos       Json?
-  faqs        Json?
-  isActivo    Boolean    @default(true)
-  categoryId  String
-  category    Category   @relation(fields: [categoryId], references: [id])
-  creadoEn    DateTime   @default(now())
-  actualizado DateTime   @updatedAt
-  plans       Plan[]
-  reviews     Review[]
-  favorites   Favorite[]
+  incluye        Json?
+  pasos          Json?
+  faqs           Json?
+  isActivo       Boolean    @default(true)
+  categoryId     String
+  category       Category   @relation(fields: [categoryId], references: [id])
+  creadoEn       DateTime   @default(now())
+  actualizado    DateTime   @updatedAt
+  plans          Plan[]
+  reviews        Review[]
+  favorites      Favorite[]
 
   @@map("products")
 }
@@ -399,4 +399,29 @@ model NewsletterCampaign {
   terminadoEn DateTime?
 
   @@map("newsletter_campaigns")
+}
+
+// Páginas de ayuda de la tienda (/ayuda/...). PAGINA = fijas (Cómo comprar, FAQ, Garantía, Términos,
+// Privacidad): si no hay fila se muestra la plantilla incluida. GUIA = artículos del blog "¿Cómo comprar?".
+enum TipoPagina {
+  PAGINA
+  GUIA
+}
+
+model Page {
+  id          String     @id @default(uuid())
+  slug        String     @unique
+  tipo        TipoPagina @default(GUIA)
+  titulo      String
+  resumen     String?
+  portadaUrl  String?
+  // Bloques del contenido: título, texto, video, imagen, pasos, preguntas, aviso y botón
+  bloques     Json
+  publicado   Boolean    @default(true)
+  orden       Int        @default(0)
+  creadoEn    DateTime   @default(now())
+  actualizado DateTime   @updatedAt
+
+  @@index([tipo, publicado, orden])
+  @@map("pages")
 }

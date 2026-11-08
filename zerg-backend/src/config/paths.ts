@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-export const UPLOAD_FOLDERS = ["products", "categories", "avatars", "general", "branding"];
+export const UPLOAD_FOLDERS = ["products", "categories", "avatars", "general", "branding", "videos"];
 
 const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
