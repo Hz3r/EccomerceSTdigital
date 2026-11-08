@@ -29,7 +29,8 @@ const productDetailInclude = {
   category: {
     select: { id: true, nombre: true, slug: true },
   },
-  plans: true,
+  // Orden fijo (el de creación en el admin): sin orderBy, la base los devuelve en otro orden tras cada edición.
+  plans: { orderBy: { creadoEn: "asc" } },
   reviews: {
     where: { isApproved: true },
     select: {

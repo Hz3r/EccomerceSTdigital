@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DataTable, type DataTableAction, type DataTableColumn } from "@/components/data-table/data-table"
 import { ImageField } from "@/components/image-field"
+import { ProfilesInput } from "@/components/products/profiles-input"
 import { ImageGalleryField } from "@/components/image-gallery-field"
 import { useLiveVersion } from "@/lib/live"
 import api from "@/lib/axios"
@@ -25,6 +26,7 @@ interface PlanDraft {
   id?: string // sin id = plan nuevo
   nombre: string
   duracion: string
+  perfiles: string
   precio: string
   precioOriginal: string
   isActivo: boolean
@@ -42,7 +44,7 @@ interface ProductDraft extends ProductContent {
   plans: PlanDraft[]
 }
 
-const EMPTY_PLAN: PlanDraft = { nombre: "1 mes", duracion: "1 mes", precio: "", precioOriginal: "", isActivo: true }
+const EMPTY_PLAN: PlanDraft = { nombre: "1 mes", duracion: "1 mes", perfiles: "", precio: "", precioOriginal: "", isActivo: true }
 
 function toDraft(product?: Product): ProductDraft {
   const galeria = product?.galeria
@@ -63,6 +65,7 @@ function toDraft(product?: Product): ProductDraft {
           id: p.id,
           nombre: p.nombre,
           duracion: p.duracion,
+          perfiles: p.perfiles ?? "",
           precio: String(Number(p.precio)),
           precioOriginal: p.precioOriginal ? String(Number(p.precioOriginal)) : "",
           isActivo: p.isActivo,
@@ -323,6 +326,7 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         const payload = {
           nombre: p.nombre.trim(),
           duracion: p.duracion.trim(),
+          perfiles: p.perfiles.trim(),
           precio: Number(p.precio),
           precioOriginal: p.precioOriginal ? Number(p.precioOriginal) : null,
           isActivo: p.isActivo,
@@ -482,21 +486,24 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         <div className="flex items-center justify-between border-b px-4 py-3">
           <div>
             <p className="font-semibold">Planes y precios</p>
-            <p className="text-xs text-muted-foreground">En soles. El precio original muestra el descuento en la tienda.</p>
+            <p className="text-xs text-muted-foreground">
+              En soles. El precio original muestra el descuento en la tienda. En “Perfiles” pon lo que incluye (ej. 1 perfil, Cuenta completa); vacío no se muestra.
+            </p>
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setDraft((d) => ({ ...d, plans: [...d.plans, { ...EMPTY_PLAN, nombre: "", duracion: "" }] }))}
+            onClick={() => setDraft((d) => ({ ...d, plans: [...d.plans, { ...EMPTY_PLAN, nombre: "", duracion: "", perfiles: d.plans.at(-1)?.perfiles ?? "" }] }))}
           >
             <PlusIcon className="size-3.5" />
             Agregar plan
           </Button>
         </div>
-        <div className="hidden grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto_auto] gap-2 px-4 pt-3 text-[11px] font-semibold text-muted-foreground uppercase sm:grid">
+        <div className="hidden grid-cols-[1.1fr_0.9fr_1fr_0.75fr_0.75fr_auto_auto] gap-2 px-4 pt-3 text-[11px] font-semibold text-muted-foreground uppercase sm:grid">
           <span>Nombre</span>
           <span>Duración</span>
+          <span>Perfiles</span>
           <span>Precio</span>
           <span>Original</span>
           <span>Activo</span>
@@ -504,9 +511,10 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
         </div>
         <ul className="space-y-2 p-4 pt-2">
           {draft.plans.map((p, i) => (
-            <li key={p.id ?? `nuevo-${i}`} className="grid grid-cols-2 gap-2 sm:grid-cols-[1.2fr_1fr_0.8fr_0.8fr_auto_auto] sm:items-center">
+            <li key={p.id ?? `nuevo-${i}`} className="grid grid-cols-2 gap-2 sm:grid-cols-[1.1fr_0.9fr_1fr_0.75fr_0.75fr_auto_auto] sm:items-center">
               <Input aria-label="Nombre del plan" placeholder="Premium" value={p.nombre} onChange={(e) => setPlan(i, { nombre: e.target.value })} />
               <Input aria-label="Duración" placeholder="1 mes" value={p.duracion} onChange={(e) => setPlan(i, { duracion: e.target.value })} />
+              <ProfilesInput value={p.perfiles} onChange={(v) => setPlan(i, { perfiles: v })} />
               <Input aria-label="Precio" type="number" min="0" step="0.1" placeholder="24.90" value={p.precio} onChange={(e) => setPlan(i, { precio: e.target.value })} />
               <Input aria-label="Precio original" type="number" min="0" step="0.1" placeholder="—" value={p.precioOriginal} onChange={(e) => setPlan(i, { precioOriginal: e.target.value })} />
               <input

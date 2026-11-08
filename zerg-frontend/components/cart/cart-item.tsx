@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { ProductCover } from "@/components/product/product-cover";
 import { MAX_QUANTITY, useCart } from "@/hooks/useCart";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, planLabel } from "@/lib/catalog";
 import type { CartItem as CartItemType } from "@/types";
 
 interface CartItemProps {
@@ -29,7 +29,7 @@ export function CartItem({ item }: CartItemProps) {
             {item.producto.nombre}
           </Link>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Plan {item.plan.duracion} · {formatPrice(item.plan.precio)} c/u
+            Plan {planLabel(item.plan)} · {formatPrice(item.plan.precio)} c/u
           </p>
         </div>
 

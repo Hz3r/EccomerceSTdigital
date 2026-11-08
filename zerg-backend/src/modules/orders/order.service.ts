@@ -34,6 +34,7 @@ const itemsWithProduct = {
         nombre: true,
         precio: true,
         duracion: true,
+        perfiles: true,
         product: { select: { nombre: true, slug: true, imagenUrl: true } },
       },
     },

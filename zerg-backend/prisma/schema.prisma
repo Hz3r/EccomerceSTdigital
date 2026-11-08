@@ -149,6 +149,8 @@ model Plan {
   nombre         String
   slug           String      @unique
   duracion       String
+  // Perfiles que incluye (ej. "1 perfil", "Cuenta completa"). Vacío = no se muestra.
+  perfiles       String?
   precio         Decimal     @db.Decimal(10, 2)
   precioOriginal Decimal?    @db.Decimal(10, 2)
   descripcion    String?

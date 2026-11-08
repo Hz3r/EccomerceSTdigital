@@ -19,6 +19,7 @@ interface Access {
   producto: { nombre: string; slug: string; imagenUrl?: string | null };
   plan: string;
   duracion: string;
+  perfiles?: string | null;
   numeroOrden: string;
 }
 
@@ -119,7 +120,7 @@ export function MyAccesses() {
                   {a.producto.nombre}
                 </Link>
                 <p className="text-xs text-muted-foreground">
-                  {a.plan} · Pedido {a.numeroOrden}
+                  {[a.plan, a.perfiles].filter(Boolean).join(" · ")} · Pedido {a.numeroOrden}
                 </p>
               </div>
               {a.venceEn && left !== null && (

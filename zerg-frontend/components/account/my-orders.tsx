@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Clock, Loader2, Package, Send, ShoppingBag, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/axios";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, planLabel } from "@/lib/catalog";
 import { useLiveVersion } from "@/lib/live";
 import { cn } from "@/lib/utils";
 import type { EstadoPago, Order, StatusOrden } from "@/types";
@@ -124,7 +124,7 @@ export function MyOrders() {
                           <span className="truncate">{item.plan?.product?.nombre ?? "Producto"}</span>
                         )}
                         <span className="shrink-0 text-xs text-muted-foreground">
-                          {item.plan?.duracion} ×{item.cantidad}
+                          {planLabel(item.plan)} ×{item.cantidad}
                         </span>
                       </span>
                       <span className="shrink-0 font-medium">{formatPrice(Number(item.precioUnitario) * item.cantidad)}</span>

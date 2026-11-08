@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/hooks/useAuth";
 import api from "@/lib/axios";
 import { apiErrorMessage, loginHref } from "@/lib/auth-redirect";
-import { formatPrice } from "@/lib/catalog";
+import { formatPrice, planLabel } from "@/lib/catalog";
 import { useLiveVersion } from "@/lib/live";
 import { cn } from "@/lib/utils";
 import type { MetodoPago, Order, PaymentMethodOption } from "@/types";
@@ -157,7 +157,7 @@ export default function PayOrderPage() {
                 <span className="flex min-w-0 items-center gap-2 text-muted-foreground">
                   <Package className="size-4 shrink-0" />
                   <span className="truncate">
-                    {item.plan?.product?.nombre} <span className="text-xs">({item.plan?.duracion}) ×{item.cantidad}</span>
+                    {item.plan?.product?.nombre} <span className="text-xs">({planLabel(item.plan)}) ×{item.cantidad}</span>
                   </span>
                 </span>
                 <span className="shrink-0 font-medium">{formatPrice(Number(item.precioUnitario) * item.cantidad)}</span>

@@ -60,7 +60,7 @@ function readDatos(cipher: string): CredentialData | null {
 }
 
 const itemInclude = {
-  plan: { select: { nombre: true, duracion: true, product: { select: { nombre: true, slug: true, imagenUrl: true } } } },
+  plan: { select: { nombre: true, duracion: true, perfiles: true, product: { select: { nombre: true, slug: true, imagenUrl: true } } } },
   credential: true,
 } as const;
 
@@ -104,6 +104,7 @@ export async function getForOrder(orderId: string) {
       producto: item.plan.product.nombre,
       plan: item.plan.nombre,
       duracion: item.plan.duracion,
+      perfiles: item.plan.perfiles,
       credential: item.credential ? present(item.credential) : null,
     })),
     canales: {
@@ -276,6 +277,7 @@ export async function mine(userId: string) {
     producto: c.orderItem.plan.product,
     plan: c.orderItem.plan.nombre,
     duracion: c.orderItem.plan.duracion,
+    perfiles: c.orderItem.plan.perfiles,
     numeroOrden: c.orderItem.order.numeroOrden,
     compradoEn: c.orderItem.order.creadoEn,
   }));

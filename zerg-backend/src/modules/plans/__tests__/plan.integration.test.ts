@@ -97,6 +97,21 @@ describe("Plan Integration Tests", () => {
   });
 
   describe("PUT /api/plans/:id", () => {
+    it("guarda los perfiles del plan y los quita con un texto vacío", async () => {
+      mockPrisma.plan.findUnique.mockReset().mockResolvedValue(mockPlan);
+      mockPrisma.plan.update.mockResolvedValue(mockPlan);
+      const lastData = () => mockPrisma.plan.update.mock.calls.at(-1)?.[0].data;
+
+      await request(app).put("/api/plans/test-plan-id").send({ perfiles: " 1 perfil " });
+      expect(lastData().perfiles).toBe("1 perfil");
+
+      await request(app).put("/api/plans/test-plan-id").send({ perfiles: "" });
+      expect(lastData().perfiles).toBeNull();
+
+      await request(app).put("/api/plans/test-plan-id").send({ nombre: "Sin tocar perfiles" });
+      expect(lastData().perfiles).toBeUndefined();
+    });
+
     it("debería actualizar un plan correctamente", async () => {
       mockPrisma.plan.findUnique
         .mockResolvedValueOnce(mockPlan)

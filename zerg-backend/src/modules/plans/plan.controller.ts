@@ -21,6 +21,10 @@ export const getById = async (req: AuthRequest, res: Response) => {
   });
 };
 
+// "" o null quita los perfiles del plan; si no viene, no se toca.
+const profiles = (value: unknown) =>
+  value === null ? null : typeof value === "string" ? value.trim().slice(0, 60) || null : undefined;
+
 export const create = async (req: AuthRequest, res: Response) => {
   const { nombre, slug, duracion, precio, precioOriginal, descripcion, productId } =
     req.body;
@@ -29,6 +33,7 @@ export const create = async (req: AuthRequest, res: Response) => {
     nombre,
     slug,
     duracion,
+    perfiles: profiles(req.body?.perfiles),
     precio,
     precioOriginal,
     descripcion,
@@ -51,6 +56,7 @@ export const update = async (req: AuthRequest, res: Response) => {
     nombre,
     slug,
     duracion,
+    perfiles: profiles(req.body?.perfiles),
     precio,
     precioOriginal,
     descripcion,
