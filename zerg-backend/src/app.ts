@@ -21,6 +21,7 @@ import notificationRoutes from "./modules/notifications/notification.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
 import supportRoutes from "./modules/support/support.routes.js";
 import favoriteRoutes from "./modules/favorites/favorite.routes.js";
+import pageRoutes from "./modules/pages/page.routes.js";
 import credentialRoutes from "./modules/credentials/credential.routes.js";
 import newsletterRoutes from "./modules/newsletter/newsletter.routes.js";
 import whatsappRoutes from "./modules/whatsapp/whatsapp.routes.js";
@@ -111,6 +112,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/support", supportRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/pages", pageRoutes);
 app.use("/api/credentials", credentialRoutes);
 app.use("/api/newsletter", newsletterRoutes);
 
@@ -120,6 +122,12 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
       success: false,
       message: err.message,
     });
+    return;
+  }
+
+  // Archivo más grande que el límite (imágenes 5 MB, videos MAX_VIDEO_MB)
+  if ((err as { code?: string }).code === "LIMIT_FILE_SIZE") {
+    res.status(413).json({ success: false, message: "El archivo es demasiado grande" });
     return;
   }
 

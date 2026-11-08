@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   CreditCard,
   Home,
   LayoutDashboard,
@@ -60,6 +61,7 @@ export const navigation: NavGroup[] = [
       { href: "/content/brand", label: "Marca y header", icon: PanelTop, description: "Logo, anuncio y menú" },
       { href: "/content/home", label: "Portada", icon: Home, description: "Hero, tendencias y secciones" },
       { href: "/content/footer", label: "Contacto y pie", icon: PanelBottom, description: "Datos de contacto y pie de página" },
+      { href: "/content/pages", label: "Páginas de ayuda", icon: BookOpen, description: "Cómo comprar (guías y videos), FAQ, garantía y textos legales" },
       { href: "/content/payments", label: "Pagos", icon: Wallet, description: "Yape, Plin, cuentas, Izipay y Binance" },
       { href: "/content/whatsapp", label: "WhatsApp", icon: MessageCircle, description: "Conexión con WhatsApp Business" },
     ],
