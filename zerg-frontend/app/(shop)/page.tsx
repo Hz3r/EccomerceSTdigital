@@ -232,12 +232,9 @@ export default function Home() {
                   href="/products?ofertas=1"
                   linkLabel="Ver ofertas"
                 />
-                <div className="mt-6 grid auto-rows-[150px] grid-cols-2 gap-3 sm:grid-cols-3 lg:auto-rows-[170px] lg:grid-cols-[1.6fr_repeat(4,1fr)]">
-                  <ProductTile
-                    product={trending[0]}
-                    size="lg"
-                    className="col-span-2 row-span-2 sm:col-span-3 lg:col-span-1"
-                  />
+                {/* Todas las tarjetas son cuadradas: la destacada ocupa 2×2 y las demás van a su lado */}
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+                  <ProductTile product={trending[0]} size="lg" className="col-span-2 sm:row-span-2" />
                   {trending.slice(1, 9).map((p) => (
                     <ProductTile key={p.id} product={p} />
                   ))}
@@ -262,7 +259,7 @@ export default function Home() {
                   itemClassName="w-[44%] sm:w-[30%] md:w-[23%] lg:w-[18.6%]"
                 >
                   {items.map((p) => (
-                    <ProductTile key={p.id} product={p} className="aspect-[4/3.4]" />
+                    <ProductTile key={p.id} product={p} className="h-full" />
                   ))}
                 </Rail>
               );
