@@ -140,3 +140,26 @@ export async function getPaymentMethods(): Promise<PaymentMethodOption[]> {
   const res = await api.get<ApiResponse<PaymentMethodOption[]>>("/payments/methods");
   return res.data.data;
 }
+
+// ==================== Una orden sin pagar por cuenta ====================
+
+/** La orden sin pagar del cliente (pendiente, sin comprobante en revisión ni pago confirmado), o null. */
+export async function getUnpaidOrder(): Promise<Order | null> {
+  if (USE_MOCKS) return null;
+  const res = await api.get<ApiResponse<Order | null>>("/orders/mine/unpaid");
+  return res.data.data;
+}
+
+/** Cancela (elimina) la orden sin pagar y devuelve sus productos para regresarlos al carrito. */
+export async function cancelMyOrder(numeroOrden: string): Promise<{ planId: string; cantidad: number }[]> {
+  const res = await api.post<ApiResponse<{ items: { planId: string; cantidad: number }[] }>>(
+    `/orders/mine/${encodeURIComponent(numeroOrden)}/cancel`
+  );
+  return res.data.data.items;
+}
+
+/** Si la API rechazó crear la orden porque ya hay una sin pagar, devuelve su número. */
+export function pendingOrderFromError(err: unknown): { numeroOrden: string; total: number } | null {
+  const data = (err as { response?: { data?: { data?: { code?: string; numeroOrden?: string; total?: number } } } })?.response?.data?.data;
+  return data?.code === "PENDING_ORDER" && data.numeroOrden ? { numeroOrden: data.numeroOrden, total: Number(data.total ?? 0) } : null;
+}

@@ -1,5 +1,8 @@
 import { getPrisma } from "../../config/database.js";
-import { NotFoundError, BadRequestError } from "../../errors/appError.js";
+import { unlink } from "fs/promises";
+import { NotFoundError, BadRequestError, ConflictError } from "../../errors/appError.js";
+import { emit } from "../../realtime/events.js";
+import { proofPath } from "../payments/payment.storage.js";
 import { notifyAdmins, notifyUser } from "../notifications/notification.service.js";
 import type { TokenPayload } from "../../utils/token.js";
 import type { MetodoPago } from "@prisma/client";
@@ -108,6 +111,54 @@ export function normalizePhone(value: unknown) {
   return raw.startsWith("+") ? `+${digits}` : digits;
 }
 
+// ==================== Una orden sin pagar por cuenta ====================
+// Una orden está "sin pagar" mientras siga pendiente y su pago no esté en revisión ni pagado
+// (sin comprobante, o con el comprobante rechazado). Para el cliente funciona como un carrito
+// reservado: puede pagarla o cancelarla (sus productos vuelven al carrito), pero no crear otra.
+const unpaidWhere = (userId: string) => ({
+  userId,
+  status: "PENDIENTE" as const,
+  // Con un intento de pago registrado: las órdenes antiguas sin pagos (antes del módulo de pagos) no se tocan
+  payments: { some: {}, none: { estado: { in: ["EN_REVISION" as const, "PAGADO" as const] } } },
+});
+
+/** La orden sin pagar del cliente (con lo necesario para devolverla al carrito), o null. */
+export const getUnpaid = async (userId: string) => {
+  const order = await getPrisma().order.findFirst({
+    where: unpaidWhere(userId),
+    include: { items: itemsWithProduct, payments: latestPayment },
+    orderBy: { creadoEn: "desc" },
+  });
+  return order ? withPublicPayment(order) : null;
+};
+
+/**
+ * El cliente cancela su orden sin pagar: se elimina (el admin nunca la ve como pendiente) y
+ * devuelve sus productos para que la tienda los regrese al carrito.
+ */
+export const cancelUnpaid = async (userId: string, numeroOrden: string) => {
+  const order = await getPrisma().order.findFirst({
+    where: { numeroOrden, userId },
+    include: { items: { select: { planId: true, cantidad: true } }, payments: { select: { estado: true, comprobante: true } } },
+  });
+  if (!order) throw new NotFoundError("Orden no encontrada");
+  const settled =
+    order.status !== "PENDIENTE" || order.payments.length === 0 || order.payments.some((p) => p.estado === "EN_REVISION" || p.estado === "PAGADO");
+  if (settled) {
+    throw new ConflictError("Este pedido ya tiene un pago en revisión o confirmado: escríbenos si necesitas cancelarlo");
+  }
+
+  // Los ítems no se borran en cascada con la orden: primero ellos (los pagos sí caen solos)
+  await getPrisma().$transaction([
+    getPrisma().orderItem.deleteMany({ where: { orderId: order.id } }),
+    getPrisma().order.delete({ where: { id: order.id } }),
+  ]);
+  // Un comprobante rechazado ya no sirve: se borra el archivo privado
+  for (const p of order.payments) if (p.comprobante) await unlink(proofPath(p.comprobante)).catch(() => {});
+  emit("orders", "deleted");
+  return { numeroOrden, items: order.items };
+};
+
 export const create = async (data: {
   nombreCliente: string;
   /** Opcional en el checkout: si viene vacío se usa el correo de la cuenta (`accountEmail`). */
@@ -129,6 +180,16 @@ export const create = async (data: {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new BadRequestError("El correo no es válido");
   const metodoPago = data.metodoPago ?? "DIRECTO";
   await assertAvailable(metodoPago);
+
+  // Una sola orden sin pagar por cuenta: primero se paga o se cancela la anterior.
+  if (data.userId) {
+    const unpaid = await getPrisma().order.findFirst({ where: unpaidWhere(data.userId), select: { numeroOrden: true, total: true } });
+    if (unpaid) {
+      const error = new ConflictError(`Ya tienes un pedido sin pagar (${unpaid.numeroOrden}). Págalo o cancélalo para hacer uno nuevo.`);
+      error.data = { code: "PENDING_ORDER", numeroOrden: unpaid.numeroOrden, total: Number(unpaid.total) };
+      throw error;
+    }
+  }
 
   let total = 0;
   const orderItems = [];
@@ -193,23 +254,8 @@ export const create = async (data: {
   });
 
   await createPending(order.id, metodoPago, order.total);
-
-  await notifyAdmins({
-    tipo: "COMPRA",
-    titulo: "Nueva orden de compra",
-    mensaje: `${order.numeroOrden} · ${order.nombreCliente} · ${money(order.total)}`,
-    href: `/orders?q=${order.numeroOrden}`,
-    orderId: order.id,
-  });
-  if (order.userId) {
-    await notifyUser(order.userId, {
-      tipo: "PEDIDO",
-      titulo: "Recibimos tu pedido",
-      mensaje: `Tu pedido ${order.numeroOrden} por ${money(order.total)} está en revisión. Te avisaremos cuando enviemos tus accesos.`,
-      href: `/account?orden=${order.numeroOrden}`,
-      orderId: order.id,
-    });
-  }
+  // Sin avisos al crearla: una orden sin pagar es solo una reserva del cliente. El admin recibe el
+  // aviso cuando llega el comprobante o se confirma el pago (ver payments).
 
   return order;
 };

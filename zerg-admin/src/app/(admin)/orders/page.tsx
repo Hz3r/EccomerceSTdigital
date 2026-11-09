@@ -48,6 +48,9 @@ function StatusSelect({ order, onChange }: { order: Order; onChange: (status: St
   )
 }
 
+// Pendiente y sin comprobante en revisión ni pago confirmado (igual que en el backend)
+const isUnpaid = (o: Order) => o.status === "PENDIENTE" && (o.payment?.estado === "PENDIENTE" || o.payment?.estado === "RECHAZADO")
+
 export default function OrdersPage() {
   return (
     <React.Suspense>
@@ -63,7 +66,7 @@ function OrdersContent() {
   const query = useSearchParams().get("q") ?? ""
   const [orders, setOrders] = React.useState<Order[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
-  const [filter, setFilter] = React.useState<StatusOrden | "TODAS">("TODAS")
+  const [filter, setFilter] = React.useState<StatusOrden | "TODAS" | "SIN_PAGAR">("TODAS")
   // Se guarda el id: el detalle se actualiza en vivo (por ejemplo cuando llega un comprobante)
   const [detailId, setDetailId] = React.useState<string | null>(null)
   const detail = orders.find((o) => o.id === detailId) ?? null
@@ -101,11 +104,15 @@ function OrdersContent() {
     }
   }
 
+  // Las órdenes sin pagar son reservas del cliente (las puede cancelar o vuelven a su carrito):
+  // no se mezclan con las que hay que atender. Se ven aparte en "Sin pagar".
+  const unpaid = orders.filter(isUnpaid)
+  const active = orders.filter((o) => !isUnpaid(o))
   const counts = STATUSES.reduce(
-    (acc, s) => ({ ...acc, [s]: orders.filter((o) => o.status === s).length }),
+    (acc, s) => ({ ...acc, [s]: active.filter((o) => o.status === s).length }),
     {} as Record<StatusOrden, number>
   )
-  const visible = filter === "TODAS" ? orders : orders.filter((o) => o.status === filter)
+  const visible = filter === "SIN_PAGAR" ? unpaid : filter === "TODAS" ? active : active.filter((o) => o.status === filter)
 
   const columns: DataTableColumn<Order>[] = [
     {
@@ -171,10 +178,25 @@ function OrdersContent() {
             >
               {Icon && <Icon className="size-3.5" style={{ color: filter === s ? undefined : STATUS_META[s as StatusOrden].color }} />}
               {s === "TODAS" ? "Todas" : STATUS_META[s].label}
-              <span className="tabular-nums opacity-70">{s === "TODAS" ? orders.length : counts[s]}</span>
+              <span className="tabular-nums opacity-70">{s === "TODAS" ? active.length : counts[s]}</span>
             </button>
           )
         })}
+        {unpaid.length > 0 && (
+          <button
+            type="button"
+            aria-pressed={filter === "SIN_PAGAR"}
+            onClick={() => setFilter("SIN_PAGAR")}
+            title="Pedidos que el cliente aún no paga. Si no los paga, vuelven a su carrito."
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border border-dashed px-3.5 py-1.5 text-xs font-semibold transition-colors",
+              filter === "SIN_PAGAR" ? "border-foreground bg-foreground text-background" : "text-muted-foreground hover:border-foreground/30"
+            )}
+          >
+            Sin pagar
+            <span className="tabular-nums opacity-70">{unpaid.length}</span>
+          </button>
+        )}
       </div>
 
       <Card>

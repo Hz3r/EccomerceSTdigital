@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { USE_MOCKS, createOrder, getPaymentMethods } from "@/lib/api";
+import { USE_MOCKS, createOrder, getPaymentMethods, pendingOrderFromError } from "@/lib/api";
+import { useReturnToCart } from "@/hooks/useReturnToCart";
 import { MethodPicker } from "@/components/payments/method-picker";
 import { apiErrorMessage, loginHref } from "@/lib/auth-redirect";
 import { formatPrice } from "@/lib/catalog";
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderSummary } from "@/components/cart/order-summary";
-import { ArrowLeft, CheckCircle2, Loader2, Lock, MessageCircle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, Loader2, Lock, MessageCircle } from "lucide-react";
 import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 import type { MetodoPago, PaymentMethodOption, User } from "@/types";
 
@@ -44,6 +45,10 @@ function Checkout({ user }: { user: User }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState("");
+  // Ya hay un pedido sin pagar (por ejemplo, abierto en otra pestaña): se paga o se cancela antes de hacer otro
+  const [pending, setPending] = useState<{ numeroOrden: string; total: number } | null>(null);
+  const [cancellingPending, setCancellingPending] = useState(false);
+  const returnToCart = useReturnToCart();
   const [orderNumber, setOrderNumber] = useState("");
   const router = useRouter();
   const [methods, setMethods] = useState<PaymentMethodOption[] | null>(null);
@@ -113,7 +118,13 @@ function Checkout({ user }: { user: User }) {
         router.push(`/pago/${order.numeroOrden}`);
       }
     } catch (err) {
-      setError(apiErrorMessage(err, "No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos."));
+      const existing = pendingOrderFromError(err);
+      if (existing) {
+        setPending(existing);
+        // El aviso está en el formulario: se lleva a la vista (el botón de confirmar queda a la derecha)
+        requestAnimationFrame(() => document.getElementById("pending-order")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+      }
+      else setError(apiErrorMessage(err, "No pudimos procesar tu pedido. Inténtalo de nuevo en unos segundos."));
     } finally {
       setIsSubmitting(false);
     }
@@ -233,6 +244,43 @@ function Checkout({ user }: { user: User }) {
           </section>
 
           {error && <p className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+          {pending && (
+            <div id="pending-order" role="alert" className="scroll-mt-32 rounded-2xl border border-brand-yellow/50 bg-brand-yellow/10 p-4">
+              <p className="flex items-center gap-2 font-bold">
+                <AlertTriangle className="size-4 shrink-0" />
+                Tienes un pedido sin pagar
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                El pedido <b className="font-mono text-foreground">{pending.numeroOrden}</b> por {formatPrice(pending.total)} sigue pendiente. Solo puedes
+                tener uno a la vez: págalo, o cancélalo y sus productos se suman a este carrito.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <Button type="button" className="h-10 rounded-xl" render={<Link href={`/pago/${pending.numeroOrden}`} />} nativeButton={false}>
+                  Ir a pagarlo
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 rounded-xl"
+                  disabled={cancellingPending}
+                  onClick={async () => {
+                    setCancellingPending(true);
+                    try {
+                      await returnToCart(pending.numeroOrden);
+                      setPending(null);
+                    } catch (err) {
+                      setError(apiErrorMessage(err, "No pudimos cancelar ese pedido."));
+                    } finally {
+                      setCancellingPending(false);
+                    }
+                  }}
+                >
+                  {cancellingPending && <Loader2 className="size-4 animate-spin" />}
+                  Cancelarlo y usar este carrito
+                </Button>
+              </div>
+            </div>
+          )}
         </form>
 
         <OrderSummary items={items} totalPrice={totalPrice} showItems>
