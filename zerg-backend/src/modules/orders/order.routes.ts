@@ -11,6 +11,8 @@ router.use(authMiddleware);
 router.post("/", orderController.create);
 router.get("/", roleMiddleware("ADMIN"), orderController.getAll);
 router.get("/mine", orderController.getMine);
+router.get("/mine/unpaid", orderController.getUnpaid);
+router.post("/mine/:numero/cancel", orderController.cancelMine);
 router.get("/:id", orderController.getById);
 router.patch("/:id/status", roleMiddleware("ADMIN"), orderController.updateStatus);
 router.delete("/:id", roleMiddleware("ADMIN"), orderController.remove);

@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, Loader2, Package } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, Package, XCircle } from "lucide-react";
+import { LeavePaymentGuard, requestCancelPurchase } from "@/components/checkout/leave-payment-guard";
 import { Button } from "@/components/ui/button";
 import { CheckoutSteps } from "@/components/checkout/checkout-steps";
 import { MethodPicker, METHOD_INFO } from "@/components/payments/method-picker";
@@ -91,9 +92,12 @@ export default function PayOrderPage() {
   const payment = data.payment;
   const settled = payment && (payment.estado === "PAGADO" || payment.estado === "EN_REVISION");
   const canChange = !settled && data.status !== "CANCELADO";
+  // Sin pagar: se puede cancelar y, al salir de la página, se pregunta si cancelar la compra
+  const unpaid = canChange && data.status === "PENDIENTE";
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-12">
+      <LeavePaymentGuard numeroOrden={data.numeroOrden} active={unpaid} />
       <Link href="/account" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" /> Mis pedidos
       </Link>
@@ -146,6 +150,17 @@ export default function PayOrderPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {unpaid && (
+            <button
+              type="button"
+              onClick={requestCancelPurchase}
+              className="mx-auto flex items-center gap-1.5 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-destructive hover:underline"
+            >
+              <XCircle className="size-4" />
+              Cancelar compra
+            </button>
           )}
         </div>
 

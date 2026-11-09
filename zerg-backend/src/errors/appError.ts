@@ -1,6 +1,8 @@
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
+  /** Datos extra para el cliente (ej. el pedido sin pagar que impide crear otro). */
+  public data?: Record<string, unknown>;
 
   constructor(message: string, statusCode: number, isOperational = true) {
     super(message);

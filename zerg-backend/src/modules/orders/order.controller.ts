@@ -21,6 +21,15 @@ export const getMine = async (req: AuthRequest, res: Response) => {
   });
 };
 
+export const getUnpaid = async (req: AuthRequest, res: Response) => {
+  res.status(200).json({ success: true, data: await orderService.getUnpaid(req.user!.userId) });
+};
+
+export const cancelMine = async (req: AuthRequest, res: Response) => {
+  const data = await orderService.cancelUnpaid(req.user!.userId, req.params.numero as string);
+  res.status(200).json({ success: true, message: "Pedido cancelado", data });
+};
+
 export const getById = async (req: AuthRequest, res: Response) => {
   const id = req.params.id as string;
   const order = await orderService.getById(id, req.user);

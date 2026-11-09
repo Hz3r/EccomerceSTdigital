@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toast";
 import { SupportWidget } from "@/components/support/support-widget";
 import { FavoritesProvider } from "@/hooks/useFavorites";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { UnpaidOrderReturn } from "@/components/checkout/unpaid-order-return";
 
 export default function ShopLayout({
   children,
@@ -28,6 +29,7 @@ export default function ShopLayout({
               <Footer />
             </div>
             <SupportWidget />
+            <UnpaidOrderReturn />
           </FavoritesProvider>
           </CartProvider>
         </AuthProvider>
