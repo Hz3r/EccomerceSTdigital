@@ -68,7 +68,8 @@ function Checkout({ user }: { user: User }) {
   }, []);
   const [form, setForm] = useState(() => ({
     nombreCliente: user.nombre,
-    email: user.email,
+    // Opcional: vacío = se usa el correo de la cuenta
+    email: "",
     // El último WhatsApp usado se recuerda en este navegador para no escribirlo en cada compra
     telefono: readSavedPhone(),
     notas: "",
@@ -165,7 +166,7 @@ function Checkout({ user }: { user: User }) {
         <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
           <section className="rounded-3xl border bg-card p-6">
             <h2 className="font-bold">Tus datos</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">A este correo y WhatsApp te enviaremos tus accesos.</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">Te enviamos tus accesos por WhatsApp y también los ves en Mi cuenta → Mis accesos.</p>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <Field id="nombreCliente" label="Nombre completo">
                 <Input
@@ -176,30 +177,35 @@ function Checkout({ user }: { user: User }) {
                   required
                 />
               </Field>
-              <Field id="email" label="Correo electrónico">
-                <Input
-                  id="email"
-                  type="email"
-                  className="h-11 rounded-xl"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
-              </Field>
-              <Field id="telefono" label="WhatsApp (recomendado)">
+              <Field id="telefono" label="WhatsApp *">
                 <Input
                   id="telefono"
                   type="tel"
                   inputMode="tel"
                   autoComplete="tel"
                   className="h-11 rounded-xl"
-                  placeholder="999 999 999"
+                  placeholder="987 654 321"
                   value={form.telefono}
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                  required
+                  pattern="[+]?[0-9 ()\-]{9,20}"
+                  title="Escribe tu número de WhatsApp, ej. 987 654 321"
                 />
                 <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                   <MessageCircle className="size-3.5 text-[#25D366]" /> Te llegan tus accesos al instante por WhatsApp.
                 </p>
+              </Field>
+              <Field id="email" label="Correo (opcional)">
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  className="h-11 rounded-xl"
+                  placeholder={user.email}
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Si lo dejas vacío usamos el de tu cuenta.</p>
               </Field>
               <Field id="notas" label="Notas (opcional)">
                 <Input

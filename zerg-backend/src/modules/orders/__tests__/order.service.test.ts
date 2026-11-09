@@ -53,6 +53,7 @@ describe("Order Service", () => {
       const result = await orderService.create({
         nombreCliente: "Juan Pérez",
         email: "juan@test.com",
+        telefono: "987654321",
         items: [{ planId: "test-plan-id", cantidad: 1 }],
       });
 
@@ -60,9 +61,25 @@ describe("Order Service", () => {
       expect(mockPrisma.order.create).toHaveBeenCalled();
     });
 
+    it("el WhatsApp es obligatorio y el correo vacío usa el de la cuenta", async () => {
+      mockPrisma.plan.findUnique.mockResolvedValue(mockPlan);
+      mockPrisma.order.create.mockResolvedValue(mockOrder);
+      const base = { nombreCliente: "Juan", items: [{ planId: "test-plan-id", cantidad: 1 }] };
+
+      await expect(orderService.create({ ...base, email: "juan@test.com" })).rejects.toThrow("WhatsApp");
+      await expect(orderService.create({ ...base, email: "juan@test.com", telefono: "12345" })).rejects.toThrow("WhatsApp");
+      expect(mockPrisma.order.create).not.toHaveBeenCalled();
+
+      await orderService.create({ ...base, email: "", accountEmail: "cuenta@test.com", telefono: "+51 987 654 321" });
+      expect(mockPrisma.order.create.mock.calls[0]![0].data).toMatchObject({ email: "cuenta@test.com", telefono: "+51987654321" });
+
+      await orderService.create({ ...base, email: " otro@test.com ", accountEmail: "cuenta@test.com", telefono: "987-654-321" });
+      expect(mockPrisma.order.create.mock.calls[1]![0].data).toMatchObject({ email: "otro@test.com", telefono: "987654321" });
+    });
+
     it("no permite comprar un producto agotado ni más unidades que el stock", async () => {
       const order = (cantidad: number) =>
-        orderService.create({ nombreCliente: "Juan", email: "juan@test.com", items: [{ planId: "test-plan-id", cantidad }] });
+        orderService.create({ nombreCliente: "Juan", email: "juan@test.com", telefono: "987654321", items: [{ planId: "test-plan-id", cantidad }] });
       const withProduct = (product: Record<string, unknown>) =>
         mockPrisma.plan.findUnique.mockResolvedValue({ ...mockPlan, product: { nombre: "Netflix", ...product } });
 
@@ -83,6 +100,7 @@ describe("Order Service", () => {
         orderService.create({
           nombreCliente: "Juan Pérez",
           email: "juan@test.com",
+        telefono: "987654321",
           items: [],
         })
       ).rejects.toThrow("La orden debe tener al menos un item");
@@ -95,6 +113,7 @@ describe("Order Service", () => {
         orderService.create({
           nombreCliente: "Juan Pérez",
           email: "juan@test.com",
+        telefono: "987654321",
           items: [{ planId: "non-existent-plan", cantidad: 1 }],
         })
       ).rejects.toThrow("Plan no encontrado");
@@ -107,6 +126,7 @@ describe("Order Service", () => {
         orderService.create({
           nombreCliente: "Juan Pérez",
           email: "juan@test.com",
+        telefono: "987654321",
           items: [{ planId: "test-plan-id", cantidad: 1 }],
         })
       ).rejects.toThrow("Plan inactivo");

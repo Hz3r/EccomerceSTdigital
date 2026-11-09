@@ -76,6 +76,7 @@ describe("Order Integration Tests", () => {
         .send({
           nombreCliente: "Juan Pérez",
           email: "juan@test.com",
+          telefono: "987654321",
           items: [{ planId: "test-plan-id", cantidad: 1 }],
         });
 
@@ -92,6 +93,7 @@ describe("Order Integration Tests", () => {
         .send({
           nombreCliente: "Cliente",
           email: "cliente@test.com",
+          telefono: "987654321",
           userId: "otro-usuario",
           items: [{ planId: "test-plan-id", cantidad: 1 }],
         });
@@ -108,6 +110,7 @@ describe("Order Integration Tests", () => {
         .send({
           nombreCliente: "Juan Pérez",
           email: "juan@test.com",
+          telefono: "987654321",
           items: [],
         });
 
