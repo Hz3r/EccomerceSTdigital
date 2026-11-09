@@ -45,6 +45,14 @@ export function PlatformsEditor({ value, onChange, placeholder = "Ej. Netflix", 
                 onChange={(e) => onChange(replaceItem(value, i, { nombre: e.target.value }))}
                 className="h-8"
               />
+              {/* La imagen se puede subir (botón de la izquierda) o pegar como URL */}
+              <Input
+                value={p.logoUrl}
+                aria-label="URL de la imagen"
+                placeholder="o pega la URL de la imagen: https://…"
+                onChange={(e) => onChange(replaceItem(value, i, { logoUrl: e.target.value.trim() }))}
+                className="mt-1.5 h-7 text-xs"
+              />
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {p.logoUrl ? "Se muestra el logo (el nombre queda como texto alternativo)" : "Se muestra el nombre como texto"}
               </p>
