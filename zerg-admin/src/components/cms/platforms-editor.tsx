@@ -11,11 +11,16 @@ import type { Plataforma } from "@/types";
 const MAX = 40;
 
 // Plataformas de la marquesina: cada una con su nombre y, opcionalmente, un logo.
-export function PlatformsEditor({ value, onChange }: { value: Plataforma[]; onChange: (v: Plataforma[]) => void }) {
+export function PlatformsEditor({ value, onChange, placeholder = "Ej. Netflix", max = MAX }: {
+  value: Plataforma[];
+  onChange: (v: Plataforma[]) => void;
+  placeholder?: string;
+  max?: number;
+}) {
   const [name, setName] = React.useState("");
   const add = () => {
     const nombre = name.trim();
-    if (!nombre || value.length >= MAX) return;
+    if (!nombre || value.length >= max) return;
     onChange([...value, { nombre, logoUrl: "" }]);
     setName("");
   };
@@ -57,7 +62,7 @@ export function PlatformsEditor({ value, onChange }: { value: Plataforma[]; onCh
       <div className="flex gap-2 border-t p-3">
         <Input
           value={name}
-          placeholder="Ej. Netflix"
+          placeholder={placeholder}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -67,7 +72,7 @@ export function PlatformsEditor({ value, onChange }: { value: Plataforma[]; onCh
           }}
           className="h-8"
         />
-        <Button type="button" variant="outline" size="sm" onClick={add} disabled={value.length >= MAX}>
+        <Button type="button" variant="outline" size="sm" onClick={add} disabled={value.length >= max}>
           <Plus className="size-3.5" />
           Agregar
         </Button>

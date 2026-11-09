@@ -25,6 +25,10 @@ const cuentaBancaria = { banco: "", titular: "", numero: "", cci: "" };
 // Plataformas de la marquesina: nombre y, si tiene, logo (se muestra la imagen en lugar del texto).
 const plataforma = { nombre: "", logoUrl: "" };
 
+// Logos pequeños bajo cada método de pago (VISA, Yape…). Sin imagen se muestra el nombre.
+const logoPago = { nombre: "", logoUrl: "" };
+const logos = (...nombres: string[]) => listOf(logoPago, nombres.map((nombre) => ({ ...logoPago, nombre })));
+
 // Columna de "Recién llegados": muestra los últimos productos de sus categorías.
 // Si `productos` tiene elementos, se muestran esos (en ese orden) en lugar de los automáticos.
 // `icono` es el slug de un ícono de categoría (vacío = el de la primera categoría); `color` es el borde superior.
@@ -151,6 +155,12 @@ export const defaultSettings = {
     },
     // Soles por 1 USDT para cobrar con Binance Pay (los precios de la tienda están en soles).
     tipoCambioUsdt: 3.75,
+    // Logos que se ven bajo cada método en el checkout y en el pago (se editan en Admin → Pagos).
+    logos: {
+      directo: logos("Yape", "Plin", "BCP", "Interbank"),
+      izipay: logos("VISA", "Mastercard", "American Express", "Diners Club"),
+      binance: logos("Binance", "USDT"),
+    },
   },
   // Google Analytics 4: ID de medición "G-XXXXXXX" (Admin → Analítica). Vacío = no se carga nada de Google.
   analytics: {

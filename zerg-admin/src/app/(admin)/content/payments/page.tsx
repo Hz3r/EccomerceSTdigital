@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, CircleDashed, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageField } from "@/components/image-field";
+import { PlatformsEditor } from "@/components/cms/platforms-editor";
 import { Field, PageIntro, SaveBar, Section, SettingsState, SetupBanner, TextField, Toggle } from "@/components/cms/form";
 import { ListControls, moveItem, removeItem, replaceItem } from "@/components/cms/list-controls";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
@@ -37,6 +38,12 @@ const GATEWAYS = [
     ],
   },
 ] as const;
+
+const LOGO_GROUPS: { key: "directo" | "izipay" | "binance"; label: string; placeholder: string }[] = [
+  { key: "directo", label: "Yape, Plin o transferencia", placeholder: "Ej. Yape" },
+  { key: "izipay", label: "Pago en línea con Izipay", placeholder: "Ej. VISA" },
+  { key: "binance", label: "Binance Pay", placeholder: "Ej. Binance" },
+];
 
 export default function PaymentsContentPage() {
   const { draft, status, error, savedAt, setupMessage, loadError, update, save, discard, isDirty } = useSiteSettings();
@@ -157,6 +164,22 @@ export default function PaymentsContentPage() {
                 </details>
               );
             })}
+          </Section>
+
+          <Section
+            title="Logos de los métodos de pago"
+            description="Se ven en tarjetitas pequeñas bajo cada método al pagar. Sube PNG o SVG con fondo transparente (ideal 120×80). Sin imagen se muestra el nombre."
+          >
+            {LOGO_GROUPS.map((g) => (
+              <Field key={g.key} label={g.label}>
+                <PlatformsEditor
+                  value={pagos.logos?.[g.key] ?? []}
+                  onChange={(v) => update("pagos", { ...pagos, logos: { ...pagos.logos, [g.key]: v } })}
+                  placeholder={g.placeholder}
+                  max={10}
+                />
+              </Field>
+            ))}
           </Section>
 
           <Section title="Tipo de cambio para cripto" description="Los precios están en soles; Binance Pay cobra en USDT.">
