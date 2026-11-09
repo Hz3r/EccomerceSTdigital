@@ -119,7 +119,7 @@ export default function PayOrderPage() {
           ) : payment.metodo === "DIRECTO" ? (
             <DirectPayment payment={payment} numeroOrden={data.numeroOrden} onUpdated={reload} />
           ) : payment.metodo === "IZIPAY" ? (
-            <IzipayPayment payment={payment} onUpdated={reload} />
+            <IzipayPayment payment={payment} numeroOrden={data.numeroOrden} onUpdated={reload} />
           ) : (
             <BinancePayment payment={payment} />
           )}
