@@ -25,11 +25,15 @@ export function PaymentLogos({ logos, className, muted }: { logos: LogoPago[]; c
         <li
           key={`${logo.nombre}-${i}`}
           title={logo.nombre}
-          className="flex h-7 min-w-11 items-center justify-center rounded-md border border-black/10 bg-white px-1.5 shadow-sm"
+          className={cn(
+            "flex h-7 items-center justify-center overflow-hidden rounded-md border border-black/10 bg-white shadow-sm",
+            logo.logoUrl ? "min-w-11" : "min-w-11 px-1.5"
+          )}
         >
           {logo.logoUrl ? (
+            // La imagen ocupa toda la tarjetita (alto completo; el ancho sigue la proporción del logo)
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={assetUrl(logo.logoUrl)} alt={logo.nombre} loading="lazy" className="h-5 max-w-16 object-contain" />
+            <img src={assetUrl(logo.logoUrl)} alt={logo.nombre} loading="lazy" className="h-full w-auto max-w-24 object-cover" />
           ) : (
             <span className="text-[10px] leading-none font-extrabold tracking-tight whitespace-nowrap text-neutral-800">{logo.nombre}</span>
           )}
