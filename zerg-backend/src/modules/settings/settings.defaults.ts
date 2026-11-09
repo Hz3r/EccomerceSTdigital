@@ -155,6 +155,9 @@ export const defaultSettings = {
     },
     // Soles por 1 USDT para cobrar con Binance Pay (los precios de la tienda están en soles).
     tipoCambioUsdt: 3.75,
+    // Formulario de Izipay: "tarjeta" = el formulario de tarjeta abierto directamente;
+    // "lista" = primero la lista de medios activos (Tarjeta, Yape, QR…) con sus logos.
+    izipayModo: "tarjeta",
     // Logos que se ven bajo cada método en el checkout y en el pago (se editan en Admin → Pagos).
     logos: {
       directo: logos("Yape", "Plin", "BCP", "Interbank"),

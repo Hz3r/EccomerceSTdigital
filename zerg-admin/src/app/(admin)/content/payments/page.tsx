@@ -39,6 +39,11 @@ const GATEWAYS = [
   },
 ] as const;
 
+const IZIPAY_MODES = [
+  { value: "tarjeta", title: "Tarjeta abierta", text: "El formulario de tarjeta aparece listo para llenar. Ideal si solo cobras con tarjeta." },
+  { value: "lista", title: "Lista de medios", text: "Primero se elige el medio (Tarjeta, Yape, QR…) con sus logos. Ideal con billeteras activas." },
+];
+
 const LOGO_GROUPS: { key: "directo" | "izipay" | "binance"; label: string; placeholder: string }[] = [
   { key: "directo", label: "Yape, Plin o transferencia", placeholder: "Ej. Yape" },
   { key: "izipay", label: "Pago en línea con Izipay", placeholder: "Ej. VISA" },
@@ -167,8 +172,32 @@ export default function PaymentsContentPage() {
           </Section>
 
           <Section
+            title="Formulario de pago de Izipay"
+            description="Cómo se presenta el pago en línea. Los medios que aparecen (tarjeta, Yape, QR…) son los que Izipay tenga activos en tu cuenta."
+          >
+            <div role="radiogroup" aria-label="Modo del formulario de Izipay" className="grid gap-2 sm:grid-cols-2">
+              {IZIPAY_MODES.map((m) => {
+                const selected = (pagos.izipayModo || "tarjeta") === m.value;
+                return (
+                  <button
+                    key={m.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => update("pagos", { ...pagos, izipayModo: m.value })}
+                    className={`rounded-xl border p-3 text-left text-sm transition-colors hover:bg-muted ${selected ? "border-primary bg-primary/10" : ""}`}
+                  >
+                    <span className="block font-semibold">{m.title}</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">{m.text}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
+          <Section
             title="Logos de los métodos de pago"
-            description="Se ven en tarjetitas pequeñas bajo cada método al pagar. Sube PNG o SVG con fondo transparente (ideal 120×80). Sin imagen se muestra el nombre."
+            description="Se ven en tarjetitas pequeñas bajo cada método al pagar. VISA, Mastercard, American Express, Diners, Discover, JCB, UnionPay, PayPal y Maestro muestran su logo oficial solos; para Yape, Plin o QR sube la imagen (PNG o SVG, ideal 120×80) o pega su URL."
           >
             {LOGO_GROUPS.map((g) => (
               <Field key={g.key} label={g.label}>
