@@ -39,6 +39,7 @@ export const create = async (req: AuthRequest, res: Response) => {
   const order = await orderService.create({
     nombreCliente,
     email,
+    accountEmail: req.user?.email,
     telefono,
     whatsappLink,
     notas,

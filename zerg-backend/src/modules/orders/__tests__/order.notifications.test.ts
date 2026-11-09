@@ -41,7 +41,7 @@ describe("Órdenes: notificaciones", () => {
     mockPrisma.plan.findUnique.mockResolvedValue(mockPlan);
     mockPrisma.order.create.mockResolvedValue(ownOrder);
 
-    await orderService.create({ nombreCliente: "Juan", email: "j@test.com", userId: "cliente-1", items: [{ planId: "p", cantidad: 1 }] });
+    await orderService.create({ nombreCliente: "Juan", email: "j@test.com", telefono: "987654321", userId: "cliente-1", items: [{ planId: "p", cantidad: 1 }] });
 
     expect(notificationsCreated()).toEqual([
       expect.objectContaining({ audiencia: "ADMIN", tipo: "COMPRA", titulo: "Nueva orden de compra", orderId: ownOrder.id }),
@@ -77,7 +77,7 @@ describe("Órdenes: notificaciones", () => {
     mockPrisma.notification.create.mockRejectedValueOnce(new Error("db"));
 
     await expect(
-      orderService.create({ nombreCliente: "Juan", email: "j@test.com", userId: "cliente-1", items: [{ planId: "p", cantidad: 1 }] })
+      orderService.create({ nombreCliente: "Juan", email: "j@test.com", telefono: "987654321", userId: "cliente-1", items: [{ planId: "p", cantidad: 1 }] })
     ).resolves.toEqual(ownOrder);
   });
 });

@@ -98,9 +98,21 @@ export const getById = async (id: string, viewer?: TokenPayload) => {
   return order;
 };
 
+/** WhatsApp obligatorio: 9 a 15 dígitos (ej. 987 654 321 o +51 987 654 321). Devuelve el número limpio. */
+export function normalizePhone(value: unknown) {
+  const raw = typeof value === "string" ? value.trim() : "";
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 9 || digits.length > 15) {
+    throw new BadRequestError("Escribe tu número de WhatsApp (ej. 987 654 321): ahí te enviamos tus accesos");
+  }
+  return raw.startsWith("+") ? `+${digits}` : digits;
+}
+
 export const create = async (data: {
   nombreCliente: string;
-  email: string;
+  /** Opcional en el checkout: si viene vacío se usa el correo de la cuenta (`accountEmail`). */
+  email?: string;
+  accountEmail?: string;
   telefono?: string;
   whatsappLink?: string;
   notas?: string;
@@ -111,6 +123,10 @@ export const create = async (data: {
   if (!data.items || data.items.length === 0) {
     throw new BadRequestError("La orden debe tener al menos un item");
   }
+  const telefono = normalizePhone(data.telefono);
+  const email = (typeof data.email === "string" && data.email.trim()) || data.accountEmail?.trim() || "";
+  if (!email) throw new BadRequestError("Falta el correo de la cuenta");
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) throw new BadRequestError("El correo no es válido");
   const metodoPago = data.metodoPago ?? "DIRECTO";
   await assertAvailable(metodoPago);
 
@@ -156,8 +172,8 @@ export const create = async (data: {
     data: {
       numeroOrden,
       nombreCliente: data.nombreCliente,
-      email: data.email,
-      telefono: data.telefono,
+      email,
+      telefono,
       whatsappLink: data.whatsappLink,
       notas: data.notas,
       userId: data.userId,
