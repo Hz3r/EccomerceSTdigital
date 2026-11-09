@@ -12,6 +12,13 @@ describe("databaseConnectionError", () => {
     }
   });
 
+  it("un borrado bloqueado por datos relacionados (P2003) es un 409 entendible, no un 500", () => {
+    expect(databaseConnectionError(Object.assign(new Error("fk"), { code: "P2003" }))).toMatchObject({
+      statusCode: 409,
+      message: expect.stringContaining("No se puede eliminar"),
+    });
+  });
+
   it("ignora los demás errores", () => {
     expect(databaseConnectionError(Object.assign(new Error("x"), { code: "P2002" }))).toBeNull();
     expect(databaseConnectionError(new Error("x"))).toBeNull();

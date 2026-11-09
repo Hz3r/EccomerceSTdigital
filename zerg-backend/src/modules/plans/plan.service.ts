@@ -107,6 +107,13 @@ export const remove = async (id: string) => {
     throw new NotFoundError("Plan no encontrado");
   }
 
+  const ventas = await getPrisma().orderItem.count({ where: { planId: id } });
+  if (ventas > 0) {
+    throw new ConflictError(
+      `El plan "${plan.nombre}" tiene ventas registradas y no se puede borrar sin perder ese historial. Desactívalo para que deje de mostrarse.`
+    );
+  }
+
   await getPrisma().plan.delete({ where: { id } });
 
   return { message: "Plan eliminado exitosamente" };

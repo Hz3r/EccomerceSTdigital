@@ -76,6 +76,7 @@ const mockPrisma = {
     delete: vi.fn(),
   },
   product: {
+    count: vi.fn().mockResolvedValue(0),
     findMany: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),
@@ -83,6 +84,7 @@ const mockPrisma = {
     delete: vi.fn(),
   },
   plan: {
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     findMany: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),
@@ -97,6 +99,7 @@ const mockPrisma = {
     delete: vi.fn(),
   },
   orderItem: {
+    count: vi.fn().mockResolvedValue(0),
     findMany: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),
@@ -105,6 +108,7 @@ const mockPrisma = {
     deleteMany: vi.fn(),
   },
   review: {
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     findMany: vi.fn(),
     findUnique: vi.fn(),
     create: vi.fn(),

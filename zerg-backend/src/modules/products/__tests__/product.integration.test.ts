@@ -181,6 +181,32 @@ describe("Product Integration Tests", () => {
   });
 
   describe("DELETE /api/products/:id", () => {
+    it("sin ventas borra también sus planes y reseñas", async () => {
+      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.orderItem.count.mockResolvedValue(0);
+      mockPrisma.product.delete.mockResolvedValue(mockProduct);
+
+      const response = await request(app).delete("/api/products/test-product-id");
+
+      expect(response.status).toBe(200);
+      expect(mockPrisma.review.deleteMany).toHaveBeenCalledWith({ where: { productId: "test-product-id" } });
+      expect(mockPrisma.plan.deleteMany).toHaveBeenCalledWith({ where: { productId: "test-product-id" } });
+      expect(mockPrisma.product.delete).toHaveBeenCalledWith({ where: { id: "test-product-id" } });
+    });
+
+    it("con ventas no se borra y explica qué hacer (409, no 500)", async () => {
+      mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrisma.orderItem.count.mockResolvedValue(3);
+
+      const response = await request(app).delete("/api/products/test-product-id");
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain("3 ventas registradas");
+      expect(response.body.message).toContain("Visible en la tienda");
+      expect(mockPrisma.product.delete).not.toHaveBeenCalled();
+      mockPrisma.orderItem.count.mockResolvedValue(0);
+    });
+
     it("debería eliminar un producto correctamente", async () => {
       mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
       mockPrisma.product.delete.mockResolvedValue(mockProduct);

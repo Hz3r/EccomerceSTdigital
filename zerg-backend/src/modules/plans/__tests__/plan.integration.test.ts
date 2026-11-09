@@ -138,6 +138,18 @@ describe("Plan Integration Tests", () => {
   });
 
   describe("DELETE /api/plans/:id", () => {
+    it("con ventas no se borra (409) y sugiere desactivarlo", async () => {
+      mockPrisma.plan.findUnique.mockResolvedValue(mockPlan);
+      mockPrisma.orderItem.count.mockResolvedValue(2);
+
+      const response = await request(app).delete("/api/plans/test-plan-id");
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain("Desactívalo");
+      expect(mockPrisma.plan.delete).not.toHaveBeenCalled();
+      mockPrisma.orderItem.count.mockResolvedValue(0);
+    });
+
     it("debería eliminar un plan correctamente", async () => {
       mockPrisma.plan.findUnique.mockResolvedValue(mockPlan);
       mockPrisma.plan.delete.mockResolvedValue(mockPlan);

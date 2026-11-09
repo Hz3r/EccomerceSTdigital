@@ -23,6 +23,9 @@ function warnOnce(code: string, message: string) {
   }
 }
 
+// Se intentó borrar algo que otros datos todavía usan (ej. un registro con pedidos).
+const FOREIGN_KEY_CODES = new Set(["P2003", "P2014"]);
+
 /** Convierte un error de conexión o de base desactualizada en un 503 claro; devuelve null si es otro tipo de error. */
 export function databaseConnectionError(err: unknown): AppError | null {
   const code = (err as { code?: unknown })?.code;
@@ -31,6 +34,10 @@ export function databaseConnectionError(err: unknown): AppError | null {
   if (code in DB_CONNECTION_HINTS) {
     warnOnce(code, `[database] ${code}: ${DB_CONNECTION_HINTS[code]} Revisa zerg-backend/.env y reinicia el backend.`);
     return new AppError("No hay conexión con la base de datos. Intenta de nuevo en unos minutos.", 503);
+  }
+
+  if (FOREIGN_KEY_CODES.has(code)) {
+    return new AppError("No se puede eliminar porque otros datos lo usan (por ejemplo, pedidos o planes). Desactívalo en su lugar.", 409);
   }
 
   if (DB_OUTDATED_CODES.has(code)) {
