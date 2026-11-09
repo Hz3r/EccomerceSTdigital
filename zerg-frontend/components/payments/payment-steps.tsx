@@ -14,6 +14,7 @@ import {
   KeyRound,
   Landmark,
   Loader2,
+  Lock,
   Package,
   Send,
   ShieldCheck,
@@ -458,13 +459,14 @@ export function DirectPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
   );
 }
 
-// ==================== Izipay (tarjeta) ====================
+// ==================== Izipay (tarjeta, Yape, QR…) ====================
 
 interface KRClient {
   setFormConfig: (config: Record<string, unknown>) => Promise<unknown>;
   renderElements: (selector: string) => Promise<unknown>;
   onSubmit: (cb: (event: { clientAnswer: unknown; rawClientAnswer?: string; hash: string }) => boolean | Promise<boolean>) => void;
-  removeForms?: () => Promise<unknown>;
+  onError?: (cb: (event: { errorCode?: string; errorMessage?: string; detailedErrorMessage?: string }) => void) => void;
+  removeForms: () => Promise<unknown>;
 }
 
 declare global {
@@ -473,66 +475,127 @@ declare global {
   }
 }
 
-function loadIzipayScript(src: string, publicKey: string) {
+function loadResource(tag: "script" | "link", url: string, attrs: Record<string, string> = {}) {
   return new Promise<void>((resolve, reject) => {
-    if (window.KR) return resolve();
-    const script = document.createElement("script");
-    script.src = src;
-    script.setAttribute("kr-public-key", publicKey);
-    script.setAttribute("kr-language", "es-ES");
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("No se pudo cargar Izipay"));
-    document.head.appendChild(script);
+    if (document.querySelector(`[data-izipay="${url}"]`)) return resolve();
+    const el = document.createElement(tag);
+    el.setAttribute("data-izipay", url);
+    if (tag === "script") (el as HTMLScriptElement).src = url;
+    else {
+      (el as HTMLLinkElement).rel = "stylesheet";
+      (el as HTMLLinkElement).href = url;
+    }
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+    el.onload = () => resolve();
+    el.onerror = () => reject(new Error("No se pudo cargar Izipay"));
+    document.head.appendChild(el);
   });
 }
 
-export function IzipayPayment({ payment, onUpdated }: { payment: Payment; onUpdated: () => void }) {
-  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
-  const [error, setError] = useState("");
+/**
+ * Carga la librería de Izipay y su tema "neon" (estilos y comportamiento de los campos).
+ * Sin el tema, los campos se ven sin formato. Los archivos del tema están junto a la librería (…/V4.0/ext/).
+ */
+async function loadIzipay(scriptUrl: string, publicKey: string) {
+  const themeBase = scriptUrl.replace(/\/stable\/kr-payment-form\.min\.js.*$/, "/ext/");
+  // kr-spa-mode: Izipay no dibuja nada al cargar; el formulario se dibuja solo con renderElements.
+  // Sin esto lo dibuja dos veces (errores CLIENT_722 / CLIENT_725).
+  await loadResource("script", scriptUrl, { "kr-public-key": publicKey, "kr-language": "es-ES", "kr-spa-mode": "true" });
+  await Promise.all([loadResource("link", `${themeBase}neon-reset.min.css`), loadResource("script", `${themeBase}neon.js`)]);
+  if (!window.KR) throw new Error("No se pudo cargar Izipay");
+  return window.KR;
+}
 
-  const start = async () => {
-    setStatus("loading");
-    setError("");
-    try {
-      const res = await api.post<{ data: { formToken: string; publicKey: string; scriptUrl: string } }>(`/payments/${payment.id}/izipay`);
-      const { formToken, publicKey, scriptUrl } = res.data.data;
-      await loadIzipayScript(scriptUrl, publicKey);
-      const KR = window.KR!;
-      await KR.setFormConfig({ formToken, "kr-language": "es-ES" });
-      await KR.renderElements("#izipay-form");
-      KR.onSubmit(async (event) => {
-        try {
-          await api.post(`/payments/${payment.id}/izipay/confirm`, {
-            krAnswer: event.rawClientAnswer ?? JSON.stringify(event.clientAnswer),
-            krHash: event.hash,
-          });
-        } finally {
-          onUpdated();
-        }
-        return false;
-      });
-      setStatus("ready");
-    } catch (err) {
-      setError(apiErrorMessage(err, "No pudimos abrir el pago con tarjeta."));
-      setStatus("error");
-    }
-  };
+/**
+ * Formulario de pago de Izipay (Smart Form): tarjeta de crédito/débito y los demás medios que Izipay tenga
+ * activos en la cuenta de la tienda (Yape, QR, etc.). Se abre solo al entrar a la página de pago.
+ */
+export function IzipayPayment({ payment, onUpdated }: { payment: Payment; onUpdated: () => void }) {
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
+  const onUpdatedRef = useRef(onUpdated);
+  useEffect(() => {
+    onUpdatedRef.current = onUpdated;
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.post<{ data: { formToken: string; publicKey: string; scriptUrl: string } }>(`/payments/${payment.id}/izipay`);
+        if (cancelled) return;
+        const { formToken, publicKey, scriptUrl } = res.data.data;
+        const KR = await loadIzipay(scriptUrl, publicKey);
+        if (cancelled) return;
+        // Un formulario a la vez: la librería no permite dibujar otro encima (error CLIENT_725).
+        await KR.removeForms();
+        await KR.setFormConfig({ formToken, "kr-language": "es-ES" });
+        await KR.renderElements("#izipay-form");
+        KR.onSubmit(async (event) => {
+          try {
+            await api.post(`/payments/${payment.id}/izipay/confirm`, {
+              krAnswer: event.rawClientAnswer ?? JSON.stringify(event.clientAnswer),
+              krHash: event.hash,
+            });
+          } finally {
+            onUpdatedRef.current();
+          }
+          return false;
+        });
+        if (!cancelled) setStatus("ready");
+      } catch (err) {
+        if (cancelled) return;
+        setError(apiErrorMessage(err, "No pudimos abrir el formulario de pago. Intenta de nuevo."));
+        setStatus("error");
+      }
+    })();
+    return () => {
+      cancelled = true;
+      window.KR?.removeForms().catch(() => {});
+    };
+  }, [payment.id, attempt]);
 
   return (
     <div className="rounded-3xl border bg-card p-6">
-      <p className="text-sm text-muted-foreground">Monto a pagar</p>
-      <p className="text-4xl font-black tracking-tight">{formatPrice(Number(payment.monto))}</p>
-      <p className="mt-3 text-sm text-muted-foreground">El pago se procesa de forma segura en el formulario de Izipay. Tus datos de tarjeta no pasan por nuestra tienda.</p>
-      <div id="izipay-form" className={cn("mt-5", status !== "ready" && "hidden")}>
-        <div className="kr-embedded" />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">Monto a pagar</p>
+          <p className="text-4xl font-black tracking-tight">{formatPrice(Number(payment.monto))}</p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand-strong dark:text-brand-bright">
+          <Lock className="size-3.5" />
+          Pago seguro
+        </span>
       </div>
-      {status !== "ready" && (
-        <Button className="mt-5 h-12 w-full rounded-xl text-base font-semibold" onClick={start} disabled={status === "loading"}>
-          {status === "loading" && <Loader2 className="size-4 animate-spin" />}
-          Pagar con tarjeta
-        </Button>
+      <p className="mt-3 text-sm text-muted-foreground">
+        Paga con tarjeta de crédito o débito, o con los otros medios que aparezcan abajo. Tus datos se procesan en el formulario seguro de Izipay y no pasan por nuestra tienda.
+      </p>
+
+      {/* Panel claro: el formulario de Izipay está pensado para fondo blanco */}
+      <div className="izipay-panel relative mt-5 min-h-48 rounded-2xl bg-white p-4 text-neutral-900 shadow-sm ring-1 ring-black/5 sm:p-6" style={{ colorScheme: "light" }}>
+        {status === "loading" && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-neutral-500">
+            <Loader2 className="size-6 animate-spin text-brand" />
+            Cargando el formulario de pago…
+          </div>
+        )}
+        <div id="izipay-form" className={cn(status !== "ready" && "invisible")}>
+          <div className="kr-smart-form" {...{ "kr-card-form-expanded": "" }} />
+        </div>
+      </div>
+
+      {status === "error" && (
+        <div className="mt-4 space-y-3">
+          <p role="alert" className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" className="h-11 w-full rounded-xl" onClick={() => { setStatus("loading"); setError(""); setAttempt((a) => a + 1); }}>
+            Reintentar
+          </Button>
+        </div>
       )}
-      {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+      <p className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+        <ShieldCheck className="size-3.5" /> Procesado por Izipay · Visa · Mastercard · Amex · Diners
+      </p>
     </div>
   );
 }

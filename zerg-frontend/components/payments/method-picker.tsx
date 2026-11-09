@@ -6,7 +6,7 @@ import type { MetodoPago, PaymentMethodOption } from "@/types";
 
 export const METHOD_INFO: Record<MetodoPago, { icon: typeof CreditCard; title: string; text: string }> = {
   DIRECTO: { icon: Smartphone, title: "Yape, Plin o transferencia", text: "Pagas desde tu app y subes la captura. Lo confirmamos en minutos." },
-  IZIPAY: { icon: CreditCard, title: "Tarjeta de crédito o débito", text: "Visa, Mastercard, Amex y Diners con Izipay. Confirmación inmediata." },
+  IZIPAY: { icon: CreditCard, title: "Pago en línea con Izipay", text: "Tarjeta de crédito o débito y otros medios disponibles. Confirmación inmediata, sin enviar capturas." },
   BINANCE_PAY: { icon: Bitcoin, title: "Binance Pay (USDT)", text: "Paga con tu cuenta de Binance escaneando un QR." },
 };
 

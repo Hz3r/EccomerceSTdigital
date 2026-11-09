@@ -188,7 +188,7 @@ function Checkout({ user }: { user: User }) {
                   value={form.telefono}
                   onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                   required
-                  pattern="[+]?[0-9 ()\-]{9,20}"
+                  pattern="\+?[0-9 \-]{9,20}"
                   title="Escribe tu número de WhatsApp, ej. 987 654 321"
                 />
                 <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">

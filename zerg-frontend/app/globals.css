@@ -271,3 +271,19 @@
 @media (prefers-reduced-motion: reduce) {
   .image-shimmer::before { animation: none; }
 }
+
+/* Formulario de Izipay (pago en línea): centrado, con el ancho de un formulario de tarjeta y el color de la tienda en el botón */
+.izipay-panel .kr-smart-form,
+.izipay-panel .kr-smart-form-wrapper,
+.izipay-panel .kr-embedded {
+  width: 100% !important;
+  max-width: 420px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+.izipay-panel .kr-payment-button {
+  background-color: var(--brand) !important;
+  color: #04110d !important;
+  border-radius: 0.75rem !important;
+  font-weight: 700 !important;
+}
