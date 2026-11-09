@@ -2,6 +2,12 @@ import { getPrisma } from "../../config/database.js";
 
 const DAYS = 30;
 
+// Las órdenes sin pagar son reservas del cliente (las cancela o vuelven a su carrito):
+// no cuentan como ventas ni como pendientes por atender.
+const NOT_UNPAID = {
+  NOT: { status: "PENDIENTE" as const, payments: { some: {}, none: { estado: { in: ["EN_REVISION" as const, "PAGADO" as const] } } } },
+};
+
 // Fecha local del servidor (YYYY-MM-DD), coherente con el inicio del rango.
 function dayKey(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -16,7 +22,7 @@ async function getChartData(db: ReturnType<typeof getPrisma>) {
 
   const [orders, statusGroups, pendingReviews, totalCustomers, activeProducts] = await Promise.all([
     db.order.findMany({
-      where: { creadoEn: { gte: since }, status: { not: "CANCELADO" } },
+      where: { creadoEn: { gte: since }, status: { not: "CANCELADO" }, ...NOT_UNPAID },
       select: {
         creadoEn: true,
         total: true,
@@ -35,7 +41,7 @@ async function getChartData(db: ReturnType<typeof getPrisma>) {
         },
       },
     }),
-    db.order.groupBy({ by: ["status"], _count: { _all: true } }),
+    db.order.groupBy({ by: ["status"], where: NOT_UNPAID, _count: { _all: true } }),
     db.review.count({ where: { isApproved: false } }),
     db.user.count({ where: { rol: "CLIENTE" } }),
     db.product.count({ where: { isActivo: true } }),
@@ -120,13 +126,14 @@ export const getStats = async () => {
   ] = await Promise.all([
     db.product.count(),
     db.category.count(),
-    db.order.count(),
+    db.order.count({ where: NOT_UNPAID }),
     db.user.count(),
-    db.order.count({ where: { status: "PENDIENTE" } }),
+    db.order.count({ where: { status: "PENDIENTE", ...NOT_UNPAID } }),
     db.order.aggregate({
       where: {
         creadoEn: { gte: startOfThisMonth },
         status: { not: "CANCELADO" },
+        ...NOT_UNPAID,
       },
       _sum: { total: true },
     }),
@@ -134,10 +141,12 @@ export const getStats = async () => {
       where: {
         creadoEn: { gte: startOfLastMonth, lt: startOfThisMonth },
         status: { not: "CANCELADO" },
+        ...NOT_UNPAID,
       },
       _sum: { total: true },
     }),
     db.order.findMany({
+      where: NOT_UNPAID,
       take: 5,
       orderBy: { creadoEn: "desc" },
       include: {

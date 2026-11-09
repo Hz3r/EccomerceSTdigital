@@ -13,7 +13,8 @@ type CartAction =
   | { type: "REMOVE_ITEM"; planId: string }
   | { type: "UPDATE_QUANTITY"; planId: string; cantidad: number }
   | { type: "CLEAR_CART" }
-  | { type: "LOAD_CART"; items: CartItem[] };
+  | { type: "LOAD_CART"; items: CartItem[] }
+  | { type: "RESTORE_ITEMS"; items: CartItem[] };
 
 export const MAX_QUANTITY = 99;
 
@@ -63,6 +64,17 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
     case "CLEAR_CART":
       return { items: [] };
+    case "RESTORE_ITEMS": {
+      // Productos de un pedido cancelado que vuelven al carrito: si ya estaban, se queda la cantidad mayor
+      // (no se suman, para no duplicar si el carrito ya tenía lo mismo).
+      const items = [...state.items];
+      for (const r of action.items) {
+        const i = items.findIndex((x) => x.planId === r.planId);
+        if (i === -1) items.push({ ...r, cantidad: clampQuantity(r.cantidad) });
+        else items[i] = { ...items[i], cantidad: clampQuantity(Math.max(items[i].cantidad, r.cantidad)) };
+      }
+      return { items };
+    }
     case "LOAD_CART":
       // Un carrito guardado antes podría traer cantidades fuera de rango
       return { items: action.items.map((i) => ({ ...i, cantidad: clampQuantity(i.cantidad) })) };
@@ -80,6 +92,8 @@ interface CartContextType {
   removeItem: (planId: string) => void;
   updateQuantity: (planId: string, cantidad: number) => void;
   clearCart: () => void;
+  /** Regresa al carrito los productos de un pedido cancelado (sin contarlo como "añadir al carrito"). */
+  restoreItems: (items: CartItem[]) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -122,6 +136,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "CLEAR_CART" });
   }, []);
 
+  const restoreItems = useCallback((items: CartItem[]) => {
+    dispatch({ type: "RESTORE_ITEMS", items });
+  }, []);
+
   const totalItems = state.items.reduce((sum, i) => sum + i.cantidad, 0);
   const totalPrice = state.items.reduce(
     (sum, i) => sum + i.plan.precio * i.cantidad,
@@ -138,6 +156,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         removeItem,
         updateQuantity,
         clearCart,
+        restoreItems,
       }}
     >
       {children}

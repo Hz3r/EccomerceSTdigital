@@ -95,6 +95,7 @@ const mockPrisma = {
   order: {
     findMany: vi.fn(),
     findUnique: vi.fn(),
+    findFirst: vi.fn().mockResolvedValue(null),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
