@@ -529,7 +529,9 @@ function izipayErrorMessage(code = "", detail = ""): IzipayResult {
  * Pensado para dar confianza: a quién se paga, pago cifrado, sellos y mensajes claros si el banco rechaza.
  */
 export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Payment; numeroOrden?: string; onUpdated: () => void }) {
-  const { marca } = useSite().settings;
+  const { marca, pagos } = useSite().settings;
+  // "lista": Izipay muestra primero los medios activos (Tarjeta, Yape, QR…) con sus logos; "tarjeta": el formulario abierto.
+  const listMode = pagos.izipayModo === "lista";
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "approved">("loading");
   const [error, setError] = useState("");
   const [result, setResult] = useState<IzipayResult>(null);
@@ -551,6 +553,15 @@ export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
       clearTimeout(slow);
     };
   }, [status]);
+
+  // Si Izipay tarda en terminar de dibujarse, se muestra igual su formulario (con su propio indicador de carga)
+  useEffect(() => {
+    if (status !== "loading") return;
+    const id = setTimeout(() => {
+      if (document.querySelector("#izipay-form .kr-smart-form *")) setStatus((s) => (s === "loading" ? "ready" : s));
+    }, 8000);
+    return () => clearTimeout(id);
+  }, [status, attempt]);
 
   useEffect(() => {
     let cancelled = false;
@@ -606,7 +617,7 @@ export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
       cancelled = true;
       window.KR?.removeForms().catch(() => {});
     };
-  }, [payment.id, attempt]);
+  }, [payment.id, attempt, listMode]);
 
   const retry = () => {
     setStatus("loading");
@@ -636,7 +647,11 @@ export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
       <div className="p-5 sm:p-6">
         {/* Cómo funciona, en 3 pasos */}
         <ol className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
-          {["Ingresa los datos de tu tarjeta", "Confirma con tu banco si te lo pide", "Recibe tus accesos por WhatsApp"].map((t, i) => (
+          {[
+            listMode ? "Elige cómo pagar: tarjeta, Yape o QR" : "Ingresa los datos de tu tarjeta",
+            listMode ? "Confirma el pago en tu banco o app" : "Confirma con tu banco si te lo pide",
+            "Recibe tus accesos por WhatsApp",
+          ].map((t, i) => (
             <li key={t} className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2">
               <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-brand-ink">{i + 1}</span>
               {t}
@@ -682,7 +697,7 @@ export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
               </div>
             )}
             <div id="izipay-form" className={cn(status !== "ready" && "invisible")}>
-              <div className="kr-smart-form" {...{ "kr-card-form-expanded": "" }} />
+              <div key={listMode ? "lista" : "tarjeta"} className="kr-smart-form" {...(listMode ? {} : { "kr-card-form-expanded": "" })} />
             </div>
           </div>
         )}

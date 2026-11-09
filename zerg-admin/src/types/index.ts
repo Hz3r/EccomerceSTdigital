@@ -283,6 +283,8 @@ export interface SiteSettings {
       cuentas: CuentaBancaria[];
     };
     tipoCambioUsdt: number;
+    /** "tarjeta" = formulario de tarjeta abierto; "lista" = lista de medios (Tarjeta, Yape, QR…). */
+    izipayModo: string;
     logos: { directo: LogoPago[]; izipay: LogoPago[]; binance: LogoPago[] };
   };
   analytics: { googleId: string };

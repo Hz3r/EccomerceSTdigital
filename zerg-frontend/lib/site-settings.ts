@@ -97,6 +97,8 @@ export interface SiteSettings {
       cuentas: CuentaBancaria[];
     };
     tipoCambioUsdt: number;
+    /** "tarjeta" = formulario de tarjeta abierto; "lista" = lista de medios (Tarjeta, Yape, QR…). */
+    izipayModo: string;
     logos: { directo: LogoPago[]; izipay: LogoPago[]; binance: LogoPago[] };
   };
   analytics: { googleId: string };
@@ -209,6 +211,7 @@ export const defaultSettings: SiteSettings = {
       cuentas: [],
     },
     tipoCambioUsdt: 3.75,
+    izipayModo: "tarjeta",
     logos: {
       directo: ["Yape", "Plin", "BCP", "Interbank"].map((nombre) => ({ nombre, logoUrl: "" })),
       izipay: ["VISA", "Mastercard", "American Express", "Diners Club"].map((nombre) => ({ nombre, logoUrl: "" })),
@@ -237,7 +240,9 @@ function normalize(s: SiteSettings): SiteSettings {
   );
   return {
     ...s,
-    pagos: s.pagos ? { ...s.pagos, logos: s.pagos.logos ?? defaultSettings.pagos.logos } : defaultSettings.pagos,
+    pagos: s.pagos
+      ? { ...s.pagos, logos: s.pagos.logos ?? defaultSettings.pagos.logos, izipayModo: s.pagos.izipayModo || "tarjeta" }
+      : defaultSettings.pagos,
     analytics: { ...defaultSettings.analytics, ...s.analytics },
     contacto: { ...defaultSettings.contacto, ...s.contacto },
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
