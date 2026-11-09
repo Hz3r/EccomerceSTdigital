@@ -52,6 +52,7 @@ const mockPrisma = {
   },
   payment: {
     create: vi.fn().mockResolvedValue({}),
+    findFirst: vi.fn(),
     findUnique: vi.fn(),
     findUniqueOrThrow: vi.fn(),
     update: vi.fn(),

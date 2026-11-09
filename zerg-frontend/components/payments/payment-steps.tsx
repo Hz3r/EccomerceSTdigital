@@ -541,11 +541,16 @@ export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
     onUpdatedRef.current = onUpdated;
   });
 
-  // Aprobado pero la confirmación tarda (llega por la notificación de Izipay): se tranquiliza al cliente.
+  // Aprobado: se consulta el pedido cada pocos segundos hasta que el backend lo marque pagado
+  // (por el retorno del navegador o por la notificación de Izipay). Si tarda, se tranquiliza al cliente.
   useEffect(() => {
     if (status !== "approved") return;
-    const id = setTimeout(() => setSlowConfirm(true), 15000);
-    return () => clearTimeout(id);
+    const poll = setInterval(() => onUpdatedRef.current(), 4000);
+    const slow = setTimeout(() => setSlowConfirm(true), 15000);
+    return () => {
+      clearInterval(poll);
+      clearTimeout(slow);
+    };
   }, [status]);
 
   useEffect(() => {

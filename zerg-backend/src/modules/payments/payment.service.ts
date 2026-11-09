@@ -246,18 +246,29 @@ export async function startIzipay(viewer: TokenPayload, paymentId: string) {
   return { formToken, publicKey: config.publicKey, scriptUrl: izipay.IZIPAY_SCRIPT_URL };
 }
 
+/** Busca el pago de Izipay de una respuesta: por el id enviado en metadata o, si no vino, por el n.º de pedido. */
+async function findIzipayPayment(answer: ReturnType<typeof izipay.parseAnswer>) {
+  if (answer.paymentId) {
+    const byId = await getPrisma().payment.findUnique({ where: { id: answer.paymentId }, include: { order: true } });
+    if (byId) return byId;
+  }
+  if (!answer.orderId) return null;
+  return getPrisma().payment.findFirst({ where: { metodo: "IZIPAY", order: { numeroOrden: answer.orderId } }, include: { order: true } });
+}
+
 async function settleIzipay(answer: ReturnType<typeof izipay.parseAnswer>, origen: string) {
-  if (!answer.paid) return null;
-  const payment = answer.paymentId
-    ? await getPrisma().payment.findUnique({ where: { id: answer.paymentId }, include: { order: true } })
-    : null;
+  if (!answer.paid) {
+    console.warn(`[izipay] ${origen}: pedido ${answer.orderId} sin pagar (${answer.status ?? "sin estado"}).`);
+    return null;
+  }
+  const payment = await findIzipayPayment(answer);
   if (!payment || payment.metodo !== "IZIPAY" || payment.order.numeroOrden !== answer.orderId) {
-    console.error("[izipay] Pago no encontrado para la orden", answer.orderId);
+    console.error(`[izipay] ${origen}: no se encontró el pago del pedido ${answer.orderId} (paymentId: ${answer.paymentId ?? "no vino"}).`);
     return null;
   }
   // El monto cobrado debe coincidir con el del pedido
   if (answer.currency !== "PEN" || answer.amountCents !== Math.round(Number(payment.monto) * 100)) {
-    console.error("[izipay] El monto no coincide en", answer.orderId, answer.amountCents, answer.currency);
+    console.error(`[izipay] ${origen}: el monto no coincide en ${answer.orderId}: cobrado ${answer.amountCents} ${answer.currency}, esperado ${Math.round(Number(payment.monto) * 100)} PEN.`);
     return null;
   }
   return markPaid(payment, {
@@ -274,10 +285,13 @@ export async function handleIzipayIpn(rawBody: string) {
   const form = new URLSearchParams(rawBody);
   const krAnswer = form.get("kr-answer");
   const krHash = form.get("kr-hash");
-  if (!krAnswer || !krHash || !izipay.isValidKrHash(krAnswer, krHash, config.password)) {
+  // La IPN se firma con la contraseña de la API REST; Izipay indica la clave usada en kr-hash-key.
+  const secret = form.get("kr-hash-key") === "sha256_hmac" ? config.hmacKey : config.password;
+  if (!krAnswer || !krHash || !izipay.isValidKrHash(krAnswer, krHash, secret)) {
+    console.error(`[izipay] IPN con firma inválida (kr-hash-key: ${form.get("kr-hash-key") ?? "no vino"}). Revisa IZIPAY_PASSWORD e IZIPAY_HMAC_KEY: deben ser del mismo modo (test o producción).`);
     throw new BadRequestError("Firma de Izipay inválida");
   }
-  await settleIzipay(izipay.parseAnswer(krAnswer), "Izipay");
+  await settleIzipay(izipay.parseAnswer(krAnswer), "Izipay (IPN)");
 }
 
 /** Retorno del formulario en el navegador: confirma al instante (la IPN llega igual y no duplica). */
@@ -286,11 +300,16 @@ export async function confirmIzipayReturn(viewer: TokenPayload, paymentId: strin
   if (!config) throw new BadRequestError("Izipay no está configurado");
   await findOwnedPayment(viewer, paymentId);
   if (typeof input.krAnswer !== "string" || typeof input.krHash !== "string" || !izipay.isValidKrHash(input.krAnswer, input.krHash, config.hmacKey)) {
+    console.error("[izipay] Retorno del navegador con firma inválida: revisa IZIPAY_HMAC_KEY (debe ser la clave HMAC-SHA-256 del mismo modo, test o producción).");
     throw new BadRequestError("No pudimos validar la respuesta del pago");
   }
   const answer = izipay.parseAnswer(input.krAnswer);
-  if (answer.paymentId !== paymentId) throw new BadRequestError("La respuesta no corresponde a este pago");
-  await settleIzipay(answer, "Izipay");
+  const payment = await getPrisma().payment.findUnique({ where: { id: paymentId }, include: { order: true } });
+  // Debe ser la respuesta de este pago: por el id (si vino) o por el n.º de pedido
+  if (!payment || (answer.paymentId ? answer.paymentId !== paymentId : answer.orderId !== payment.order.numeroOrden)) {
+    throw new BadRequestError("La respuesta no corresponde a este pago");
+  }
+  await settleIzipay(answer, "Izipay (navegador)");
   return publicPayment(await getPrisma().payment.findUniqueOrThrow({ where: { id: paymentId }, select: paymentSelect }));
 }
 
