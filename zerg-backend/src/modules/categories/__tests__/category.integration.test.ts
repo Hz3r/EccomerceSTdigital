@@ -143,6 +143,18 @@ describe("Category Integration Tests", () => {
   });
 
   describe("DELETE /api/categories/:id", () => {
+    it("con productos no se borra (409) y dice cuántos tiene", async () => {
+      mockPrisma.category.findUnique.mockResolvedValue(mockCategory);
+      mockPrisma.product.count.mockResolvedValue(5);
+
+      const response = await request(app).delete("/api/categories/test-category-id");
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain("5 productos");
+      expect(mockPrisma.category.delete).not.toHaveBeenCalled();
+      mockPrisma.product.count.mockResolvedValue(0);
+    });
+
     it("debería eliminar una categoría correctamente", async () => {
       mockPrisma.category.findUnique.mockResolvedValue(mockCategory);
       mockPrisma.category.delete.mockResolvedValue(mockCategory);

@@ -76,6 +76,13 @@ export const remove = async (id: string) => {
     throw new NotFoundError("Categoría no encontrada");
   }
 
+  const productos = await getPrisma().product.count({ where: { categoryId: id } });
+  if (productos > 0) {
+    throw new ConflictError(
+      `La categoría "${category.nombre}" tiene ${productos} ${productos === 1 ? "producto" : "productos"}. Muévelos a otra categoría antes de borrarla, u ocúltala.`
+    );
+  }
+
   await getPrisma().category.delete({ where: { id } });
 
   return { message: "Categoría eliminada exitosamente" };

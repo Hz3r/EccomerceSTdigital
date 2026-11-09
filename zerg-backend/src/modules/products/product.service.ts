@@ -157,7 +157,21 @@ export const remove = async (id: string) => {
     throw new NotFoundError("Producto no encontrado");
   }
 
-  await getPrisma().product.delete({ where: { id } });
+  // Con pedidos no se borra: se perdería el historial de ventas y los accesos entregados.
+  const ventas = await getPrisma().orderItem.count({ where: { plan: { productId: id } } });
+  if (ventas > 0) {
+    throw new ConflictError(
+      `"${product.nombre}" tiene ${ventas} ${ventas === 1 ? "venta registrada" : "ventas registradas"} y no se puede borrar sin perder ese historial. ` +
+        "Desmarca “Visible en la tienda” para ocultarlo, o “Hay stock” para mostrarlo como agotado."
+    );
+  }
+
+  // Sin ventas: se borran también sus planes y reseñas (los favoritos se borran solos).
+  await getPrisma().$transaction([
+    getPrisma().review.deleteMany({ where: { productId: id } }),
+    getPrisma().plan.deleteMany({ where: { productId: id } }),
+    getPrisma().product.delete({ where: { id } }),
+  ]);
 
   return { message: "Producto eliminado exitosamente" };
 };
