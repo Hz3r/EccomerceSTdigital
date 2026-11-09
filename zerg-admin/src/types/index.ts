@@ -278,6 +278,7 @@ export interface SiteSettings {
     };
     tipoCambioUsdt: number;
   };
+  analytics: { googleId: string };
   contacto: { whatsapp: string; whatsappMensaje: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
 }

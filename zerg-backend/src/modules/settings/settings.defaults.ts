@@ -152,6 +152,10 @@ export const defaultSettings = {
     // Soles por 1 USDT para cobrar con Binance Pay (los precios de la tienda están en soles).
     tipoCambioUsdt: 3.75,
   },
+  // Google Analytics 4: ID de medición "G-XXXXXXX" (Admin → Analítica). Vacío = no se carga nada de Google.
+  analytics: {
+    googleId: "",
+  },
   contacto: {
     whatsapp: "",
     // Mensaje que ya va escrito al abrir WhatsApp desde el chat de ayuda.

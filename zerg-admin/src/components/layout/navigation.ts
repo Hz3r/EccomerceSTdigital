@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   BookOpen,
   CreditCard,
   Home,
@@ -64,6 +65,7 @@ export const navigation: NavGroup[] = [
       { href: "/content/pages", label: "Páginas de ayuda", icon: BookOpen, description: "Cómo comprar (guías y videos), FAQ, garantía y textos legales" },
       { href: "/content/payments", label: "Pagos", icon: Wallet, description: "Yape, Plin, cuentas, Izipay y Binance" },
       { href: "/content/whatsapp", label: "WhatsApp", icon: MessageCircle, description: "Conexión con WhatsApp Business" },
+      { href: "/content/analytics", label: "Analítica", icon: BarChart3, description: "Google Analytics 4" },
     ],
   },
 ];

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import api from "@/lib/axios";
 import type { User } from "@/types";
+import { track } from "@/lib/analytics";
 
 interface AuthContextType {
   user: User | null;
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string) => {
       const response = await api.post("/auth/login", { email, password });
       startSession(response.data.data.user, response.data.data.token);
+      track("login", { method: "email" });
       return response.data.data.user as User;
     },
     [startSession]
@@ -81,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (nombre: string, email: string, password: string) => {
       const response = await api.post("/auth/register", { nombre, email, password });
       startSession(response.data.data.user, response.data.data.token);
+      track("sign_up", { method: "email" });
       return response.data.data.user as User;
     },
     [startSession]
@@ -92,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await api.post("/auth/google", { credential });
       const { user: userData, token: newToken, status } = response.data.data;
       startSession(userData, newToken);
+      track(status === "created" ? "sign_up" : "login", { method: "google" });
       return { user: userData as User, status: (status ?? "existing") as GoogleAuthStatus };
     },
     [startSession]

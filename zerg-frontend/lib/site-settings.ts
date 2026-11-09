@@ -92,6 +92,7 @@ export interface SiteSettings {
     };
     tipoCambioUsdt: number;
   };
+  analytics: { googleId: string };
   contacto: { whatsapp: string; whatsappMensaje: string; email: string; horario: string };
   footer: { descripcion: string; metodosPago: string[] };
 }
@@ -202,6 +203,7 @@ export const defaultSettings: SiteSettings = {
     },
     tipoCambioUsdt: 3.75,
   },
+  analytics: { googleId: "" },
   contacto: {
     whatsapp: "",
     whatsappMensaje: "Hola {tienda}, necesito ayuda{cliente}.",
@@ -224,6 +226,7 @@ function normalize(s: SiteSettings): SiteSettings {
   return {
     ...s,
     pagos: s.pagos ?? defaultSettings.pagos,
+    analytics: { ...defaultSettings.analytics, ...s.analytics },
     contacto: { ...defaultSettings.contacto, ...s.contacto },
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
     portada: { ...s.portada, plataformas, recienLlegados: s.portada.recienLlegados ?? defaultSettings.portada.recienLlegados, boletin: { ...defaultSettings.portada.boletin, ...s.portada.boletin } },

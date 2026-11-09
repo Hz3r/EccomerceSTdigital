@@ -7,6 +7,7 @@ import { useSite } from "@/hooks/useSiteSettings";
 import api from "@/lib/axios";
 import { USE_MOCKS } from "@/lib/api";
 import { apiErrorMessage } from "@/lib/auth-redirect";
+import { track } from "@/lib/analytics";
 
 // Formulario del boletín: guarda el suscriptor en el backend (Suscriptores en el admin).
 // Los textos se editan en el admin (Portada → Boletín) y la sección se oculta desde "Secciones visibles".
@@ -32,6 +33,7 @@ export function Newsletter() {
         ? boletin.mensajeExito
         : (await api.post<{ message?: string }>("/newsletter/subscribe", body)).data.message;
       setSent(boletin.mensajeExito || message || "¡Listo!");
+      track("generate_lead", { lead_source: "boletin" });
     } catch (err) {
       setError(apiErrorMessage(err, "No pudimos suscribirte. Intenta de nuevo."));
     } finally {
