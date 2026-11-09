@@ -29,6 +29,7 @@ import { useSite } from "@/hooks/useSiteSettings";
 import api from "@/lib/axios";
 import { apiErrorMessage } from "@/lib/auth-redirect";
 import { formatPrice } from "@/lib/catalog";
+import { MethodLogos } from "./payment-logos";
 import { assetUrl } from "@/lib/site-settings";
 import { cn } from "@/lib/utils";
 import type { Payment, StatusOrden } from "@/types";
@@ -522,8 +523,6 @@ function izipayErrorMessage(code = "", detail = ""): IzipayResult {
   return { kind: "error", title: "No pudimos procesar el pago", text: "No se realizó ningún cobro. Intenta de nuevo en unos segundos o elige otro método de pago." };
 }
 
-const CARD_BRANDS = ["VISA", "Mastercard", "AMEX", "Diners"];
-
 /**
  * Formulario de pago de Izipay (Smart Form): tarjeta de crédito/débito y los demás medios que Izipay tenga
  * activos en la cuenta de la tienda (Yape, QR, etc.). Se abre solo al entrar a la página de pago.
@@ -630,13 +629,7 @@ export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Pa
             <Lock className="size-3.5" />
             Pago 100% seguro
           </span>
-          <div className="flex flex-wrap justify-end gap-1">
-            {CARD_BRANDS.map((b) => (
-              <span key={b} className="rounded-md border bg-background px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-muted-foreground">
-                {b}
-              </span>
-            ))}
-          </div>
+          <MethodLogos metodo="IZIPAY" className="justify-end" />
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { Bitcoin, Check, CreditCard, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MethodLogos } from "./payment-logos";
 import type { MetodoPago, PaymentMethodOption } from "@/types";
 
 export const METHOD_INFO: Record<MetodoPago, { icon: typeof CreditCard; title: string; text: string }> = {
@@ -47,6 +48,7 @@ export function MethodPicker({ methods, value, onChange, className }: {
                 )}
               </span>
               <span className="mt-0.5 block text-sm text-muted-foreground">{info.text}</span>
+              <MethodLogos metodo={m.metodo} className="mt-2.5" muted={!m.disponible} />
             </span>
             <span className={cn("flex size-5 shrink-0 items-center justify-center rounded-full border", selected && "border-brand-strong bg-brand-strong text-white")}>
               {selected && <Check className="size-3.5" />}

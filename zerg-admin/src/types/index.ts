@@ -211,6 +211,12 @@ export interface MenuItem {
   grupos: MenuGroup[];
 }
 
+/** Logo pequeño bajo un método de pago (VISA, Yape…). Sin imagen se muestra el nombre. */
+export interface LogoPago {
+  nombre: string;
+  logoUrl: string;
+}
+
 export interface Plataforma {
   nombre: string;
   logoUrl: string;
@@ -277,6 +283,7 @@ export interface SiteSettings {
       cuentas: CuentaBancaria[];
     };
     tipoCambioUsdt: number;
+    logos: { directo: LogoPago[]; izipay: LogoPago[]; binance: LogoPago[] };
   };
   analytics: { googleId: string };
   contacto: { whatsapp: string; whatsappMensaje: string; email: string; horario: string };

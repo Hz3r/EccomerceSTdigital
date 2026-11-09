@@ -24,6 +24,12 @@ export interface MenuItem {
   grupos: MenuGroup[];
 }
 
+/** Logo pequeño bajo un método de pago (VISA, Yape…). Sin imagen se muestra el nombre. */
+export interface LogoPago {
+  nombre: string;
+  logoUrl: string;
+}
+
 export interface Plataforma {
   nombre: string;
   logoUrl: string;
@@ -91,6 +97,7 @@ export interface SiteSettings {
       cuentas: CuentaBancaria[];
     };
     tipoCambioUsdt: number;
+    logos: { directo: LogoPago[]; izipay: LogoPago[]; binance: LogoPago[] };
   };
   analytics: { googleId: string };
   contacto: { whatsapp: string; whatsappMensaje: string; email: string; horario: string };
@@ -202,6 +209,11 @@ export const defaultSettings: SiteSettings = {
       cuentas: [],
     },
     tipoCambioUsdt: 3.75,
+    logos: {
+      directo: ["Yape", "Plin", "BCP", "Interbank"].map((nombre) => ({ nombre, logoUrl: "" })),
+      izipay: ["VISA", "Mastercard", "American Express", "Diners Club"].map((nombre) => ({ nombre, logoUrl: "" })),
+      binance: ["Binance", "USDT"].map((nombre) => ({ nombre, logoUrl: "" })),
+    },
   },
   analytics: { googleId: "" },
   contacto: {
@@ -225,7 +237,7 @@ function normalize(s: SiteSettings): SiteSettings {
   );
   return {
     ...s,
-    pagos: s.pagos ?? defaultSettings.pagos,
+    pagos: s.pagos ? { ...s.pagos, logos: s.pagos.logos ?? defaultSettings.pagos.logos } : defaultSettings.pagos,
     analytics: { ...defaultSettings.analytics, ...s.analytics },
     contacto: { ...defaultSettings.contacto, ...s.contacto },
     header: { ...s.header, menu: Array.isArray(s.header.menu) ? s.header.menu : defaultSettings.header.menu },
