@@ -26,6 +26,7 @@ import { Rating } from "@/components/product/rating";
 import { ProductCarousel } from "@/components/home/product-carousel";
 import { Newsletter } from "@/components/layout/newsletter";
 import { MAX_QUANTITY, clampQuantity, useCart } from "@/hooks/useCart";
+import { CURRENCY, itemsValue, toItem, track } from "@/lib/analytics";
 import { useLiveVersion } from "@/lib/live";
 import { getProductBySlug, getProducts } from "@/lib/api";
 import { activePlans, averageRating, cheapestPlan, discountPercent, formatPrice, isSoldOut, planLabel, soldOutLabel, stockLabel } from "@/lib/catalog";
@@ -43,7 +44,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
   const router = useRouter();
-  const { addItem, items, updateQuantity } = useCart();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,11 +113,18 @@ export default function ProductDetailPage() {
   // Con stock definido no se puede elegir más de lo que hay
   const maxQuantity = Math.min(MAX_QUANTITY, product?.stock ?? MAX_QUANTITY);
 
+  // Analytics: una vista de producto por producto abierto (no en cada actualización en vivo)
+  const viewedId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!product || viewedId.current === product.id) return;
+    viewedId.current = product.id;
+    const item = toItem(product, cheapestPlan(product));
+    track("view_item", { currency: CURRENCY, value: itemsValue([item]), items: [item] });
+  }, [product]);
+
   const addToCart = () => {
     if (!product || !plan || soldOut) return;
-    const current = items.find((i) => i.planId === plan.id)?.cantidad ?? 0;
-    addItem(plan, product);
-    updateQuantity(plan.id, current + quantity);
+    addItem(plan, product, quantity);
   };
 
   if (isLoading) {

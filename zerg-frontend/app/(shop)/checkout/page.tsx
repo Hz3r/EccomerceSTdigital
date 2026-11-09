@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/hooks/useCart";
@@ -9,6 +9,7 @@ import { USE_MOCKS, createOrder, getPaymentMethods } from "@/lib/api";
 import { MethodPicker } from "@/components/payments/method-picker";
 import { apiErrorMessage, loginHref } from "@/lib/auth-redirect";
 import { formatPrice } from "@/lib/catalog";
+import { CURRENCY, itemsValue, toItem, track } from "@/lib/analytics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,15 @@ function Checkout({ user }: { user: User }) {
   const [methods, setMethods] = useState<PaymentMethodOption[] | null>(null);
   const [payment, setPayment] = useState<MetodoPago | null>(null);
 
+  // Analytics: inicio del pago, una vez por visita al checkout y solo con productos en el carrito
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || items.length === 0) return;
+    checkoutTracked.current = true;
+    const list = items.map((i) => toItem(i.producto, i.plan, i.cantidad));
+    track("begin_checkout", { currency: CURRENCY, value: itemsValue(list), items: list });
+  }, [items]);
+
   useEffect(() => {
     getPaymentMethods()
       .then((list) => {
@@ -84,6 +94,15 @@ function Checkout({ user }: { user: User }) {
         })),
       });
       savePhone(form.telefono);
+      // Analytics: pedido realizado (antes de vaciar el carrito). El pago se confirma después.
+      const purchased = items.map((i) => toItem(i.producto, i.plan, i.cantidad));
+      track("purchase", {
+        transaction_id: order.numeroOrden,
+        currency: CURRENCY,
+        value: itemsValue(purchased),
+        payment_type: payment,
+        items: purchased,
+      });
       clearCart();
       // Con el pedido creado se pasa a pagarlo (instrucciones, comprobante, tarjeta o Binance)
       if (USE_MOCKS) {

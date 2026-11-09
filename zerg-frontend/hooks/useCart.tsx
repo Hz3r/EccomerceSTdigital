@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, useReducer } from "react";
 import type { CartItem, Plan, Product } from "@/types";
+import { CURRENCY, itemsValue, toItem, track } from "@/lib/analytics";
 
 interface CartState {
   items: CartItem[];
 }
 
 type CartAction =
-  | { type: "ADD_ITEM"; plan: Plan; product: Product }
+  | { type: "ADD_ITEM"; plan: Plan; product: Product; cantidad: number }
   | { type: "REMOVE_ITEM"; planId: string }
   | { type: "UPDATE_QUANTITY"; planId: string; cantidad: number }
   | { type: "CLEAR_CART" }
@@ -28,7 +29,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         return {
           items: state.items.map((i) =>
             i.planId === action.plan.id
-              ? { ...i, cantidad: i.cantidad + 1 }
+              ? { ...i, cantidad: clampQuantity(i.cantidad + action.cantidad) }
               : i
           ),
         };
@@ -40,7 +41,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
             planId: action.plan.id,
             plan: action.plan,
             producto: action.product,
-            cantidad: 1,
+            cantidad: clampQuantity(action.cantidad),
           },
         ],
       };
@@ -74,7 +75,8 @@ interface CartContextType {
   items: CartItem[];
   totalItems: number;
   totalPrice: number;
-  addItem: (plan: Plan, product: Product) => void;
+  /** Suma `cantidad` (1 por defecto) al carrito y lo registra en Analytics (add_to_cart). */
+  addItem: (plan: Plan, product: Product, cantidad?: number) => void;
   removeItem: (planId: string) => void;
   updateQuantity: (planId: string, cantidad: number) => void;
   clearCart: () => void;
@@ -102,8 +104,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [state.items, isLoaded]);
 
-  const addItem = useCallback((plan: Plan, product: Product) => {
-    dispatch({ type: "ADD_ITEM", plan, product });
+  const addItem = useCallback((plan: Plan, product: Product, cantidad = 1) => {
+    dispatch({ type: "ADD_ITEM", plan, product, cantidad });
+    const item = toItem(product, plan, cantidad);
+    track("add_to_cart", { currency: CURRENCY, value: itemsValue([item]), items: [item] });
   }, []);
 
   const removeItem = useCallback((planId: string) => {

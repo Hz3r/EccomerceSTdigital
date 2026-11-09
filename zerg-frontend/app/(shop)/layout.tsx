@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/toast";
 import { SupportWidget } from "@/components/support/support-widget";
 import { FavoritesProvider } from "@/hooks/useFavorites";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 
 export default function ShopLayout({
   children,
@@ -17,6 +18,7 @@ export default function ShopLayout({
   return (
     <Toaster>
       <SiteSettingsProvider>
+        <GoogleAnalytics />
         <AuthProvider>
           <CartProvider>
           <FavoritesProvider>
