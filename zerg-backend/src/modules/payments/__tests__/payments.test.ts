@@ -154,6 +154,51 @@ describe("Izipay", () => {
     expect(mockPrisma.payment.update).not.toHaveBeenCalled();
   });
 
+  it("encuentra el pago si la metadata vuelve en la transacción", async () => {
+    configure();
+    mockPrisma.payment.findUnique.mockResolvedValue(payment({ metodo: "IZIPAY" }));
+    const a = answer({
+      orderDetails: { orderId: "ORD-1", orderTotalAmount: 2490, orderCurrency: "PEN", metadata: null },
+      transactions: [{ uuid: "tx-2", detailedStatus: "AUTHORISED", metadata: { paymentId: payment().id } }],
+    });
+    await paymentService.handleIzipayIpn(ipnBody(a));
+    expect(mockPrisma.payment.findUnique).toHaveBeenCalledWith(expect.objectContaining({ where: { id: payment().id } }));
+    expect(mockPrisma.payment.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ estado: "PAGADO", referencia: "tx-2" }) }));
+  });
+
+  it("sin metadata, encuentra el pago por el n.º de pedido (IPN y retorno del navegador)", async () => {
+    configure();
+    const sinMetadata = answer({
+      orderDetails: { orderId: "ORD-1", orderTotalAmount: 2490, orderCurrency: "PEN", metadata: null },
+      transactions: [{ uuid: "tx-3", detailedStatus: "AUTHORISED", metadata: null }],
+    });
+    mockPrisma.payment.findFirst.mockResolvedValue(payment({ metodo: "IZIPAY" }));
+    await paymentService.handleIzipayIpn(ipnBody(sinMetadata));
+    expect(mockPrisma.payment.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { metodo: "IZIPAY", order: { numeroOrden: "ORD-1" } } }));
+    expect(mockPrisma.payment.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ estado: "PAGADO" }) }));
+
+    // Retorno del navegador firmado con la clave HMAC, también sin metadata
+    vi.clearAllMocks();
+    mockPrisma.payment.findUnique.mockResolvedValue(payment({ metodo: "IZIPAY" }));
+    mockPrisma.payment.findFirst.mockResolvedValue(payment({ metodo: "IZIPAY" }));
+    mockPrisma.payment.findUniqueOrThrow.mockResolvedValue(payment({ metodo: "IZIPAY", estado: "PAGADO" }));
+    await paymentService.confirmIzipayReturn(client, payment().id, {
+      krAnswer: sinMetadata,
+      krHash: createHmac("sha256", "hmac-key").update(sinMetadata).digest("hex"),
+    });
+    expect(mockPrisma.payment.update).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ estado: "PAGADO" }) }));
+  });
+
+  it("el retorno del navegador rechaza la respuesta de otro pedido", async () => {
+    configure();
+    mockPrisma.payment.findUnique.mockResolvedValue(payment({ metodo: "IZIPAY" }));
+    const otro = answer({ orderDetails: { orderId: "ORD-999", orderTotalAmount: 2490, orderCurrency: "PEN", metadata: null }, transactions: [{ uuid: "x" }] });
+    await expect(
+      paymentService.confirmIzipayReturn(client, payment().id, { krAnswer: otro, krHash: createHmac("sha256", "hmac-key").update(otro).digest("hex") })
+    ).rejects.toThrow("no corresponde");
+    expect(mockPrisma.payment.update).not.toHaveBeenCalled();
+  });
+
   it("una IPN repetida no vuelve a notificar", async () => {
     configure();
     mockPrisma.payment.findUnique.mockResolvedValue(payment({ metodo: "IZIPAY", estado: "PAGADO" }));

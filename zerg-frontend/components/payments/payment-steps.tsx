@@ -506,18 +506,52 @@ async function loadIzipay(scriptUrl: string, publicKey: string) {
   return window.KR;
 }
 
+type IzipayResult = { kind: "refused" | "error" | "retry-limit"; title: string; text: string } | null;
+
+/** Errores de Izipay → mensajes claros para el cliente. Los errores de campos (tarjeta, fecha, CVV) los marca el propio formulario. */
+function izipayErrorMessage(code = "", detail = ""): IzipayResult {
+  if (code.startsWith("CLIENT_3")) return null; // dato mal escrito: Izipay lo señala en el campo
+  if (code === "PSP_099" || code === "PSP_108")
+    return { kind: "retry-limit", title: "Superaste el número de intentos", text: "Por seguridad, este formulario ya no acepta más intentos. Pulsa “Intentar de nuevo” para abrir uno nuevo. No se realizó ningún cobro." };
+  if (code.startsWith("ACQ") || code === "PSP_010" || /rechaz|refus|declin/i.test(detail))
+    return {
+      kind: "refused",
+      title: "Tu banco no aprobó el pago",
+      text: "No se te cobró nada. Revisa que los datos sean correctos y que tu tarjeta tenga saldo y compras por internet habilitadas, o prueba con otra tarjeta.",
+    };
+  return { kind: "error", title: "No pudimos procesar el pago", text: "No se realizó ningún cobro. Intenta de nuevo en unos segundos o elige otro método de pago." };
+}
+
+const CARD_BRANDS = ["VISA", "Mastercard", "AMEX", "Diners"];
+
 /**
  * Formulario de pago de Izipay (Smart Form): tarjeta de crédito/débito y los demás medios que Izipay tenga
  * activos en la cuenta de la tienda (Yape, QR, etc.). Se abre solo al entrar a la página de pago.
+ * Pensado para dar confianza: a quién se paga, pago cifrado, sellos y mensajes claros si el banco rechaza.
  */
-export function IzipayPayment({ payment, onUpdated }: { payment: Payment; onUpdated: () => void }) {
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+export function IzipayPayment({ payment, numeroOrden, onUpdated }: { payment: Payment; numeroOrden?: string; onUpdated: () => void }) {
+  const { marca } = useSite().settings;
+  const [status, setStatus] = useState<"loading" | "ready" | "error" | "approved">("loading");
   const [error, setError] = useState("");
+  const [result, setResult] = useState<IzipayResult>(null);
   const [attempt, setAttempt] = useState(0);
+  const [slowConfirm, setSlowConfirm] = useState(false);
   const onUpdatedRef = useRef(onUpdated);
   useEffect(() => {
     onUpdatedRef.current = onUpdated;
   });
+
+  // Aprobado: se consulta el pedido cada pocos segundos hasta que el backend lo marque pagado
+  // (por el retorno del navegador o por la notificación de Izipay). Si tarda, se tranquiliza al cliente.
+  useEffect(() => {
+    if (status !== "approved") return;
+    const poll = setInterval(() => onUpdatedRef.current(), 4000);
+    const slow = setTimeout(() => setSlowConfirm(true), 15000);
+    return () => {
+      clearInterval(poll);
+      clearTimeout(slow);
+    };
+  }, [status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -530,14 +564,33 @@ export function IzipayPayment({ payment, onUpdated }: { payment: Payment; onUpda
         if (cancelled) return;
         // Un formulario a la vez: la librería no permite dibujar otro encima (error CLIENT_725).
         await KR.removeForms();
-        await KR.setFormConfig({ formToken, "kr-language": "es-ES" });
+        await KR.setFormConfig({
+          formToken,
+          "kr-language": "es-ES",
+          "kr-placeholder-pan": "1234 1234 1234 1234",
+          "kr-placeholder-expiry": "MM/AA",
+          "kr-placeholder-security-code": "CVV",
+        });
         await KR.renderElements("#izipay-form");
+        KR.onError?.((event) => {
+          const message = izipayErrorMessage(event.errorCode, `${event.errorMessage ?? ""} ${event.detailedErrorMessage ?? ""}`);
+          if (message) setResult(message);
+        });
         KR.onSubmit(async (event) => {
+          const answer = event.clientAnswer as { orderStatus?: string } | undefined;
+          if (answer?.orderStatus && answer.orderStatus !== "PAID") {
+            setResult(izipayErrorMessage("ACQ_001"));
+            return false;
+          }
+          setResult(null);
+          setStatus("approved");
           try {
             await api.post(`/payments/${payment.id}/izipay/confirm`, {
               krAnswer: event.rawClientAnswer ?? JSON.stringify(event.clientAnswer),
               krHash: event.hash,
             });
+          } catch {
+            // Si la confirmación del navegador falla, la notificación de Izipay (IPN) confirma el pago igual.
           } finally {
             onUpdatedRef.current();
           }
@@ -556,46 +609,117 @@ export function IzipayPayment({ payment, onUpdated }: { payment: Payment; onUpda
     };
   }, [payment.id, attempt]);
 
-  return (
-    <div className="rounded-3xl border bg-card p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Monto a pagar</p>
-          <p className="text-4xl font-black tracking-tight">{formatPrice(Number(payment.monto))}</p>
-        </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand-strong dark:text-brand-bright">
-          <Lock className="size-3.5" />
-          Pago seguro
-        </span>
-      </div>
-      <p className="mt-3 text-sm text-muted-foreground">
-        Paga con tarjeta de crédito o débito, o con los otros medios que aparezcan abajo. Tus datos se procesan en el formulario seguro de Izipay y no pasan por nuestra tienda.
-      </p>
+  const retry = () => {
+    setStatus("loading");
+    setError("");
+    setResult(null);
+    setAttempt((a) => a + 1);
+  };
 
-      {/* Panel claro: el formulario de Izipay está pensado para fondo blanco */}
-      <div className="izipay-panel relative mt-5 min-h-48 rounded-2xl bg-white p-4 text-neutral-900 shadow-sm ring-1 ring-black/5 sm:p-6" style={{ colorScheme: "light" }}>
-        {status === "loading" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-neutral-500">
-            <Loader2 className="size-6 animate-spin text-brand" />
-            Cargando el formulario de pago…
+  return (
+    <div className="overflow-hidden rounded-3xl border bg-card">
+      {/* Cabecera: a quién se paga y cuánto */}
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b bg-muted/30 p-5 sm:p-6">
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Pagas a {marca.nombre}</p>
+          <p className="mt-1 text-4xl font-black tracking-tight">{formatPrice(Number(payment.monto))}</p>
+          {numeroOrden && <p className="mt-1 text-xs text-muted-foreground">Pedido <span className="font-mono font-semibold text-foreground">{numeroOrden}</span></p>}
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand-strong dark:text-brand-bright">
+            <Lock className="size-3.5" />
+            Pago 100% seguro
+          </span>
+          <div className="flex flex-wrap justify-end gap-1">
+            {CARD_BRANDS.map((b) => (
+              <span key={b} className="rounded-md border bg-background px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-muted-foreground">
+                {b}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 sm:p-6">
+        {/* Cómo funciona, en 3 pasos */}
+        <ol className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+          {["Ingresa los datos de tu tarjeta", "Confirma con tu banco si te lo pide", "Recibe tus accesos por WhatsApp"].map((t, i) => (
+            <li key={t} className="flex items-center gap-2 rounded-xl bg-muted/40 px-3 py-2">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-brand-ink">{i + 1}</span>
+              {t}
+            </li>
+          ))}
+        </ol>
+
+        {result && (
+          <div role="alert" className="mt-4 flex gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4">
+            <XCircle className="mt-0.5 size-5 shrink-0 text-destructive" />
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-destructive">{result.title}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">{result.text}</p>
+              {result.kind !== "refused" && (
+                <Button size="sm" variant="outline" className="mt-3 rounded-lg" onClick={retry}>
+                  Intentar de nuevo
+                </Button>
+              )}
+            </div>
           </div>
         )}
-        <div id="izipay-form" className={cn(status !== "ready" && "invisible")}>
-          <div className="kr-smart-form" {...{ "kr-card-form-expanded": "" }} />
+
+        {status === "approved" ? (
+          <div role="status" className="mt-4 flex flex-col items-center gap-2 rounded-2xl bg-brand-mint p-8 text-center">
+            <CheckCircle2 className="size-10 text-brand-strong" />
+            <p className="text-lg font-extrabold">¡Pago aprobado!</p>
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> Confirmando tu pedido…
+            </p>
+            {slowConfirm && (
+              <p className="max-w-sm text-xs text-muted-foreground">
+                Tu pago quedó registrado. La confirmación puede tardar unos minutos: esta página se actualiza sola y también lo verás en Mis pedidos. No vuelvas a pagar.
+              </p>
+            )}
+          </div>
+        ) : (
+          /* Panel claro: el formulario de Izipay está pensado para fondo blanco */
+          <div className="izipay-panel relative mt-4 min-h-48 rounded-2xl bg-white p-4 text-neutral-900 shadow-sm ring-1 ring-black/5 sm:p-6" style={{ colorScheme: "light" }}>
+            {status === "loading" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-neutral-500">
+                <Loader2 className="size-6 animate-spin text-brand" />
+                Abriendo el formulario seguro de pago…
+              </div>
+            )}
+            <div id="izipay-form" className={cn(status !== "ready" && "invisible")}>
+              <div className="kr-smart-form" {...{ "kr-card-form-expanded": "" }} />
+            </div>
+          </div>
+        )}
+
+        {status === "error" && (
+          <div className="mt-4 space-y-3">
+            <p role="alert" className="text-sm text-destructive">{error}</p>
+            <Button variant="outline" className="h-11 w-full rounded-xl" onClick={retry}>
+              Intentar de nuevo
+            </Button>
+          </div>
+        )}
+
+        {/* Sellos y garantías */}
+        <div className="mt-5 grid gap-3 border-t pt-5 text-xs text-muted-foreground sm:grid-cols-2">
+          <p className="flex items-start gap-2">
+            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-brand-strong dark:text-brand-bright" />
+            <span>
+              <span className="font-semibold text-foreground">Procesado por Izipay.</span> Tus datos viajan cifrados directamente a la pasarela de pagos.
+              {" "}{marca.nombre} nunca ve ni guarda tu tarjeta.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Lock className="mt-0.5 size-4 shrink-0 text-brand-strong dark:text-brand-bright" />
+            <span>
+              <span className="font-semibold text-foreground">Certificado PCI DSS y 3-D Secure.</span> Tu banco puede pedirte un código para confirmar que eres tú.
+            </span>
+          </p>
         </div>
       </div>
-
-      {status === "error" && (
-        <div className="mt-4 space-y-3">
-          <p role="alert" className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" className="h-11 w-full rounded-xl" onClick={() => { setStatus("loading"); setError(""); setAttempt((a) => a + 1); }}>
-            Reintentar
-          </Button>
-        </div>
-      )}
-      <p className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <ShieldCheck className="size-3.5" /> Procesado por Izipay · Visa · Mastercard · Amex · Diners
-      </p>
     </div>
   );
 }

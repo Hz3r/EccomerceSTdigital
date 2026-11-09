@@ -64,8 +64,8 @@ export function isValidKrHash(krAnswer: string, krHash: string, secret: string) 
 
 export interface IzipayAnswer {
   orderStatus?: string;
-  orderDetails?: { orderId?: string; orderTotalAmount?: number; orderCurrency?: string; metadata?: Record<string, string> };
-  transactions?: { uuid?: string; status?: string; detailedStatus?: string }[];
+  orderDetails?: { orderId?: string; orderTotalAmount?: number; orderCurrency?: string; metadata?: Record<string, string> | null };
+  transactions?: { uuid?: string; status?: string; detailedStatus?: string; metadata?: Record<string, string> | null }[];
 }
 
 /** Lee `kr-answer` y devuelve lo necesario para conciliar el pago. */
@@ -74,7 +74,8 @@ export function parseAnswer(krAnswer: string) {
   return {
     paid: answer.orderStatus === "PAID",
     orderId: answer.orderDetails?.orderId,
-    paymentId: answer.orderDetails?.metadata?.paymentId,
+    // La metadata enviada al crear el pago puede volver en orderDetails o en la transacción, según el caso.
+    paymentId: answer.orderDetails?.metadata?.paymentId ?? answer.transactions?.[0]?.metadata?.paymentId,
     amountCents: answer.orderDetails?.orderTotalAmount,
     currency: answer.orderDetails?.orderCurrency,
     transactionId: answer.transactions?.[0]?.uuid,
