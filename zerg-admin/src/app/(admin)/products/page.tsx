@@ -509,8 +509,8 @@ function ProductEditor({ product, categories, onCancel, onSaved }: {
           <div className="space-y-2">
             <Label>Imagen para tarjetas (cuadrada)</Label>
             <p className="text-xs text-muted-foreground">
-              Tendencias, carruseles, carrito y buscador. Ideal 1000×1000, con el logo en la parte de arriba y el tercio
-              inferior libre (ahí van el nombre y el precio). Si la dejas vacía se usa la portada recortada al centro.
+              Tendencias, carruseles, carrito y buscador. Ideal 1000×1000: se muestra completa y el nombre y el precio
+              van debajo, así que puedes usar todo el cuadro. Si la dejas vacía se usa la portada recortada al centro.
             </p>
             <ImageField
               value={draft.imagenTarjeta}
