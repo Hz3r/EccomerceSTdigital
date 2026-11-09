@@ -20,7 +20,8 @@ export function MethodPicker({ methods, value, onChange, className }: {
 }) {
   return (
     <div role="radiogroup" aria-label="Método de pago" className={cn("grid gap-3", className)}>
-      {methods.map((m) => {
+      {/* El pago directo apagado desde el admin no se muestra (no es "próximamente": se desactivó a propósito) */}
+      {methods.filter((m) => m.disponible || m.metodo !== "DIRECTO").map((m) => {
         const info = METHOD_INFO[m.metodo];
         const selected = value === m.metodo;
         return (
